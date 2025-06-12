@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AssemblyVersion>8.0</AssemblyVersion>
+        <AssemblyName>Vault111</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
