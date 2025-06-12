@@ -24,12 +24,12 @@ dotnet build -c Release
 ## Architecture
 
 The application uses:
-- **UI Framework**: Avalonia UI 11.1.0 with ReactiveUI for MVVM
+- **UI Framework**: Avalonia UI 11.3.1 with ReactiveUI for MVVM
 - **Target**: .NET 8.0 cross-platform desktop application
 - **Structure**: 
   - `CLASSIC-8/`: Core application (ViewModels, Views, Assets)
   - `CLASSIC-8.Desktop/`: Desktop launcher project
-  - **Recommended**: Create a separate `CLASSIC-8.Core/` or `CLASSIC-8.Library/` project for all scanning logic, ensuring clean separation between UI and business logic
+  - `CLASSIC-8.Core/`: All scanning logic, ensuring clean separation between UI and business logic
 
 ## Original Python Application
 
@@ -37,6 +37,7 @@ The Python code to be ported is located in `/Code to Port/`:
 - **Main modules**: CLASSIC_Main.py, CLASSIC_Interface.py, CLASSIC_ScanGame.py, CLASSIC_ScanLogs.py
 - **Core library**: ClassicLib/ contains various analyzers and utilities
 - **Data files**: CLASSIC Data/ contains YAML configurations, graphics, and sounds
+- **Crash log files**: Crash Logs/ contains example crash logs for testing
 
 Key functionality to port:
 1. Crash log scanning and analysis for multiple game engines
@@ -55,6 +56,7 @@ When porting from Python to C#:
 - Replace PySide6 UI components with equivalent Avalonia controls
 - Use async/await for background operations (replacing Python's asyncio)
 - Implement proper MVVM pattern with ViewModels and data binding
+- Generate tests which are compatible with .NET testing frameworks (e.g., xUnit)
 
 ## Key Python Dependencies to Replace
 
