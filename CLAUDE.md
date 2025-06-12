@@ -66,3 +66,5 @@ When porting from Python to C#:
 - regex → System.Text.RegularExpressions
 - pathlib → System.IO.Path
 - winreg → Microsoft.Win32.Registry
+- logging → NLog
+- pytest → xUnit
