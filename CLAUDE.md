@@ -29,7 +29,7 @@ The application uses:
 - **Structure**: 
   - `CLASSIC-8/`: Core application (ViewModels, Views, Assets)
   - `CLASSIC-8.Desktop/`: Desktop launcher project
-  - `CLASSIC-8.Core/`: All scanning logic, ensuring clean separation between UI and business logic
+  - `CLASSIC-8.Core/`: All scanning logic, ensuring clean separation between UI and business logic as well as any shared code (like YAML configuration handling)
 
 ## Original Python Application
 
