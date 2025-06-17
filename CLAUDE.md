@@ -54,6 +54,7 @@ When porting from Python to C#:
 - Ensure that all services and components are registered in the .NET dependency injection container.
 - Use a singleton pattern for passing global settings and configurations.
 - Convert YAML configuration handling to use YamlDotNet or similar
+- Use a singleton pattern for the YAML configuration manager to ensure consistent access across the application.
 - Replace PySide6 UI components with equivalent Avalonia controls
 - Use async/await for background operations (replacing Python's asyncio)
 - Implement proper MVVM pattern with ViewModels and data binding
