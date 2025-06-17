@@ -37,7 +37,7 @@ The Python code to be ported is located in `/Code to Port/`:
 - **Main modules**: CLASSIC_Main.py, CLASSIC_Interface.py, CLASSIC_ScanGame.py, CLASSIC_ScanLogs.py
 - **Core library**: ClassicLib/ contains various analyzers and utilities
 - **Data files**: CLASSIC Data/ contains YAML configurations, graphics, and sounds
-- **Crash log files**: Crash Logs/ contains example crash logs for testing
+- **Crash log files**: Crash Logs/ contains example crash logs for testing and reports for reference.
 
 Key functionality to port:
 1. Crash log scanning and analysis for multiple game engines
@@ -51,7 +51,8 @@ Key functionality to port:
 ## Development Guidelines
 
 When porting from Python to C#:
-- Maintain the singleton pattern from GlobalRegistry.py using appropriate C# patterns
+- Ensure that all services and components are registered in the .NET dependency injection container.
+- Use a singleton pattern for passing global settings and configurations.
 - Convert YAML configuration handling to use YamlDotNet or similar
 - Replace PySide6 UI components with equivalent Avalonia controls
 - Use async/await for background operations (replacing Python's asyncio)
@@ -65,6 +66,6 @@ When porting from Python to C#:
 - aiohttp/requests → HttpClient
 - regex → System.Text.RegularExpressions
 - pathlib → System.IO.Path
-- winreg → Microsoft.Win32.Registry
+- winreg → Microsoft.Win32.Registry (Conditional for Windows)
 - logging → NLog
 - pytest → xUnit
