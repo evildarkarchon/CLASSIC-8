@@ -5,16 +5,10 @@ namespace CLASSIC_8.Core.Yaml;
 /// </summary>
 public static class YamlSettingsHelper
 {
-    private static IYamlSettingsCache? _yamlCache;
-
     /// <summary>
-    ///     Initializes the YAML settings helper with the cache instance.
-    ///     This should be called during application startup.
+    ///     Gets the YAML settings cache instance.
     /// </summary>
-    public static void Initialize(IYamlSettingsCache yamlCache)
-    {
-        _yamlCache = yamlCache;
-    }
+    private static IYamlSettingsCache YamlCache => YamlSettingsCache.Instance;
 
     /// <summary>
     ///     Gets or sets a YAML setting value.
@@ -26,11 +20,7 @@ public static class YamlSettingsHelper
     /// <returns>The existing or updated setting value if successful, otherwise default(T).</returns>
     public static T? YamlSettings<T>(YamlStore yamlStore, string keyPath, T? newValue = default)
     {
-        if (_yamlCache == null)
-            throw new InvalidOperationException(
-                "YamlSettingsHelper has not been initialized. Call Initialize() first.");
-
-        var result = _yamlCache.GetSetting<T>(yamlStore, keyPath, newValue);
+        var result = YamlCache.GetSetting<T>(yamlStore, keyPath, newValue);
 
         // Special handling for Path types
         if (typeof(T) == typeof(FileInfo) && result is string filePath) return (T)(object)new FileInfo(filePath);
@@ -50,10 +40,6 @@ public static class YamlSettingsHelper
     /// <returns>The value of the requested setting, or default(T) if not found.</returns>
     public static T? ClassicSettings<T>(string setting)
     {
-        if (_yamlCache == null)
-            throw new InvalidOperationException(
-                "YamlSettingsHelper has not been initialized. Call Initialize() first.");
-
         var settingsPath = new FileInfo("CLASSIC Settings.yaml");
 
         if (!settingsPath.Exists)

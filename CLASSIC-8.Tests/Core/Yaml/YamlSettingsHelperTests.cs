@@ -1,5 +1,3 @@
-using System.Reflection;
-using CLASSIC_8.Core;
 using CLASSIC_8.Core.Yaml;
 using Xunit;
 
@@ -7,16 +5,10 @@ namespace CLASSIC_8.Tests.Core.Yaml;
 
 public class YamlSettingsHelperTests : IDisposable
 {
-    private readonly YamlSettingsCache _cache;
-    private readonly GameManager _gameManager;
     private readonly string _testSettingsPath = "CLASSIC Settings.yaml";
 
     public YamlSettingsHelperTests()
     {
-        _gameManager = new GameManager();
-        _cache = new YamlSettingsCache(_gameManager);
-        YamlSettingsHelper.Initialize(_cache);
-
         // Clean up any existing settings file
         if (File.Exists(_testSettingsPath)) File.Delete(_testSettingsPath);
     }
@@ -26,27 +18,6 @@ public class YamlSettingsHelperTests : IDisposable
         if (File.Exists(_testSettingsPath)) File.Delete(_testSettingsPath);
     }
 
-    [Fact]
-    public void Initialize_ThrowsWhenNotInitialized()
-    {
-        // Arrange - Create a new helper class to test uninitialized state
-        var helperType = typeof(YamlSettingsHelper);
-        var cacheField = helperType.GetField("_yamlCache", BindingFlags.NonPublic | BindingFlags.Static);
-        var originalValue = cacheField?.GetValue(null);
-        cacheField?.SetValue(null, null);
-
-        try
-        {
-            // Act & Assert
-            Assert.Throws<InvalidOperationException>(() =>
-                YamlSettingsHelper.YamlSettings<string>(YamlStore.Settings, "test"));
-        }
-        finally
-        {
-            // Restore original value
-            cacheField?.SetValue(null, originalValue);
-        }
-    }
 
     [Fact]
     public void ClassicSettings_CreatesSettingsFileIfNotExists()

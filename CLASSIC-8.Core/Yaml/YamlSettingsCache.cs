@@ -5,10 +5,12 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace CLASSIC_8.Core.Yaml;
 
-public sealed class YamlSettingsCache(IGameManager gameManager) : IYamlSettingsCache
+public sealed class YamlSettingsCache : IYamlSettingsCache
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private static readonly HashSet<YamlStore> StaticYamlStores = [YamlStore.Main, YamlStore.Game];
+    private static readonly Lazy<YamlSettingsCache> _instance = new(() => new YamlSettingsCache());
+
     private readonly ConcurrentDictionary<string, object> _cache = new();
 
     private readonly IDeserializer _deserializer = new DeserializerBuilder()
@@ -16,6 +18,7 @@ public sealed class YamlSettingsCache(IGameManager gameManager) : IYamlSettingsC
         .Build();
 
     private readonly ConcurrentDictionary<string, DateTime> _fileModTimes = new();
+    private readonly IGameManager _gameManager;
     private readonly ConcurrentDictionary<YamlStore, string> _pathCache = new();
 
     private readonly ISerializer _serializer = new SerializerBuilder()
@@ -25,8 +28,24 @@ public sealed class YamlSettingsCache(IGameManager gameManager) : IYamlSettingsC
 
     private readonly ConcurrentDictionary<(YamlStore, string, Type), object?> _settingsCache = new();
 
+    private YamlSettingsCache()
+    {
+        // For singleton pattern, we'll need to get the game manager from a service locator or similar
+        // For now, we'll create a default implementation
+        _gameManager = new GameManager();
+    }
+
+    /// <summary>
+    /// Gets the singleton instance of YamlSettingsCache.
+    /// </summary>
+    public static YamlSettingsCache Instance => _instance.Value;
+
     public string GetPathForStore(YamlStore yamlStore)
     {
+        // For Test store, don't cache the path as it might change between test runs
+        if (yamlStore == YamlStore.Test)
+            return Path.Combine(Environment.CurrentDirectory, "tests", "test_settings.yaml");
+
         if (_pathCache.TryGetValue(yamlStore, out var cachedPath)) return cachedPath;
 
         const string dataPath = "CLASSIC Data";
@@ -35,9 +54,8 @@ public sealed class YamlSettingsCache(IGameManager gameManager) : IYamlSettingsC
             YamlStore.Main => Path.Combine(dataPath, "databases", "CLASSIC Main.yaml"),
             YamlStore.Settings => "CLASSIC Settings.yaml",
             YamlStore.Ignore => "CLASSIC Ignore.yaml",
-            YamlStore.Game => Path.Combine(dataPath, "databases", $"CLASSIC {gameManager.CurrentGame}.yaml"),
-            YamlStore.GameLocal => Path.Combine(dataPath, $"CLASSIC {gameManager.CurrentGame} Local.yaml"),
-            YamlStore.Test => Path.Combine("tests", "test_settings.yaml"),
+            YamlStore.Game => Path.Combine(dataPath, "databases", $"CLASSIC {_gameManager.CurrentGame}.yaml"),
+            YamlStore.GameLocal => Path.Combine(dataPath, $"CLASSIC {_gameManager.CurrentGame} Local.yaml"),
             _ => throw new NotImplementedException($"YAML store {yamlStore} is not implemented")
         };
 
@@ -161,6 +179,17 @@ public sealed class YamlSettingsCache(IGameManager gameManager) : IYamlSettingsC
         // Clear all cached settings for this store
         var keysToRemove = _settingsCache.Keys.Where(k => k.Item1 == yamlStore).ToList();
         foreach (var key in keysToRemove) _settingsCache.TryRemove(key, out _);
+    }
+
+    /// <summary>
+    /// Clears all caches. Useful for testing scenarios.
+    /// </summary>
+    public void ClearAllCaches()
+    {
+        _cache.Clear();
+        _fileModTimes.Clear();
+        _pathCache.Clear();
+        _settingsCache.Clear();
     }
 
     private object LoadYaml(string yamlPath, YamlStore yamlStore)

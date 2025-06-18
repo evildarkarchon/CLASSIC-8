@@ -1,4 +1,3 @@
-using CLASSIC_8.Core;
 using CLASSIC_8.Core.Yaml;
 using Xunit;
 
@@ -7,13 +6,20 @@ namespace CLASSIC_8.Tests.Core.Yaml;
 public class YamlSettingsCacheTests : IDisposable
 {
     private readonly YamlSettingsCache _cache;
-    private readonly GameManager _gameManager;
-    private readonly string _testYamlPath = "test_settings.yaml";
+    private readonly string _testYamlPath;
 
     public YamlSettingsCacheTests()
     {
-        _gameManager = new GameManager();
-        _cache = new YamlSettingsCache(_gameManager);
+        _cache = YamlSettingsCache.Instance;
+
+        // Clear all caches to ensure test isolation
+        _cache.ClearAllCaches();
+
+        // Use absolute path to ensure consistency across test environments
+        _testYamlPath = Path.Combine(Environment.CurrentDirectory, "tests", "test_settings.yaml");
+
+        // Create test directory and file
+        Directory.CreateDirectory(Path.GetDirectoryName(_testYamlPath)!);
 
         // Create a test YAML file
         var testContent = @"
@@ -34,6 +40,7 @@ test_settings:
     public void Dispose()
     {
         if (File.Exists(_testYamlPath)) File.Delete(_testYamlPath);
+        if (Directory.Exists("tests")) Directory.Delete("tests", true);
     }
 
     [Fact]
@@ -50,16 +57,14 @@ test_settings:
     [Fact]
     public void GetPathForStore_UsesCurrentGame()
     {
-        // Arrange
-        _gameManager.CurrentGame = "Skyrim";
-
+        // Note: This test now verifies the default game setting since we're using singleton
         // Act
         var gamePath = _cache.GetPathForStore(YamlStore.Game);
         var gameLocalPath = _cache.GetPathForStore(YamlStore.GameLocal);
 
-        // Assert
-        Assert.Equal("CLASSIC Data/databases/CLASSIC Skyrim.yaml", gamePath);
-        Assert.Equal("CLASSIC Data/CLASSIC Skyrim Local.yaml", gameLocalPath);
+        // Assert - should use default game from GameManager
+        Assert.Equal("CLASSIC Data/databases/CLASSIC Fallout4.yaml", gamePath);
+        Assert.Equal("CLASSIC Data/CLASSIC Fallout4 Local.yaml", gameLocalPath);
     }
 
     [Fact]

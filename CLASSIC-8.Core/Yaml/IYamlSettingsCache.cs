@@ -24,4 +24,9 @@ public interface IYamlSettingsCache
     /// </summary>
     /// <param name="yamlStore">The YAML store to reload.</param>
     void ReloadYamlFile(YamlStore yamlStore);
+
+    /// <summary>
+    ///     Clears all caches. Useful for testing scenarios.
+    /// </summary>
+    void ClearAllCaches();
 }
