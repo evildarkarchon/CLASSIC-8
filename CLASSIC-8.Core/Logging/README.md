@@ -5,7 +5,9 @@ This directory contains the C# port of the Python logging system from CLASSIC.
 ## Key Components
 
 ### LoggingConfiguration Class
+
 Central configuration for NLog logging:
+
 - **File Target**: `CLASSIC Journal.log` in application directory
 - **Log Format**: `{timestamp} | {level} | {message}{exception}`
 - **Log Retention**: Automatic deletion after 7 days
@@ -13,21 +15,27 @@ Central configuration for NLog logging:
 - **Concurrent Writes**: Supports multiple threads writing simultaneously
 
 ### IMessageHandler Interface
+
 Defines the contract for unified message handling across GUI and CLI modes:
+
 - `Info()`, `Warning()`, `Error()`, `Debug()` - Standard logging levels
 - `Status()`, `Notice()`, `Complete()` - Special message types
 - `ShowYesNoDialog()` - Interactive user prompts
 - `IsGuiMode` - Determines display behavior
 
 ### MessageHandler Class
+
 Implementation of IMessageHandler that:
+
 - **Dual Output**: Logs to file AND displays to console/GUI
 - **Emoji Stripping**: Removes emoji characters from log entries to prevent encoding issues
 - **Color-coded Console**: Different colors for different message types in CLI mode
 - **GUI Ready**: Placeholder methods for future GUI integration
 
 ### MessageHandlerExtensions Static Class
+
 Provides global access to message handling:
+
 - `MsgInfo()`, `MsgWarning()`, `MsgError()` - Convenient global methods
 - **Singleton Pattern**: Maintains global message handler instance
 - **Initialization Check**: Throws exception if not properly initialized
@@ -35,6 +43,7 @@ Provides global access to message handling:
 ## Usage Examples
 
 ### Basic Setup (Application Startup)
+
 ```csharp
 // Configure logging first
 LoggingConfiguration.Configure();
@@ -47,6 +56,7 @@ MessageHandlerExtensions.InitializeMessageHandler(messageHandler);
 ```
 
 ### Using Direct Logger
+
 ```csharp
 var logger = LogManager.GetLogger("CLASSIC.MyComponent");
 logger.Info("Component initialized");
@@ -54,6 +64,7 @@ logger.Error("Something went wrong");
 ```
 
 ### Using Message Handler
+
 ```csharp
 var handler = new MessageHandler();
 handler.Info("Processing file...");
@@ -63,6 +74,7 @@ handler.Complete("Process finished successfully");
 ```
 
 ### Using Global Extensions
+
 ```csharp
 MessageHandlerExtensions.MsgInfo("Application starting...");
 MessageHandlerExtensions.MsgStatus("Loading configuration...");
@@ -74,32 +86,34 @@ bool result = MessageHandlerExtensions.ShowYesNo("Continue processing?", "Confir
 
 ## Key Features Ported from Python
 
-1. **Log File Management**: 
-   - Automatic creation of `CLASSIC Journal.log`
-   - 7-day retention policy with automatic cleanup
-   - Rotation to prevent oversized files
+1. **Log File Management**:
+    - Automatic creation of `CLASSIC Journal.log`
+    - 7-day retention policy with automatic cleanup
+    - Rotation to prevent oversized files
 
 2. **Dual Mode Operation**:
-   - CLI mode with colored console output
-   - GUI mode preparation for future Avalonia integration
+    - CLI mode with colored console output
+    - GUI mode preparation for future Avalonia integration
 
 3. **Emoji Handling**:
-   - Strips emoji characters from log entries
-   - Prevents encoding issues on different systems
+    - Strips emoji characters from log entries
+    - Prevents encoding issues on different systems
 
 4. **Hierarchical Loggers**:
-   - Uses namespaced loggers (e.g., "CLASSIC.MessageHandler")
-   - Consistent with Python logging structure
+    - Uses namespaced loggers (e.g., "CLASSIC.MessageHandler")
+    - Consistent with Python logging structure
 
 5. **Message Types**:
-   - Standard: Info, Warning, Error, Debug
-   - Special: Status, Notice, Complete
-   - Interactive: Yes/No dialogs
+    - Standard: Info, Warning, Error, Debug
+    - Special: Status, Notice, Complete
+    - Interactive: Yes/No dialogs
 
 ## Configuration Files
 
 ### NLog.config
+
 XML configuration file that defines:
+
 - File target with rotation settings
 - Console target (optional for development)
 - Logger rules and levels
@@ -108,6 +122,7 @@ XML configuration file that defines:
 ## Integration with YAML System
 
 The logging system integrates with the YAML configuration:
+
 ```csharp
 // YAML cache uses logging
 var yamlCache = new YamlSettingsCache(gameManager);

@@ -1,28 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <!--If you are willing to use Windows/MacOS native APIs you will need to create 3 projects.
-    One for Windows with net8.0-windows TFM, one for MacOS with net8.0-macos and one with net8.0 TFM for Linux.-->
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>CLASSIC</AssemblyName>
-    <PackageId>CLASSIC-8.Desktop</PackageId>
-    <Company>CLASSIC</Company>
-    <Product>CLASSIC</Product>
-    <AssemblyVersion>8.0</AssemblyVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <!--If you are willing to use Windows/MacOS native APIs you will need to create 3 projects.
+        One for Windows with net8.0-windows TFM, one for MacOS with net8.0-macos and one with net8.0 TFM for Linux.-->
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <AssemblyName>CLASSIC</AssemblyName>
+        <PackageId>CLASSIC-8.Desktop</PackageId>
+        <Company>CLASSIC</Company>
+        <Product>CLASSIC</Product>
+        <AssemblyVersion>8.0</AssemblyVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.1" />
-    <PackageReference Include="Mutagen.Bethesda.Fallout4" Version="0.50.2" />
-    <PackageReference Include="NLog" Version="5.5.0" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="YamlDotNet" Version="16.3.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.1"/>
+        <PackageReference Include="Mutagen.Bethesda.Fallout4" Version="0.50.2"/>
+        <PackageReference Include="NLog" Version="5.5.0"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
+        <PackageReference Include="YamlDotNet" Version="16.3.0"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\CLASSIC-8\CLASSIC-8.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\CLASSIC-8\CLASSIC-8.csproj"/>
+    </ItemGroup>
 </Project>

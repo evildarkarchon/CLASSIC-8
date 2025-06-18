@@ -3,14 +3,14 @@ namespace CLASSIC_8.Core.Yaml;
 public interface IYamlSettingsCache
 {
     /// <summary>
-    /// Gets the file path for a given YAML configuration type.
+    ///     Gets the file path for a given YAML configuration type.
     /// </summary>
     /// <param name="yamlStore">The identifier for the configuration type.</param>
     /// <returns>The resolved file path corresponding to the provided YAML store.</returns>
     string GetPathForStore(YamlStore yamlStore);
-    
+
     /// <summary>
-    /// Retrieves or updates a setting from a nested YAML data structure.
+    ///     Retrieves or updates a setting from a nested YAML data structure.
     /// </summary>
     /// <typeparam name="T">The expected type of the setting value.</typeparam>
     /// <param name="yamlStore">The YAML store from which the setting is retrieved or updated.</param>
@@ -18,9 +18,9 @@ public interface IYamlSettingsCache
     /// <param name="newValue">The new value to update the setting with. If null, the method operates as a read.</param>
     /// <returns>The existing or updated setting value if successful, otherwise default(T).</returns>
     T? GetSetting<T>(YamlStore yamlStore, string keyPath, T? newValue = default);
-    
+
     /// <summary>
-    /// Forces a reload of the YAML file, ignoring the cache.
+    ///     Forces a reload of the YAML file, ignoring the cache.
     /// </summary>
     /// <param name="yamlStore">The YAML store to reload.</param>
     void ReloadYamlFile(YamlStore yamlStore);

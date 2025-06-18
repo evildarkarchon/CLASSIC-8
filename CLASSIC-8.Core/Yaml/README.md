@@ -5,22 +5,28 @@ This directory contains the C# port of the Python YAML processing system from CL
 ## Key Components
 
 ### YamlStore Enum
+
 Defines the different types of YAML configuration files:
+
 - `Main`: CLASSIC Data/databases/CLASSIC Main.yaml
-- `Settings`: CLASSIC Settings.yaml  
+- `Settings`: CLASSIC Settings.yaml
 - `Ignore`: CLASSIC Ignore.yaml
 - `Game`: CLASSIC Data/databases/CLASSIC {game}.yaml
 - `GameLocal`: CLASSIC Data/CLASSIC {game} Local.yaml
 - `Test`: tests/test_settings.yaml
 
 ### IYamlSettingsCache Interface
+
 Defines the contract for YAML settings management with methods for:
+
 - Getting file paths for YAML stores
 - Reading/writing settings with type safety
 - Reloading YAML files
 
 ### YamlSettingsCache Class
+
 Main implementation that provides:
+
 - **Singleton pattern** via dependency injection
 - **Intelligent caching** with modification time checking for dynamic files
 - **Type-safe access** using generics
@@ -31,7 +37,9 @@ Main implementation that provides:
 - **YamlDotNet** for YAML serialization/deserialization
 
 ### YamlSettingsHelper Static Class
+
 Provides convenient static methods:
+
 - `YamlSettings<T>()`: Generic method for reading/writing YAML settings
 - `ClassicSettings<T>()`: Specialized method for user settings with automatic file creation
 
@@ -67,6 +75,7 @@ var rootFolder = YamlSettingsHelper.YamlSettings<DirectoryInfo>(YamlStore.GameLo
 ## Testing
 
 Unit tests are provided in `CLASSIC-8.Tests/Core/Yaml/` covering:
+
 - Path resolution for different YAML stores
 - Reading/writing various data types
 - Nested key access
