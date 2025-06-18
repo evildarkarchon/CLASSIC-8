@@ -30,6 +30,7 @@ The application uses:
   - `CLASSIC-8/`: Core application (ViewModels, Views, Assets)
   - `CLASSIC-8.Desktop/`: Desktop launcher project
   - `CLASSIC-8.Core/`: All scanning logic, ensuring clean separation between UI and business logic. As well as any shared code (like YAML configuration handling)
+  - `CLASSIC-8.CLI/`: CLI launcher project
 
 ## Original Python Application
 

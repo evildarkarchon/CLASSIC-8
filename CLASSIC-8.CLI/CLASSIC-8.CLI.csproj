@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>CLASSIC_8.CLI</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Company>CLASSIC-CLI</Company>
+        <Product>CLASSIC-CLI</Product>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CLASSIC-8.Core\CLASSIC-8.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CommandLineParser" Version="2.9.1" />
+      <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.50.2" />
+    </ItemGroup>
+
+</Project>

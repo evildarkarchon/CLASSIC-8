@@ -17,6 +17,7 @@
     <ItemGroup>
         <PackageReference Include="Avalonia.Desktop" Version="11.3.1"/>
         <PackageReference Include="Mutagen.Bethesda.Fallout4" Version="0.50.2"/>
+        <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.50.2" />
         <PackageReference Include="NLog" Version="5.5.0"/>
         <PackageReference Include="xunit" Version="2.9.3"/>
         <PackageReference Include="YamlDotNet" Version="16.3.0"/>
