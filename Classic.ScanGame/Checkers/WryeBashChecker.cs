@@ -17,7 +17,7 @@ public class WryeBashChecker : IWryeBashChecker
 {
     private readonly IFileSystem _fileSystem;
     private readonly IYamlSettingsCache _yamlSettings;
-    private readonly IGlobalRegistry _globalRegistry;
+    private readonly IGameConfiguration _gameConfiguration;
     private readonly ILogger _logger;
 
     private static readonly Dictionary<string, string> ResourceLinks = new()
@@ -30,12 +30,12 @@ public class WryeBashChecker : IWryeBashChecker
     public WryeBashChecker(
         IFileSystem fileSystem,
         IYamlSettingsCache yamlSettings,
-        IGlobalRegistry globalRegistry,
+        IGameConfiguration gameConfiguration,
         ILogger logger)
     {
         _fileSystem = fileSystem;
         _yamlSettings = yamlSettings;
-        _globalRegistry = globalRegistry;
+        _gameConfiguration = gameConfiguration;
         _logger = logger;
     }
 
@@ -58,7 +58,7 @@ public class WryeBashChecker : IWryeBashChecker
         {
             // Load settings from YAML
             var missingHtmlSetting = await _yamlSettings.GetSettingAsync<string>("Game", "Warnings_MODS.Warn_WRYE_MissingHTML");
-            var vrSuffix = _globalRegistry.IsVrMode ? "VR" : "";
+            var vrSuffix = _gameConfiguration.IsVrMode ? "VR" : "";
             var pluginCheckPath = await _yamlSettings.GetSettingAsync<string>("Game_Local", $"Game{vrSuffix}_Info.Docs_File_WryeBashPC");
             var wryeWarnings = await _yamlSettings.GetSettingAsync<Dictionary<string, string>>("Main", "Warnings_WRYE") ?? new Dictionary<string, string>();
 
@@ -76,7 +76,7 @@ public class WryeBashChecker : IWryeBashChecker
             var messageParts = new List<string>
             {
                 "\n✔️ WRYE BASH PLUGIN CHECKER REPORT WAS FOUND! ANALYZING CONTENTS...\n",
-                $"  [This report is located in your Documents/My Games/{_globalRegistry.CurrentGame} folder.]\n",
+                $"  [This report is located in your Documents/My Games/{_gameConfiguration.CurrentGame} folder.]\n",
                 "  [To hide this report, remove *ModChecker.html* from the same folder.]\n"
             };
 

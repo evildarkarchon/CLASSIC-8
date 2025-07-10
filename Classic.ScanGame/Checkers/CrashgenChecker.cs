@@ -13,7 +13,7 @@ public class CrashgenChecker : ICrashgenChecker
 {
     private readonly IFileSystem _fileSystem;
     private readonly IYamlSettingsCache _yamlSettings;
-    private readonly IGlobalRegistry _globalRegistry;
+    private readonly IGameConfiguration _gameConfiguration;
     private readonly ILogger _logger;
     private readonly IMessageHandler _messageHandler;
 
@@ -26,13 +26,13 @@ public class CrashgenChecker : ICrashgenChecker
     public CrashgenChecker(
         IFileSystem fileSystem,
         IYamlSettingsCache yamlSettings,
-        IGlobalRegistry globalRegistry,
+        IGameConfiguration gameConfiguration,
         ILogger logger,
         IMessageHandler messageHandler)
     {
         _fileSystem = fileSystem;
         _yamlSettings = yamlSettings;
-        _globalRegistry = globalRegistry;
+        _gameConfiguration = gameConfiguration;
         _logger = logger;
         _messageHandler = messageHandler;
     }
@@ -89,14 +89,14 @@ public class CrashgenChecker : ICrashgenChecker
 
     private async Task<string?> GetPluginsPathAsync()
     {
-        var vrSuffix = _globalRegistry.IsVrMode ? "VR" : "";
+        var vrSuffix = _gameConfiguration.IsVrMode ? "VR" : "";
         var key = $"Game{vrSuffix}_Info.Game_Folder_Plugins";
         return await _yamlSettings.GetSettingAsync<string>("Game_Local", key);
     }
 
     private async Task<string> GetCrashgenNameAsync()
     {
-        var vrSuffix = _globalRegistry.IsVrMode ? "VR" : "";
+        var vrSuffix = _gameConfiguration.IsVrMode ? "VR" : "";
         var key = $"Game{vrSuffix}_Info.CRASHGEN_LogName";
         var crashgenName = await _yamlSettings.GetSettingAsync<string>("Game", key);
         return crashgenName ?? "Buffout4";
@@ -233,7 +233,7 @@ public class CrashgenChecker : ICrashgenChecker
 
     private List<CrashgenSetting> GetSettingsToCheck()
     {
-        if (_globalRegistry.CurrentGame != "Fallout4")
+        if (_gameConfiguration.CurrentGame != "Fallout4")
         {
             return new List<CrashgenSetting>();
         }

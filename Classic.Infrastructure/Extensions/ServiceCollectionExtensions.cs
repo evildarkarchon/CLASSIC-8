@@ -3,7 +3,6 @@ using Classic.Core.Interfaces;
 using Classic.Infrastructure.Configuration;
 using Classic.Infrastructure.Logging;
 using Classic.Infrastructure.Messaging;
-using Classic.Infrastructure.Registry;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -18,7 +17,7 @@ public static class ServiceCollectionExtensions
 
         // Register core services
         services.AddSingleton<IYamlSettingsCache, YamlSettingsCache>();
-        services.AddSingleton<IGlobalRegistry, GlobalRegistry>();
+        services.AddSingleton<IGameConfiguration, GameConfiguration>();
 
         // Register message handlers
         services.AddSingleton<ConsoleMessageHandler>();

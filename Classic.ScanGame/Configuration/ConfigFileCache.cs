@@ -16,7 +16,7 @@ public class ConfigFileCache
 {
     private readonly IFileSystem _fileSystem;
     private readonly IYamlSettingsCache _yamlSettings;
-    private readonly IGlobalRegistry _globalRegistry;
+    private readonly IGameConfiguration _gameConfiguration;
     private readonly ILogger _logger;
 
     private readonly ConcurrentDictionary<string, string> _configFiles = new();
@@ -28,13 +28,13 @@ public class ConfigFileCache
     private ConfigFileCache(
         IFileSystem fileSystem,
         IYamlSettingsCache yamlSettings,
-        IGlobalRegistry globalRegistry,
+        IGameConfiguration gameConfiguration,
         ILogger logger,
         string? gameRootPath)
     {
         _fileSystem = fileSystem;
         _yamlSettings = yamlSettings;
-        _globalRegistry = globalRegistry;
+        _gameConfiguration = gameConfiguration;
         _logger = logger;
         _gameRootPath = gameRootPath;
     }
@@ -45,13 +45,13 @@ public class ConfigFileCache
     public static async Task<ConfigFileCache> CreateAsync(
         IFileSystem fileSystem,
         IYamlSettingsCache yamlSettings,
-        IGlobalRegistry globalRegistry,
+        IGameConfiguration gameConfiguration,
         ILogger logger)
     {
-        var vrSuffix = globalRegistry.IsVrMode ? "VR" : "";
+        var vrSuffix = gameConfiguration.IsVrMode ? "VR" : "";
         var gameRootPath = await yamlSettings.GetSettingAsync<string>("Game_Local", $"Game{vrSuffix}_Info.Root_Folder_Game");
 
-        var cache = new ConfigFileCache(fileSystem, yamlSettings, globalRegistry, logger, gameRootPath);
+        var cache = new ConfigFileCache(fileSystem, yamlSettings, gameConfiguration, logger, gameRootPath);
         await cache.ScanConfigurationFilesAsync();
         return cache;
     }

@@ -13,7 +13,7 @@ public class ModIniScanner : IModIniScanner
 {
     private readonly IFileSystem _fileSystem;
     private readonly IYamlSettingsCache _yamlSettings;
-    private readonly IGlobalRegistry _globalRegistry;
+    private readonly IGameConfiguration _gameConfiguration;
     private readonly ILogger _logger;
 
     // Constants for config settings
@@ -26,12 +26,12 @@ public class ModIniScanner : IModIniScanner
     public ModIniScanner(
         IFileSystem fileSystem,
         IYamlSettingsCache yamlSettings,
-        IGlobalRegistry globalRegistry,
+        IGameConfiguration gameConfiguration,
         ILogger logger)
     {
         _fileSystem = fileSystem;
         _yamlSettings = yamlSettings;
-        _globalRegistry = globalRegistry;
+        _gameConfiguration = gameConfiguration;
         _logger = logger;
     }
 
@@ -53,7 +53,7 @@ public class ModIniScanner : IModIniScanner
         try
         {
             var messageList = new List<string>();
-            var configFiles = await ConfigFileCache.CreateAsync(_fileSystem, _yamlSettings, _globalRegistry, _logger);
+            var configFiles = await ConfigFileCache.CreateAsync(_fileSystem, _yamlSettings, _gameConfiguration, _logger);
 
             // Check for console command settings that might slow down startup
             await CheckStartingConsoleCommandAsync(configFiles, messageList);
@@ -88,7 +88,7 @@ public class ModIniScanner : IModIniScanner
     /// </summary>
     private async Task CheckStartingConsoleCommandAsync(ConfigFileCache configFiles, List<string> messageList)
     {
-        var gameLower = _globalRegistry.CurrentGame.ToLowerInvariant();
+        var gameLower = _gameConfiguration.CurrentGame.ToLowerInvariant();
 
         foreach (var (fileName, filePath) in configFiles.GetFiles())
         {
@@ -114,7 +114,7 @@ public class ModIniScanner : IModIniScanner
         // List of files and their VSync settings to check
         var vsyncSettings = new List<VsyncSetting>
         {
-            new("dxvk.conf", $"{_globalRegistry.CurrentGame}.exe", "dxgi.syncInterval"),
+            new("dxvk.conf", $"{_gameConfiguration.CurrentGame}.exe", "dxgi.syncInterval"),
             new("enblocal.ini", "ENGINE", "ForceVSync"),
             new("longloadingtimesfix.ini", "Limiter", "EnableVSync"),
             new("reshade.ini", "APP", "ForceVsync"),

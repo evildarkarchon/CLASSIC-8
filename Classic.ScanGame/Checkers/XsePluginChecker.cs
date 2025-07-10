@@ -12,18 +12,15 @@ public class XsePluginChecker : IXsePluginChecker
 {
     private readonly IFileSystem _fileSystem;
     private readonly IYamlSettingsCache _yamlSettings;
-    private readonly IGlobalRegistry _globalRegistry;
     private readonly ILogger _logger;
 
     public XsePluginChecker(
         IFileSystem fileSystem,
         IYamlSettingsCache yamlSettings,
-        IGlobalRegistry globalRegistry,
         ILogger logger)
     {
         _fileSystem = fileSystem;
         _yamlSettings = yamlSettings;
-        _globalRegistry = globalRegistry;
         _logger = logger;
     }
 
