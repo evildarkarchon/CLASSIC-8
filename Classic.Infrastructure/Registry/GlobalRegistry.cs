@@ -9,6 +9,16 @@ public class GlobalRegistry(IServiceProvider? serviceProvider = null, ILogger? l
 {
     private readonly ConcurrentDictionary<Type, object> _services = new();
 
+    /// <summary>
+    /// Gets or sets whether the application is running in VR mode.
+    /// </summary>
+    public bool IsVrMode { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current game name.
+    /// </summary>
+    public string CurrentGame { get; set; } = string.Empty;
+
     public T GetService<T>() where T : class
     {
         var serviceType = typeof(T);

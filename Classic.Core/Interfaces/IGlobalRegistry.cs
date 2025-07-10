@@ -11,4 +11,14 @@ public interface IGlobalRegistry
 
     bool IsServiceRegistered<T>() where T : class;
     void ClearServices();
+
+    /// <summary>
+    /// Gets or sets whether the application is running in VR mode.
+    /// </summary>
+    bool IsVrMode { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current game name.
+    /// </summary>
+    string CurrentGame { get; set; }
 }

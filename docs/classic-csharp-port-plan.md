@@ -104,15 +104,15 @@ ClassicCS/
 
 ### 3.1 ScanGame Library
 - [x] Create `Classic.ScanGame` class library project
-- [ ] Port game file scanning modules
-  - [ ] CheckXsePlugins → XsePluginChecker class
-  - [ ] CheckCrashgen → CrashgenChecker class
-  - [ ] WryeCheck → WryeBashChecker class
-  - [ ] ScanModInis → ModIniScanner class
-- [ ] Port configuration file handling
-  - [ ] Config file parsing
-  - [ ] INI file comparison
-  - [ ] TOML support (if needed)
+- [x] Port game file scanning modules
+  - [x] CheckXsePlugins → XsePluginChecker class
+  - [x] CheckCrashgen → CrashgenChecker class
+  - [x] WryeCheck → WryeBashChecker class
+  - [x] ScanModInis → ModIniScanner class
+- [x] Port configuration file handling
+  - [x] Config file parsing
+  - [x] INI file comparison
+  - [x] TOML support (if needed)
 
 ## Phase 4: CLI Application (Week 6)
 
@@ -133,7 +133,6 @@ ClassicCS/
   - [ ] Add integrity checking
 - [ ] Implement CLI-specific features
   - [ ] Batch processing
-  - [ ] JSON output format option
   - [ ] Quiet/verbose modes
 
 ## Phase 5: GUI Integration (Week 7-8)
