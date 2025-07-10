@@ -36,16 +36,16 @@ public class ScanLogConfiguration
 
 public class ScanLogPatterns
 {
-    public string GameVersionPattern { get; set; } = @"^(.+?) v(.+?)$";
+    public string GameVersionPattern { get; set; } = "^(.+?) v(.+?)$";
     public string BuffoutVersionPattern { get; set; } = @"Buffout 4 v(.+?)(?:\s|$)";
     public string MainErrorPattern { get; set; } = @"Unhandled exception ""(.+?)"" at (.+?)(?:\s|$)";
-    public string PluginSectionPattern { get; set; } = @"^PLUGINS:$";
-    public string F4SeSectionPattern { get; set; } = @"^F4SE PLUGINS:$";
-    public string StackSectionPattern { get; set; } = @"^PROBABLE CALL STACK:$";
-    public string SystemSpecsPattern { get; set; } = @"^SYSTEM SPECS:$";
-    public string RegistersPattern { get; set; } = @"^REGISTERS:$";
-    public string StackPattern { get; set; } = @"^STACK:$";
-    public string ModulesPattern { get; set; } = @"^MODULES:$";
+    public string PluginSectionPattern { get; set; } = "^PLUGINS:$";
+    public string F4SeSectionPattern { get; set; } = "^F4SE PLUGINS:$";
+    public string StackSectionPattern { get; set; } = "^PROBABLE CALL STACK:$";
+    public string SystemSpecsPattern { get; set; } = "^SYSTEM SPECS:$";
+    public string RegistersPattern { get; set; } = "^REGISTERS:$";
+    public string StackPattern { get; set; } = "^STACK:$";
+    public string ModulesPattern { get; set; } = "^MODULES:$";
 
     // Plugin parsing patterns
     public string PluginEntryPattern { get; set; } = @"^\[([0-9A-F]{2})\]\s+(.+?)(?:\s+\[(.+?)\])?$";

@@ -78,10 +78,7 @@ public class FormIdAnalyzer : IFormIdAnalyzer
             try
             {
                 // Parse FormID value
-                if (formIdString.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-                    formId.FormIdValue = Convert.ToUInt32(formIdString, 16);
-                else
-                    formId.FormIdValue = Convert.ToUInt32(formIdString, 16);
+                formId.FormIdValue = Convert.ToUInt32(formIdString, 16);
 
                 // Extract plugin index from FormID
                 var pluginIndex = (formId.FormIdValue >> 24) & 0xFF;
@@ -248,7 +245,7 @@ public class FormIdAnalyzer : IFormIdAnalyzer
     {
         // Look for patterns like "-> 1447818+0x3A" which might contain FormID references
         return Regex.IsMatch(line, @"->\s*\d+\+0x[0-9A-F]+") ||
-               Regex.IsMatch(line, @"0x[0-9A-F]{8}") ||
+               Regex.IsMatch(line, "0x[0-9A-F]{8}") ||
                line.Contains("FormID") ||
                line.Contains("kNAVM") ||
                line.Contains("kREFR");
@@ -262,13 +259,13 @@ public class FormIdAnalyzer : IFormIdAnalyzer
         try
         {
             // Look for hex patterns that might be FormIDs
-            var hexMatches = Regex.Matches(line, @"0x([0-9A-F]{8})");
+            var hexMatches = Regex.Matches(line, "0x([0-9A-F]{8})");
             foreach (Match match in hexMatches)
             {
                 var hexValue = match.Groups[1].Value;
                 if (uint.TryParse(hexValue, NumberStyles.HexNumber, null, out var value))
                     // Simple heuristic: if it looks like a FormID (not too high, not zero)
-                    if (value > 0 && value < 0xFF000000)
+                    if (value is > 0 and < 0xFF000000)
                         return ResolveFormIdAsync(hexValue, CancellationToken.None).Result;
             }
         }
@@ -287,7 +284,7 @@ public class FormIdAnalyzer : IFormIdAnalyzer
     {
         // Reserved ranges for Fallout 4
         return formId >= 0xFF000000 || // Reserved high range
-               (formId >= 0x00000000 && formId <= 0x00000FFF); // Reserved low range
+               formId <= 0x00000FFF; // Reserved low range
     }
 
     /// <summary>

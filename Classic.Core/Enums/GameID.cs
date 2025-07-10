@@ -1,9 +1,9 @@
 ﻿namespace Classic.Core.Enums;
 
-public enum GameID
+public enum GameId
 {
     Fallout4,
-    Fallout4VR,
-    SkyrimSE,
-    SkyrimVR
+    Fallout4Vr,
+    SkyrimSe,
+    SkyrimVr
 }

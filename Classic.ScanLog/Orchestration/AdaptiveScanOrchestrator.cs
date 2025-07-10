@@ -412,8 +412,7 @@ public class AdaptiveScanOrchestrator : IScanOrchestrator
             result.DetectedSuspects = await _suspectScanner.ScanForSuspectsAsync(crashLog, cancellationToken);
 
             // Analyze plugins  
-            var pluginAnalyzer = _pluginAnalyzer as PluginAnalyzer;
-            if (pluginAnalyzer != null)
+            if (_pluginAnalyzer is PluginAnalyzer pluginAnalyzer)
                 result.PluginAnalysis = await pluginAnalyzer.AnalyzePluginsInternalAsync(crashLog, cancellationToken);
             else
                 result.PluginAnalysis = new PluginAnalysisResult();
@@ -464,24 +463,22 @@ public class AdaptiveScanOrchestrator : IScanOrchestrator
         {
             LogFileName = $"Aggregated ({results.Count} logs)",
             IsSuccessful = results.All(r => r.IsSuccessful),
-            ScanDuration = TimeSpan.FromMilliseconds(results.Sum(r => r.ScanDuration.TotalMilliseconds))
+            ScanDuration = TimeSpan.FromMilliseconds(results.Sum(r => r.ScanDuration.TotalMilliseconds)),
+            // Aggregate detected suspects
+            DetectedSuspects = results
+                .SelectMany(r => r.DetectedSuspects)
+                .GroupBy(s => s.Name)
+                .Select(g => g.OrderByDescending(s => s.Confidence).First())
+                .OrderByDescending(s => s.Severity)
+                .ToList(),
+            // Aggregate recommendations
+            Recommendations = results
+                .SelectMany(r => r.Recommendations)
+                .GroupBy(r => r.Title)
+                .Select(g => g.First())
+                .OrderByDescending(r => r.Priority)
+                .ToList()
         };
-
-        // Aggregate detected suspects
-        aggregated.DetectedSuspects = results
-            .SelectMany(r => r.DetectedSuspects)
-            .GroupBy(s => s.Name)
-            .Select(g => g.OrderByDescending(s => s.Confidence).First())
-            .OrderByDescending(s => s.Severity)
-            .ToList();
-
-        // Aggregate recommendations
-        aggregated.Recommendations = results
-            .SelectMany(r => r.Recommendations)
-            .GroupBy(r => r.Title)
-            .Select(g => g.First())
-            .OrderByDescending(r => r.Priority)
-            .ToList();
 
         // Aggregate error messages
         var errors = results.Where(r => !r.IsSuccessful).Select(r => r.ErrorMessage);

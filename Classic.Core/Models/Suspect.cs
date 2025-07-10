@@ -10,13 +10,13 @@ public class Suspect
     public string Evidence { get; set; } = string.Empty;
     public string Recommendation { get; set; } = string.Empty;
     public List<string> RelatedFiles { get; set; } = new();
-    public List<FormID> RelatedFormIDs { get; set; } = new();
+    public List<FormId> RelatedFormIDs { get; set; } = new();
 }
 
 public enum SuspectType
 {
     Plugin,
-    FormID,
+    FormId,
     Setting,
     ModConflict,
     CorruptFile,
