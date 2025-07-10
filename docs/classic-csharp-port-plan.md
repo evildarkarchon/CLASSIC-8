@@ -59,40 +59,40 @@ ClassicCS/
 
 ### 2.1 ScanLog Library Foundation
 - [x] Create `Classic.ScanLog` class library project
-- [ ] Port core data structures
-  - [ ] ClassicScanLogsInfo → ScanLogConfiguration class
-  - [ ] ThreadSafeLogCache → ConcurrentLogCache class
-  - [ ] Create crash log models
+- [x] Port core data structures
+  - [x] ClassicScanLogsInfo → ScanLogConfiguration class
+  - [x] ThreadSafeLogCache → ConcurrentLogCache class
+  - [x] Create crash log models
 
 ### 2.2 Parser and Analyzers
-- [ ] Port Parser module
-  - [ ] Implement crash header parsing
-  - [ ] Implement segment extraction
-  - [ ] Port regex patterns for log parsing
-- [ ] Port analyzer components
-  - [ ] PluginAnalyzer class
-  - [ ] FormIDAnalyzer class
-  - [ ] SuspectScanner class
-  - [ ] RecordScanner class
-  - [ ] SettingsScanner class
-- [ ] Port utility modules
-  - [ ] DetectMods functionality
-  - [ ] GPUDetector (using WMI or similar with fallback if unavailable)
+- [x] Port Parser module
+  - [x] Implement crash header parsing
+  - [x] Implement segment extraction
+  - [x] Port regex patterns for log parsing
+- [x] Port analyzer components
+  - [x] PluginAnalyzer class
+  - [x] FormIDAnalyzer class
+  - [x] SuspectScanner class
+  - [x] RecordScanner class
+  - [x] SettingsScanner class
+- [x] Port utility modules
+  - [x] DetectMods functionality
+  - [x] GPUDetector (using WMI or similar with fallback if unavailable)
 
 ### 2.3 Unified Orchestrator Implementation
-- [ ] Create adaptive ScanOrchestrator
-  - [ ] Implement IScanOrchestrator interface with configurable processing modes
-  - [ ] Create async workflow coordination with performance monitoring
-  - [ ] Implement statistics tracking and performance metrics collection
-- [ ] Implement multiple processing strategies
-  - [ ] Sequential processing for single-threaded scenarios
-  - [ ] Parallel processing with Task.WhenAll for CPU-bound operations
-  - [ ] Producer-consumer pattern using Channel<T> for I/O-bound operations
-  - [ ] Batch processing with configurable batch sizes
-- [ ] Add adaptive strategy selection
-  - [ ] Performance benchmarking during initialization
-  - [ ] Dynamic strategy switching based on workload characteristics
-  - [ ] Configuration-driven strategy selection with fallback options
+- [x] Create adaptive ScanOrchestrator
+  - [x] Implement IScanOrchestrator interface with configurable processing modes
+  - [x] Create async workflow coordination with performance monitoring
+  - [x] Implement statistics tracking and performance metrics collection
+- [x] Implement multiple processing strategies
+  - [x] Sequential processing for single-threaded scenarios
+  - [x] Parallel processing with Task.WhenAll for CPU-bound operations
+  - [x] Producer-consumer pattern using Channel<T> for I/O-bound operations
+  - [x] Batch processing with configurable batch sizes
+- [x] Add adaptive strategy selection
+  - [x] Performance benchmarking during initialization
+  - [x] Dynamic strategy switching based on workload characteristics
+  - [x] Configuration-driven strategy selection with fallback options
 
 ### 2.4 Report Generation
 - [ ] Port ReportGenerator
