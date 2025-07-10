@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="Classic.Avalonia\Classic.Avalonia.csproj" Type="Classic C#" />
+  <Project Path="Classic.Core\Classic.Core.csproj" Type="Classic C#" />
+  <Project Path="Classic.Infrastructure\Classic.Infrastructure.csproj" Type="Classic C#" />
 </Solution>
