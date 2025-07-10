@@ -2,9 +2,11 @@ using Classic.Core.Models;
 
 namespace Classic.Core.Interfaces;
 
-public interface IFormIDAnalyzer
+public interface IFormIdAnalyzer
 {
-    Task<List<FormID>> ExtractFormIDsAsync(CrashLog crashLog, CancellationToken cancellationToken = default);
-    Task<FormID?> AnalyzeFormIDAsync(string formIdString, CancellationToken cancellationToken = default);
-    Task<bool> IsKnownProblematicFormIDAsync(FormID formId, CancellationToken cancellationToken = default);
+    Task<List<FormId>> AnalyzeFormIDsAsync(CrashLog crashLog, CancellationToken cancellationToken = default);
+    Task<FormId> ResolveFormIdAsync(string formIdString, CancellationToken cancellationToken = default);
+
+    Task<List<string>> ValidateFormIDsAsync(CrashLog crashLog, List<FormId> formIDs,
+        CancellationToken cancellationToken = default);
 }

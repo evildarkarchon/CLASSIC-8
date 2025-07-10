@@ -1,19 +1,19 @@
+using System.Collections.Concurrent;
 using Classic.Core.Enums;
 using Serilog;
-using System.Collections.Concurrent;
 
 namespace Classic.Infrastructure.Messaging;
 
 public class GuiMessageHandler(ILogger logger) : MessageHandlerBase(logger)
 {
-    private readonly ConcurrentQueue<GuiMessage> _messageQueue = new ConcurrentQueue<GuiMessage>();
+    private readonly ConcurrentQueue<GuiMessage> _messageQueue = new();
 
     public event EventHandler<GuiMessage>? MessageReceived;
     public event EventHandler<ProgressUpdate>? ProgressUpdated;
 
     public override void SendMessage(string message, MessageType type, MessageTarget target)
     {
-        if (!target.HasFlag(MessageTarget.GUI)) return;
+        if (!target.HasFlag(MessageTarget.Gui)) return;
 
         var guiMessage = new GuiMessage
         {
@@ -50,10 +50,7 @@ public class GuiMessageHandler(ILogger logger) : MessageHandlerBase(logger)
     public IEnumerable<GuiMessage> GetQueuedMessages()
     {
         var messages = new List<GuiMessage>();
-        while (_messageQueue.TryDequeue(out var message))
-        {
-            messages.Add(message);
-        }
+        while (_messageQueue.TryDequeue(out var message)) messages.Add(message);
         return messages;
     }
 
@@ -79,18 +76,15 @@ public class GuiMessageHandler(ILogger logger) : MessageHandlerBase(logger)
             _handler.ReportProgress(_operation, _current, _total);
         }
 
+        public void Dispose()
+        {
+            if (_current < _total) _handler.ReportProgress(_operation, _total, _total);
+        }
+
         public void Increment()
         {
             _current++;
             _handler.ReportProgress(_operation, _current, _total);
-        }
-
-        public void Dispose()
-        {
-            if (_current < _total)
-            {
-                _handler.ReportProgress(_operation, _total, _total);
-            }
         }
     }
 }

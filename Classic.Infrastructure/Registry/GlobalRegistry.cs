@@ -1,23 +1,20 @@
+using System.Collections.Concurrent;
 using Classic.Core.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using System.Collections.Concurrent;
 
 namespace Classic.Infrastructure.Registry;
 
 public class GlobalRegistry(IServiceProvider? serviceProvider = null, ILogger? logger = null) : IGlobalRegistry
 {
-    private readonly ConcurrentDictionary<Type, object> _services = new ConcurrentDictionary<Type, object>();
+    private readonly ConcurrentDictionary<Type, object> _services = new();
 
     public T GetService<T>() where T : class
     {
         var serviceType = typeof(T);
 
         // First check our internal registry
-        if (_services.TryGetValue(serviceType, out var service))
-        {
-            return (T)service;
-        }
+        if (_services.TryGetValue(serviceType, out var service)) return (T)service;
 
         // If we have a service provider, try to get the service from it
         if (serviceProvider != null)
@@ -62,7 +59,7 @@ public class GlobalRegistry(IServiceProvider? serviceProvider = null, ILogger? l
     {
         var serviceType = typeof(T);
         return _services.ContainsKey(serviceType) ||
-               (serviceProvider?.GetService<T>() != null);
+               serviceProvider?.GetService<T>() != null;
     }
 
     public void ClearServices()

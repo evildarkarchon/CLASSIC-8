@@ -1,5 +1,5 @@
-﻿using Classic.Core.Interfaces;
-using Classic.Core.Enums;
+﻿using Classic.Core.Enums;
+using Classic.Core.Interfaces;
 using Classic.Infrastructure.Configuration;
 using Classic.Infrastructure.Logging;
 using Classic.Infrastructure.Messaging;
@@ -29,9 +29,9 @@ public static class ServiceCollectionExtensions
         {
             return target switch
             {
-                MessageTarget.CLI => (IMessageHandler)provider.GetRequiredService<ConsoleMessageHandler>(),
-                MessageTarget.GUI => (IMessageHandler)provider.GetRequiredService<GuiMessageHandler>(),
-                MessageTarget.Both => (IMessageHandler)provider.GetRequiredService<ConsoleMessageHandler>(), // Default fallback
+                MessageTarget.Cli => provider.GetRequiredService<ConsoleMessageHandler>(),
+                MessageTarget.Gui => provider.GetRequiredService<GuiMessageHandler>(),
+                MessageTarget.Both => provider.GetRequiredService<ConsoleMessageHandler>(), // Default fallback
                 _ => throw new ArgumentException($"Unknown message target: {target}")
             };
         });
@@ -41,7 +41,7 @@ public static class ServiceCollectionExtensions
             provider.GetRequiredService<ConsoleMessageHandler>());
 
         // Register Serilog logger as singleton
-        services.AddSingleton<Serilog.ILogger>(Log.Logger);
+        services.AddSingleton(Log.Logger);
 
         return services;
     }

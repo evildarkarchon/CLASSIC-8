@@ -4,7 +4,7 @@ namespace Classic.Core.Interfaces;
 
 public interface IPluginAnalyzer
 {
-    Task<List<Plugin>> ExtractPluginsAsync(CrashLog crashLog, CancellationToken cancellationToken = default);
-    Task<List<Plugin>> AnalyzePluginConflictsAsync(List<Plugin> plugins, CancellationToken cancellationToken = default);
-    Task<bool> IsKnownProblematicPluginAsync(Plugin plugin, CancellationToken cancellationToken = default);
+    Task<object> AnalyzePluginsAsync(CrashLog crashLog, CancellationToken cancellationToken = default);
+    Task<bool> HasPluginAsync(CrashLog crashLog, string pluginName, CancellationToken cancellationToken = default);
+    Task<List<string>> ValidateLoadOrderAsync(CrashLog crashLog, CancellationToken cancellationToken = default);
 }

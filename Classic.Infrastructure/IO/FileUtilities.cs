@@ -9,10 +9,7 @@ public static class FileUtilities
         var lines = new List<string>();
         using var reader = new StreamReader(path);
         string? line;
-        while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
-        {
-            lines.Add(line);
-        }
+        while ((line = await reader.ReadLineAsync(cancellationToken)) != null) lines.Add(line);
         return lines.ToArray();
     }
 
@@ -33,7 +30,8 @@ public static class FileUtilities
         return extension == ".txt" || extension == ".log";
     }
 
-    public static async Task<FileInfo[]> GetCrashLogsAsync(string directory, CancellationToken cancellationToken = default)
+    public static async Task<FileInfo[]> GetCrashLogsAsync(string directory,
+        CancellationToken cancellationToken = default)
     {
         if (!Directory.Exists(directory))
             return Array.Empty<FileInfo>();

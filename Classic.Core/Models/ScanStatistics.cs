@@ -14,5 +14,7 @@ public class ScanStatistics
     public DateTime ScanEndTime { get; set; }
 
     public double SuccessRate => TotalCrashLogs > 0 ? (double)SuccessfulScans / TotalCrashLogs * 100 : 0;
-    public double AverageProcessingTimePerLog => ProcessedLogs > 0 ? TotalProcessingTime.TotalMilliseconds / ProcessedLogs : 0;
+
+    public double AverageProcessingTimePerLog =>
+        ProcessedLogs > 0 ? TotalProcessingTime.TotalMilliseconds / ProcessedLogs : 0;
 }

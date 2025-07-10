@@ -77,17 +77,22 @@ ClassicCS/
   - [ ] SettingsScanner class
 - [ ] Port utility modules
   - [ ] DetectMods functionality
-  - [ ] GPUDetector (using WMI or similar)
+  - [ ] GPUDetector (using WMI or similar with fallback if unavailable)
 
-### 2.3 Orchestrator Implementation
-- [ ] Port ScanOrchestrator
-  - [ ] Implement IScanOrchestrator interface
-  - [ ] Create async workflow coordination
-  - [ ] Implement statistics tracking
-- [ ] Port AsyncScanOrchestrator
-  - [ ] Implement parallel processing with Task.WhenAll
-  - [ ] Use Channel<T> for async producer-consumer pattern
-  - [ ] Implement batch processing
+### 2.3 Unified Orchestrator Implementation
+- [ ] Create adaptive ScanOrchestrator
+  - [ ] Implement IScanOrchestrator interface with configurable processing modes
+  - [ ] Create async workflow coordination with performance monitoring
+  - [ ] Implement statistics tracking and performance metrics collection
+- [ ] Implement multiple processing strategies
+  - [ ] Sequential processing for single-threaded scenarios
+  - [ ] Parallel processing with Task.WhenAll for CPU-bound operations
+  - [ ] Producer-consumer pattern using Channel<T> for I/O-bound operations
+  - [ ] Batch processing with configurable batch sizes
+- [ ] Add adaptive strategy selection
+  - [ ] Performance benchmarking during initialization
+  - [ ] Dynamic strategy switching based on workload characteristics
+  - [ ] Configuration-driven strategy selection with fallback options
 
 ### 2.4 Report Generation
 - [ ] Port ReportGenerator
@@ -242,6 +247,27 @@ public async Task<ScanResult> ProcessCrashLogAsync(
 }
 ```
 
+### Unified Orchestrator Pattern
+```csharp
+public class AdaptiveScanOrchestrator : IScanOrchestrator
+{
+    private readonly IPerformanceMonitor _performanceMonitor;
+    private ProcessingStrategy _currentStrategy;
+    
+    public async Task<ScanResult> ExecuteScanAsync(ScanRequest request)
+    {
+        // Select optimal strategy based on workload and performance metrics
+        var strategy = await SelectOptimalStrategyAsync(request);
+        return await strategy.ExecuteAsync(request);
+    }
+    
+    private async Task<ProcessingStrategy> SelectOptimalStrategyAsync(ScanRequest request)
+    {
+        // Performance-based strategy selection logic
+    }
+}
+```
+
 ### MVVM with ReactiveUI
 ```csharp
 public class ScanLogsViewModel : ReactiveObject
@@ -257,9 +283,20 @@ public class ScanLogsViewModel : ReactiveObject
 ```csharp
 public class ScanConfiguration
 {
-    public bool UseAsyncPipeline { get; set; } = true;
+    public ProcessingMode PreferredMode { get; set; } = ProcessingMode.Adaptive;
     public int MaxConcurrency { get; set; } = Environment.ProcessorCount;
+    public int BatchSize { get; set; } = 100;
     public TimeSpan CacheTimeout { get; set; } = TimeSpan.FromMinutes(5);
+    public bool EnablePerformanceMonitoring { get; set; } = true;
+    public TimeSpan StrategyEvaluationInterval { get; set; } = TimeSpan.FromSeconds(30);
+}
+
+public enum ProcessingMode
+{
+    Sequential,      // Single-threaded processing
+    Parallel,        // Task.WhenAll parallel processing
+    ProducerConsumer, // Channel-based pipeline
+    Adaptive         // Auto-select based on performance
 }
 ```
 

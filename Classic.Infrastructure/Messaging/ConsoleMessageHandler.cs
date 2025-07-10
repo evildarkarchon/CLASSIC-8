@@ -7,7 +7,7 @@ public class ConsoleMessageHandler(ILogger logger) : MessageHandlerBase(logger)
 {
     public override void SendMessage(string message, MessageType type, MessageTarget target)
     {
-        if (!target.HasFlag(MessageTarget.CLI)) return;
+        if (!target.HasFlag(MessageTarget.Cli)) return;
 
         var color = type switch
         {
@@ -31,10 +31,7 @@ public class ConsoleMessageHandler(ILogger logger) : MessageHandlerBase(logger)
         var percentage = (double)current / total * 100;
         Console.Write($"\r{operation}: {current}/{total} ({percentage:F1}%)");
 
-        if (current == total)
-        {
-            Console.WriteLine(); // New line when complete
-        }
+        if (current == total) Console.WriteLine(); // New line when complete
     }
 
     public override IDisposable BeginProgressContext(string operation, int total)
@@ -59,19 +56,16 @@ public class ConsoleMessageHandler(ILogger logger) : MessageHandlerBase(logger)
             Console.WriteLine($"Starting: {operation}");
         }
 
+        public void Dispose()
+        {
+            if (_current < _total) _handler.ReportProgress(_operation, _total, _total);
+            Console.WriteLine($"Completed: {_operation}");
+        }
+
         public void Increment()
         {
             _current++;
             _handler.ReportProgress(_operation, _current, _total);
-        }
-
-        public void Dispose()
-        {
-            if (_current < _total)
-            {
-                _handler.ReportProgress(_operation, _total, _total);
-            }
-            Console.WriteLine($"Completed: {_operation}");
         }
     }
 }

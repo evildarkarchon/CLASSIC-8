@@ -3,9 +3,12 @@
 public class Plugin
 {
     public string Name { get; set; } = string.Empty;
-    public string LoadOrder { get; set; } = string.Empty;
-    public bool IsLightPlugin { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public int LoadOrder { get; set; }
+    public bool IsLight { get; set; }
+    public bool IsMaster { get; set; }
     public PluginStatus Status { get; set; }
+    public string Flags { get; set; } = string.Empty;
 }
 
 public enum PluginStatus
@@ -13,5 +16,9 @@ public enum PluginStatus
     Active,
     Inactive,
     Missing,
-    Error
+    Error,
+    Light,
+    Master,
+    Regular,
+    Unknown
 }
