@@ -21,7 +21,7 @@ public static class LoggingConfiguration
                 outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
     }
-    
+
     public static ILogger CreateLogger(string logPath)
     {
         return new LoggerConfiguration()

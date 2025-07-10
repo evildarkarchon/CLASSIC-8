@@ -1,25 +1,17 @@
 ﻿using Classic.Core.Interfaces;
-using Microsoft.Extensions.Logging;
+using Serilog;
 using System.Collections.Concurrent;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace Classic.Infrastructure.Configuration;
 
-public class YamlSettingsCache : IYamlSettingsCache
+public class YamlSettingsCache(ILogger logger) : IYamlSettingsCache
 {
-    private readonly ILogger<YamlSettingsCache> _logger;
-    private readonly ConcurrentDictionary<string, object> _cache;
-    private readonly IDeserializer _deserializer;
-
-    public YamlSettingsCache(ILogger<YamlSettingsCache> logger)
-    {
-        _logger = logger;
-        _cache = new ConcurrentDictionary<string, object>();
-        _deserializer = new DeserializerBuilder()
+    private readonly ConcurrentDictionary<string, object> _cache = new();
+    private readonly IDeserializer _deserializer = new DeserializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .Build();
-    }
 
     public T GetSetting<T>(string file, string path, T defaultValue = default)
     {
@@ -33,21 +25,21 @@ public class YamlSettingsCache : IYamlSettingsCache
 
             if (!File.Exists(file))
             {
-                _logger.LogWarning("YAML file not found: {File}", file);
+                logger.Warning("YAML file not found: {File}", file);
                 return defaultValue;
             }
 
             var yamlContent = File.ReadAllText(file);
             var yamlObject = _deserializer.Deserialize<Dictionary<string, object>>(yamlContent);
-            
+
             var value = GetNestedValue(yamlObject, path, defaultValue);
             _cache.TryAdd(cacheKey, value);
-            
+
             return value;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error reading YAML setting from {File} at path {Path}", file, path);
+            logger.Error(ex, "Error reading YAML setting from {File} at path {Path}", file, path);
             return defaultValue;
         }
     }
@@ -64,21 +56,21 @@ public class YamlSettingsCache : IYamlSettingsCache
 
             if (!File.Exists(file))
             {
-                _logger.LogWarning("YAML file not found: {File}", file);
+                logger.Warning("YAML file not found: {File}", file);
                 return defaultValue;
             }
 
             var yamlContent = await File.ReadAllTextAsync(file);
             var yamlObject = _deserializer.Deserialize<Dictionary<string, object>>(yamlContent);
-            
+
             var value = GetNestedValue(yamlObject, path, defaultValue);
             _cache.TryAdd(cacheKey, value);
-            
+
             return value;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error reading YAML setting from {File} at path {Path}", file, path);
+            logger.Error(ex, "Error reading YAML setting from {File} at path {Path}", file, path);
             return defaultValue;
         }
     }
@@ -86,7 +78,7 @@ public class YamlSettingsCache : IYamlSettingsCache
     public void ReloadCache()
     {
         _cache.Clear();
-        _logger.LogInformation("YAML settings cache cleared");
+        logger.Information("YAML settings cache cleared");
     }
 
     private T GetNestedValue<T>(Dictionary<string, object> yamlObject, string path, T defaultValue)

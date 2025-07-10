@@ -23,37 +23,37 @@ ClassicCS/
 
 ### 1.1 Core Library Setup
 - [x] Create `Classic.Core` class library project
-  - [ ] Define domain models (CrashLog, Plugin, FormID, etc.)
-  - [ ] Create core interfaces (IScanOrchestrator, IMessageHandler, etc.)
-  - [ ] Define enums (GameID, MessageType, MessageTarget, etc.)
-  - [ ] Create custom exceptions
-  - [ ] Set up dependency injection container interfaces
+  - [x] Define domain models (CrashLog, Plugin, FormID, ScanStatistics, Suspect)
+  - [x] Create core interfaces (IScanOrchestrator, IMessageHandler, IYamlSettingsCache, IFormIDAnalyzer, IPluginAnalyzer, ICrashLogParser, IGlobalRegistry)
+  - [x] Define enums (GameID, MessageType, MessageTarget, PluginStatus, SuspectType, SeverityLevel)
+  - [x] Create custom exceptions (ClassicException, CrashLogParsingException, ConfigurationException, ScanningException)
+  - [x] Set up dependency injection container interfaces
 
 ### 1.2 Infrastructure Library
 - [x] Create `Classic.Infrastructure` class library project
-  - [ ] Implement YAML settings management
-    - [ ] Port YamlSettingsCache to C# using YamlDotNet
-    - [ ] Create IYamlSettingsCache interface
-    - [ ] Implement caching mechanism
-  - [ ] Implement file system utilities
-    - [ ] Async file I/O operations
-    - [ ] Path management utilities
-    - [ ] File hash calculation
-  - [ ] Implement logging infrastructure
-    - [ ] Use Serilog for structured logging
-    - [ ] Create logging abstractions
-  - [ ] Port MessageHandler system
-    - [ ] Create IMessageHandler interface
-    - [ ] Implement CLI and GUI message handlers
-    - [ ] Create progress reporting system
+  - [x] Implement YAML settings management
+    - [x] Port YamlSettingsCache to C# using YamlDotNet
+    - [x] Create IYamlSettingsCache interface
+    - [x] Implement caching mechanism
+  - [x] Implement file system utilities
+    - [x] Async file I/O operations
+    - [x] Path management utilities
+    - [x] File hash calculation
+  - [x] Implement logging infrastructure
+    - [x] Use Serilog for structured logging
+    - [x] Create logging abstractions
+  - [x] Port MessageHandler system
+    - [x] Create IMessageHandler interface
+    - [x] Implement CLI and GUI message handlers
+    - [x] Create progress reporting system
 
 ### 1.3 Configuration Management
-- [ ] Port Constants module
-  - [ ] Create Constants.cs with all game versions, paths, etc.
-  - [ ] Implement configuration loading
-- [ ] Port GlobalRegistry pattern
-  - [ ] Implement singleton registry using DI
-  - [ ] Create service registration extensions
+- [x] Port Constants module
+  - [x] Create Constants.cs with all game versions, paths, regex patterns, configuration
+  - [x] Implement configuration loading
+- [x] Port GlobalRegistry pattern
+  - [x] Implement singleton registry using DI
+  - [x] Create service registration extensions
 
 ## Phase 2: Core Scanning Logic (Week 3-4)
 

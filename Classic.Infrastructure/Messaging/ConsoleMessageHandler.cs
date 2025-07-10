@@ -1,14 +1,10 @@
 ﻿using Classic.Core.Enums;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Classic.Infrastructure.Messaging;
 
-public class ConsoleMessageHandler : MessageHandlerBase
+public class ConsoleMessageHandler(ILogger logger) : MessageHandlerBase(logger)
 {
-    public ConsoleMessageHandler(ILogger<MessageHandlerBase> logger) : base(logger)
-    {
-    }
-
     public override void SendMessage(string message, MessageType type, MessageTarget target)
     {
         if (!target.HasFlag(MessageTarget.CLI)) return;
@@ -26,15 +22,15 @@ public class ConsoleMessageHandler : MessageHandlerBase
         Console.ForegroundColor = color;
         Console.WriteLine($"[{type}] {message}");
         Console.ResetColor();
-        
-        Logger.LogInformation("Message sent: [{Type}] {Message}", type, message);
+
+        Logger.Information("Message sent: [{Type}] {Message}", type, message);
     }
 
     public override void ReportProgress(string operation, int current, int total)
     {
         var percentage = (double)current / total * 100;
         Console.Write($"\r{operation}: {current}/{total} ({percentage:F1}%)");
-        
+
         if (current == total)
         {
             Console.WriteLine(); // New line when complete
@@ -59,7 +55,7 @@ public class ConsoleMessageHandler : MessageHandlerBase
             _operation = operation;
             _total = total;
             _current = 0;
-            
+
             Console.WriteLine($"Starting: {operation}");
         }
 

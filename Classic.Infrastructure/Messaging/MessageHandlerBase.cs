@@ -1,17 +1,12 @@
 ﻿using Classic.Core.Interfaces;
 using Classic.Core.Enums;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Classic.Infrastructure.Messaging;
 
-public abstract class MessageHandlerBase : IMessageHandler
+public abstract class MessageHandlerBase(ILogger logger) : IMessageHandler
 {
-    protected readonly ILogger<MessageHandlerBase> Logger;
-
-    protected MessageHandlerBase(ILogger<MessageHandlerBase> logger)
-    {
-        Logger = logger;
-    }
+    protected readonly ILogger Logger = logger;
 
     public abstract void SendMessage(string message, MessageType type, MessageTarget target);
     public abstract void ReportProgress(string operation, int current, int total);

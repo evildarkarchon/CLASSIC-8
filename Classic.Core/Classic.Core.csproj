@@ -8,12 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.7" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.7" />
       <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Classic.Infrastructure\Classic.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>
