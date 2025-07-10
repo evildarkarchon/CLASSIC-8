@@ -3,8 +3,8 @@
 ## Initial Project Setup
 
 ### Solution Structure Creation
-- [ ] Create new solution: `dotnet new sln -n Classic`
-- [ ] Create folder structure:
+- [x] Create new solution: `dotnet new sln -n Classic`
+- [x] Create folder structure:
   ```bash
   mkdir src
   mkdir tests
@@ -12,17 +12,17 @@
   ```
 
 ### Core Projects
-- [ ] Create Classic.Core project:
+- [x] Create Classic.Core project:
   ```bash
   dotnet new classlib -n Classic.Core -o src/Classic.Core
   dotnet sln add src/Classic.Core/Classic.Core.csproj
   ```
-- [ ] Create Classic.Infrastructure project:
+- [x] Create Classic.Infrastructure project:
   ```bash
   dotnet new classlib -n Classic.Infrastructure -o src/Classic.Infrastructure
   dotnet sln add src/Classic.Infrastructure/Classic.Infrastructure.csproj
   ```
-- [ ] Add project references:
+- [x] Add project references:
   ```bash
   cd src/Classic.Infrastructure
   dotnet add reference ../Classic.Core/Classic.Core.csproj
@@ -31,25 +31,25 @@
 ### NuGet Packages Installation
 
 #### Classic.Core packages:
-- [ ] `dotnet add package Microsoft.Extensions.DependencyInjection.Abstractions`
-- [ ] `dotnet add package Microsoft.Extensions.Logging.Abstractions`
-- [ ] `dotnet add package System.ComponentModel.Annotations`
+- [x] `dotnet add package Microsoft.Extensions.DependencyInjection.Abstractions`
+- [x] `dotnet add package Microsoft.Extensions.Logging.Abstractions`
+- [x] `dotnet add package System.ComponentModel.Annotations`
 
 #### Classic.Infrastructure packages:
-- [ ] `dotnet add package YamlDotNet`
-- [ ] `dotnet add package Serilog`
-- [ ] `dotnet add package Serilog.Sinks.Console`
-- [ ] `dotnet add package Serilog.Sinks.File`
-- [ ] `dotnet add package Microsoft.Extensions.DependencyInjection`
-- [ ] `dotnet add package Microsoft.Extensions.Configuration`
-- [ ] `dotnet add package Microsoft.Extensions.Configuration.Yaml`
-- [ ] `dotnet add package System.IO.Abstractions`
+- [x] `dotnet add package YamlDotNet`
+- [x] `dotnet add package Serilog`
+- [x] `dotnet add package Serilog.Sinks.Console`
+- [x] `dotnet add package Serilog.Sinks.File`
+- [x] `dotnet add package Microsoft.Extensions.DependencyInjection`
+- [x] `dotnet add package Microsoft.Extensions.Configuration`
+- [x] `dotnet add package Microsoft.Extensions.Configuration.Yaml`
+- [x] `dotnet add package System.IO.Abstractions`
 
 ## Classic.Core Implementation
 
 ### Domain Models
-- [ ] Create `Models` folder
-- [ ] Implement `CrashLog.cs`:
+- [x] Create `Models` folder
+- [x] Implement `CrashLog.cs`:
   ```csharp
   namespace Classic.Core.Models;
   
@@ -66,7 +66,7 @@
   }
   ```
 
-- [ ] Implement `Plugin.cs`:
+- [x] Implement `Plugin.cs`:
   ```csharp
   public class Plugin
   {
@@ -77,7 +77,7 @@
   }
   ```
 
-- [ ] Implement `FormID.cs`:
+- [x] Implement `FormID.cs`:
   ```csharp
   public class FormID
   {
@@ -88,8 +88,8 @@
   ```
 
 ### Enums
-- [ ] Create `Enums` folder
-- [ ] Implement `GameID.cs`:
+- [x] Create `Enums` folder
+- [x] Implement `GameID.cs`:
   ```csharp
   public enum GameID
   {
@@ -100,7 +100,7 @@
   }
   ```
 
-- [ ] Implement `MessageType.cs`:
+- [x] Implement `MessageType.cs`:
   ```csharp
   public enum MessageType
   {
@@ -113,7 +113,7 @@
   }
   ```
 
-- [ ] Implement `MessageTarget.cs`:
+- [x] Implement `MessageTarget.cs`:
   ```csharp
   [Flags]
   public enum MessageTarget
@@ -126,8 +126,8 @@
   ```
 
 ### Interfaces
-- [ ] Create `Interfaces` folder
-- [ ] Implement `IMessageHandler.cs`:
+- [x] Create `Interfaces` folder
+- [x] Implement `IMessageHandler.cs`:
   ```csharp
   public interface IMessageHandler
   {
@@ -146,7 +146,7 @@
   }
   ```
 
-- [ ] Implement `IYamlSettingsCache.cs`:
+- [x] Implement `IYamlSettingsCache.cs`:
   ```csharp
   public interface IYamlSettingsCache
   {
@@ -157,8 +157,8 @@
   ```
 
 ### Custom Exceptions
-- [ ] Create `Exceptions` folder
-- [ ] Implement `ClassicException.cs`:
+- [x] Create `Exceptions` folder
+- [x] Implement `ClassicException.cs`:
   ```csharp
   public class ClassicException : Exception
   {
@@ -168,7 +168,7 @@
   }
   ```
 
-- [ ] Implement specific exceptions:
+- [x] Implement specific exceptions:
   ```csharp
   public class CrashLogParsingException : ClassicException { }
   public class ConfigurationException : ClassicException { }
@@ -178,7 +178,7 @@
 ## Classic.Infrastructure Implementation
 
 ### Constants
-- [ ] Port `Constants.cs`:
+- [x] Port `Constants.cs`:
   ```csharp
   namespace Classic.Infrastructure;
   
@@ -200,8 +200,8 @@
   ```
 
 ### YAML Settings Implementation
-- [ ] Create `Configuration` folder
-- [ ] Implement `YamlSettingsCache.cs`:
+- [x] Create `Configuration` folder
+- [x] Implement `YamlSettingsCache.cs`:
   ```csharp
   public class YamlSettingsCache : IYamlSettingsCache
   {
@@ -221,7 +221,7 @@
   ```
 
 ### Message Handler
-- [ ] Create `Messaging` folder
+- [x] Create `Messaging` folder
 - [ ] Implement `MessageHandlerBase.cs`:
   ```csharp
   public abstract class MessageHandlerBase : IMessageHandler
@@ -234,7 +234,7 @@
   }
   ```
 
-- [ ] Implement `ConsoleMessageHandler.cs`:
+- [x] Implement `ConsoleMessageHandler.cs`:
   ```csharp
   public class ConsoleMessageHandler : MessageHandlerBase
   {
@@ -258,7 +258,7 @@
   ```
 
 ### File System Utilities
-- [ ] Create `IO` folder
+- [x] Create `IO` folder
 - [ ] Implement `FileUtilities.cs`:
   ```csharp
   public static class FileUtilities
@@ -277,16 +277,16 @@
       
       public static async Task<string> CalculateFileHashAsync(string path, CancellationToken cancellationToken = default)
       {
-          using var md5 = MD5.Create();
+          using var sha256 = SHA256.Create();
           using var stream = File.OpenRead(path);
-          var hash = await md5.ComputeHashAsync(stream, cancellationToken);
+          var hash = await sha256.ComputeHashAsync(stream, cancellationToken);
           return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
       }
   }
   ```
 
 ### Logging Setup
-- [ ] Create `Logging` folder
+- [x] Create `Logging` folder
 - [ ] Implement `LoggingConfiguration.cs`:
   ```csharp
   public static class LoggingConfiguration
