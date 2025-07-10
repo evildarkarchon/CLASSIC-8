@@ -9,6 +9,8 @@ public class Plugin
     public bool IsMaster { get; set; }
     public PluginStatus Status { get; set; }
     public string Flags { get; set; } = string.Empty;
+    public string Author { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }
 
 public enum PluginStatus

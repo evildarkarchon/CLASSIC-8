@@ -17,4 +17,8 @@ public class ScanStatistics
 
     public double AverageProcessingTimePerLog =>
         ProcessedLogs > 0 ? TotalProcessingTime.TotalMilliseconds / ProcessedLogs : 0;
+
+    public TimeSpan Duration => ScanEndTime - ScanStartTime;
+    public int FilesScanned => ProcessedLogs;
+    public int PluginsFound => PluginsAnalyzed;
 }

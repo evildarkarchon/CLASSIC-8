@@ -32,6 +32,31 @@ public class ScanLogConfiguration
     ///     Plugin analysis configuration
     /// </summary>
     public PluginAnalysisConfiguration PluginAnalysis { get; set; } = new();
+
+    /// <summary>
+    ///     Records to detect in crash logs (from catch_log_records)
+    /// </summary>
+    public List<string> RecordsToDetect { get; set; } = new()
+    {
+        ".bgsm", ".bto", ".btr", ".dds", ".dll+", ".fuz", ".hkb", ".hkx", ".ini", ".nif", 
+        ".pex", ".strings", ".swf", ".txt", ".uvd", ".wav", ".xwm", "data/", "data\\", 
+        "scaleform", "editorid:", "file:", "function:", "name:"
+    };
+
+    /// <summary>
+    ///     Records to ignore/exclude in crash logs (from Crashlog_Records_Exclude)
+    /// </summary>
+    public List<string> RecordsToIgnore { get; set; } = new()
+    {
+        "\"\"", "...", "FE:", ".esl", ".esm", ".esp", ".exe", "Buffout4.dll+", "KERNEL", 
+        "MSVC", "USER32", "Unhandled", "cudart64_75.dll+", "d3d11.dll+", "dxgi.dll+", 
+        "f4se", "flexRelease_x64.dll+", "kernel32.dll+", "ntdll", "nvcuda64.dll+"
+    };
+
+    /// <summary>
+    ///     List of plugins to ignore during analysis
+    /// </summary>
+    public List<string> IgnorePluginsList { get; set; } = new();
 }
 
 public class ScanLogPatterns

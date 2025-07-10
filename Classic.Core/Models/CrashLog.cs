@@ -10,4 +10,6 @@ public class CrashLog
     public string MainError { get; set; } = string.Empty;
     public List<string> RawContent { get; set; } = new();
     public Dictionary<string, List<string>> Segments { get; set; } = new();
+    public DateTime Timestamp => DateCreated;
+    public List<Suspect> Suspects { get; set; } = new();
 }

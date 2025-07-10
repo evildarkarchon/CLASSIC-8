@@ -19,5 +19,15 @@ namespace Classic.Core.Interfaces
         /// <returns>A task representing the asynchronous operation.</returns>
         Task GenerateReportAsync(CrashLog crashLog, ScanStatistics statistics, string outputPath,
             CancellationToken cancellationToken = default);
+            
+        /// <summary>
+        /// Asynchronously generates a report from a crash log analysis result.
+        /// </summary>
+        /// <param name="analysisResult">The complete crash log analysis result.</param>
+        /// <param name="outputPath">The path to save the generated report.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task GenerateReportAsync(CrashLogAnalysisResult analysisResult, string outputPath,
+            CancellationToken cancellationToken = default);
     }
 }

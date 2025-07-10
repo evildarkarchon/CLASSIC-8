@@ -445,4 +445,275 @@ public class SuspectScanner
 
         return null;
     }
+
+    /// <summary>
+    /// Advanced suspect scanning with ME-REQ, ME-OPT, NOT, and occurrence counting patterns.
+    /// </summary>
+    /// <param name="crashLog">The crash log to analyze</param>
+    /// <param name="advancedSuspects">Dictionary of advanced suspect patterns</param>
+    /// <returns>List of detected suspects using advanced patterns</returns>
+    public List<DetectedSuspect> ScanWithAdvancedPatterns(CrashLog crashLog, Dictionary<string, List<string>> advancedSuspects)
+    {
+        var detectedSuspects = new List<DetectedSuspect>();
+        var mainError = crashLog.MainError ?? string.Empty;
+        var callStackIntact = GetCallStackAsString(crashLog);
+        
+        foreach (var (errorKey, signalList) in advancedSuspects)
+        {
+            // Parse error information (format: "severity | name")
+            var parts = errorKey.Split(" | ", 2);
+            if (parts.Length != 2 || !int.TryParse(parts[0], out var severity))
+                continue;
+                
+            var errorName = parts[1];
+            
+            // Initialize match status tracking
+            var matchStatus = new AdvancedMatchStatus();
+            
+            // Process each signal in the list
+            bool shouldSkipError = false;
+            foreach (var signal in signalList)
+            {
+                if (ProcessAdvancedSignal(signal, mainError, callStackIntact, matchStatus))
+                {
+                    shouldSkipError = true;
+                    break; // NOT condition met, skip this suspect
+                }
+            }
+            
+            if (shouldSkipError)
+                continue;
+                
+            // Determine if we have a match based on processed signals
+            if (IsAdvancedSuspectMatch(matchStatus))
+            {
+                detectedSuspects.Add(new DetectedSuspect
+                {
+                    Name = errorName,
+                    Description = $"Advanced pattern match detected: {errorName}",
+                    Severity = severity,
+                    MatchedPatterns = GetMatchedPatterns(signalList, mainError, callStackIntact),
+                    Confidence = CalculateConfidence(matchStatus),
+                    Solutions = new List<string> { $"Investigate {errorName} related issues" }
+                });
+            }
+        }
+        
+        return detectedSuspects;
+    }
+
+    /// <summary>
+    /// Processes an individual advanced signal pattern.
+    /// </summary>
+    /// <param name="signal">The signal to process</param>
+    /// <param name="mainError">Main error message</param>
+    /// <param name="callStackIntact">Complete call stack as string</param>
+    /// <param name="matchStatus">Match status to update</param>
+    /// <returns>True if processing should stop (NOT condition met)</returns>
+    private bool ProcessAdvancedSignal(string signal, string mainError, string callStackIntact, AdvancedMatchStatus matchStatus)
+    {
+        // Constants for signal modifiers
+        const string MainErrorRequired = "ME-REQ";
+        const string MainErrorOptional = "ME-OPT";
+        const string CallStackNegative = "NOT";
+        
+        if (!signal.Contains('|'))
+        {
+            // Simple case: direct string match in callstack
+            if (callStackIntact.Contains(signal, StringComparison.OrdinalIgnoreCase))
+            {
+                matchStatus.StackFound = true;
+            }
+            return false;
+        }
+        
+        var parts = signal.Split('|', 2);
+        if (parts.Length != 2)
+            return false;
+            
+        var signalModifier = parts[0].Trim();
+        var signalString = parts[1].Trim();
+        
+        // Process based on signal modifier
+        switch (signalModifier)
+        {
+            case MainErrorRequired:
+                matchStatus.HasRequiredItem = true;
+                if (mainError.Contains(signalString, StringComparison.OrdinalIgnoreCase))
+                {
+                    matchStatus.ErrorReqFound = true;
+                }
+                break;
+                
+            case MainErrorOptional:
+                if (mainError.Contains(signalString, StringComparison.OrdinalIgnoreCase))
+                {
+                    matchStatus.ErrorOptFound = true;
+                }
+                break;
+                
+            case CallStackNegative:
+                // Return true to break out of loop if NOT condition is met
+                return callStackIntact.Contains(signalString, StringComparison.OrdinalIgnoreCase);
+                
+            default:
+                // Check for numeric occurrence counting (e.g., "3|pattern" for minimum 3 occurrences)
+                if (int.TryParse(signalModifier, out var minOccurrences))
+                {
+                    var regex = new Regex(Regex.Escape(signalString), RegexOptions.IgnoreCase);
+                    var matches = regex.Matches(callStackIntact);
+                    if (matches.Count >= minOccurrences)
+                    {
+                        matchStatus.StackFound = true;
+                    }
+                }
+                break;
+        }
+        
+        return false;
+    }
+
+    /// <summary>
+    /// Determines if current error conditions constitute a suspect match.
+    /// </summary>
+    /// <param name="matchStatus">The match status to evaluate</param>
+    /// <returns>True if conditions indicate a suspect match</returns>
+    private bool IsAdvancedSuspectMatch(AdvancedMatchStatus matchStatus)
+    {
+        if (matchStatus.HasRequiredItem)
+        {
+            return matchStatus.ErrorReqFound;
+        }
+        return matchStatus.ErrorOptFound || matchStatus.StackFound;
+    }
+
+    /// <summary>
+    /// Gets the complete call stack as a single string for pattern matching.
+    /// </summary>
+    /// <param name="crashLog">The crash log</param>
+    /// <returns>Call stack content as string</returns>
+    private string GetCallStackAsString(CrashLog crashLog)
+    {
+        var callStackSegments = new[] { "PROBABLE CALL STACK", "STACK", "MODULES" };
+        var callStackBuilder = new System.Text.StringBuilder();
+        
+        foreach (var segmentName in callStackSegments)
+        {
+            if (crashLog.Segments.TryGetValue(segmentName, out var lines))
+            {
+                foreach (var line in lines)
+                {
+                    callStackBuilder.AppendLine(line);
+                }
+            }
+        }
+        
+        return callStackBuilder.ToString();
+    }
+
+    /// <summary>
+    /// Gets the patterns that actually matched for reporting.
+    /// </summary>
+    /// <param name="signalList">List of signals to check</param>
+    /// <param name="mainError">Main error message</param>
+    /// <param name="callStackIntact">Call stack content</param>
+    /// <returns>List of matched patterns</returns>
+    private List<string> GetMatchedPatterns(List<string> signalList, string mainError, string callStackIntact)
+    {
+        var matchedPatterns = new List<string>();
+        
+        foreach (var signal in signalList)
+        {
+            if (!signal.Contains('|'))
+            {
+                if (callStackIntact.Contains(signal, StringComparison.OrdinalIgnoreCase))
+                {
+                    matchedPatterns.Add(signal);
+                }
+            }
+            else
+            {
+                var parts = signal.Split('|', 2);
+                if (parts.Length == 2)
+                {
+                    var signalString = parts[1].Trim();
+                    var modifier = parts[0].Trim();
+                    
+                    if ((modifier == "ME-REQ" || modifier == "ME-OPT") && 
+                        mainError.Contains(signalString, StringComparison.OrdinalIgnoreCase))
+                    {
+                        matchedPatterns.Add($"{modifier}|{signalString}");
+                    }
+                    else if (callStackIntact.Contains(signalString, StringComparison.OrdinalIgnoreCase))
+                    {
+                        matchedPatterns.Add(signalString);
+                    }
+                }
+            }
+        }
+        
+        return matchedPatterns;
+    }
+
+    /// <summary>
+    /// Calculates confidence based on match status.
+    /// </summary>
+    /// <param name="matchStatus">The match status</param>
+    /// <returns>Confidence score between 0 and 1</returns>
+    private double CalculateConfidence(AdvancedMatchStatus matchStatus)
+    {
+        double confidence = 0.5; // Base confidence
+        
+        if (matchStatus.ErrorReqFound || matchStatus.ErrorOptFound)
+            confidence += 0.3; // Higher confidence for main error matches
+            
+        if (matchStatus.StackFound)
+            confidence += 0.2; // Additional confidence for stack matches
+            
+        return Math.Min(confidence, 1.0);
+    }
+
+    /// <summary>
+    /// Checks for DLL-related crashes in the main error message.
+    /// </summary>
+    /// <param name="mainError">The main error message</param>
+    /// <returns>Detected suspect if DLL crash found, null otherwise</returns>
+    public DetectedSuspect? CheckDllCrash(string mainError)
+    {
+        if (string.IsNullOrEmpty(mainError))
+            return null;
+            
+        var mainErrorLower = mainError.ToLowerInvariant();
+        
+        if (mainErrorLower.Contains(".dll") && !mainErrorLower.Contains("tbbmalloc"))
+        {
+            return new DetectedSuspect
+            {
+                Name = "DLL Crash Detected",
+                Description = "Main error reports that a DLL file was involved in this crash",
+                Severity = 4, // High severity
+                MatchedPatterns = new List<string> { ".dll" },
+                Solutions = new List<string>
+                {
+                    "If the DLL belongs to a mod, that mod is a prime suspect for the crash",
+                    "Check if the DLL is up to date",
+                    "Try disabling the mod associated with the DLL"
+                },
+                Confidence = 0.8
+            };
+        }
+        
+        return null;
+    }
+}
+
+/// <summary>
+/// Tracks the status of advanced pattern matching.
+/// </summary>
+public class AdvancedMatchStatus
+{
+    public bool HasRequiredItem { get; set; }
+    public bool ErrorReqFound { get; set; }
+    public bool ErrorOptFound { get; set; }
+    public bool StackFound { get; set; }
 }
