@@ -22,7 +22,7 @@ ClassicCS/
 ## Phase 1: Foundation and Infrastructure (Week 1-2)
 
 ### 1.1 Core Library Setup
-- [ ] Create `Classic.Core` class library project
+- [x] Create `Classic.Core` class library project
   - [ ] Define domain models (CrashLog, Plugin, FormID, etc.)
   - [ ] Create core interfaces (IScanOrchestrator, IMessageHandler, etc.)
   - [ ] Define enums (GameID, MessageType, MessageTarget, etc.)
@@ -30,7 +30,7 @@ ClassicCS/
   - [ ] Set up dependency injection container interfaces
 
 ### 1.2 Infrastructure Library
-- [ ] Create `Classic.Infrastructure` class library project
+- [x] Create `Classic.Infrastructure` class library project
   - [ ] Implement YAML settings management
     - [ ] Port YamlSettingsCache to C# using YamlDotNet
     - [ ] Create IYamlSettingsCache interface
@@ -58,7 +58,7 @@ ClassicCS/
 ## Phase 2: Core Scanning Logic (Week 3-4)
 
 ### 2.1 ScanLog Library Foundation
-- [ ] Create `Classic.ScanLog` class library project
+- [x] Create `Classic.ScanLog` class library project
 - [ ] Port core data structures
   - [ ] ClassicScanLogsInfo → ScanLogConfiguration class
   - [ ] ThreadSafeLogCache → ConcurrentLogCache class
@@ -98,7 +98,7 @@ ClassicCS/
 ## Phase 3: Game Scanning Logic (Week 5)
 
 ### 3.1 ScanGame Library
-- [ ] Create `Classic.ScanGame` class library project
+- [x] Create `Classic.ScanGame` class library project
 - [ ] Port game file scanning modules
   - [ ] CheckXsePlugins → XsePluginChecker class
   - [ ] CheckCrashgen → CrashgenChecker class
@@ -112,7 +112,7 @@ ClassicCS/
 ## Phase 4: CLI Application (Week 6)
 
 ### 4.1 CLI Project Setup
-- [ ] Create `Classic.CLI` console application project
+- [x] Create `Classic.CLI` console application project
 - [ ] Implement command-line parsing
   - [ ] Use System.CommandLine or CommandLineParser
   - [ ] Define command structure
