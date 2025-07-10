@@ -154,7 +154,6 @@ public class CommunityPatch
 
 public enum ProcessingMode
 {
-    Sequential, // Single-threaded processing
     Parallel, // Task.WhenAll parallel processing
     ProducerConsumer, // Channel-based pipeline
     Adaptive // Auto-select based on performance
@@ -162,7 +161,6 @@ public enum ProcessingMode
 
 public enum ProcessingStrategy
 {
-    Sequential,
     Parallel,
     ProducerConsumer
 }

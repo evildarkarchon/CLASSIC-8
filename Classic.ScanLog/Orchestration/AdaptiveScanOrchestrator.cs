@@ -18,7 +18,7 @@ public class AdaptiveScanOrchestrator : IScanOrchestrator
     private readonly ScanLogConfiguration _configuration;
     private readonly ICrashLogParser _crashLogParser;
 
-    private readonly ProcessingStrategy _currentStrategy = ProcessingStrategy.Sequential;
+    private readonly ProcessingStrategy _currentStrategy = ProcessingStrategy.Parallel;
     private readonly IFormIdAnalyzer _formIdAnalyzer;
     private readonly ILogger<AdaptiveScanOrchestrator> _logger;
     private readonly IMessageHandler _messageHandler;
@@ -95,9 +95,6 @@ public class AdaptiveScanOrchestrator : IScanOrchestrator
 
             switch (strategy)
             {
-                case ProcessingStrategy.Sequential:
-                    result = await ExecuteSequentialScanAsync(request, cancellationToken);
-                    break;
                 case ProcessingStrategy.Parallel:
                     result = await ExecuteParallelScanAsync(request, cancellationToken);
                     break;
@@ -105,7 +102,7 @@ public class AdaptiveScanOrchestrator : IScanOrchestrator
                     result = await ExecuteProducerConsumerScanAsync(request, cancellationToken);
                     break;
                 default:
-                    result = await ExecuteSequentialScanAsync(request, cancellationToken);
+                    result = await ExecuteParallelScanAsync(request, cancellationToken);
                     break;
             }
 
@@ -182,67 +179,56 @@ public class AdaptiveScanOrchestrator : IScanOrchestrator
             var systemCores = Environment.ProcessorCount;
 
             // Strategy selection logic
-            if (logCount == 1) return ProcessingStrategy.Sequential;
+            // For single logs, use parallel to avoid blocking UI
+            if (logCount == 1) return ProcessingStrategy.Parallel;
 
+            // For small batches, use parallel processing
             if (logCount <= systemCores && logCount <= 4) return ProcessingStrategy.Parallel;
 
+            // For large batches, use producer-consumer for better resource management
             if (logCount > systemCores * 2) return ProcessingStrategy.ProducerConsumer;
 
             return ProcessingStrategy.Parallel;
         }, cancellationToken);
     }
 
+
     /// <summary>
-    ///     Executes scan using sequential processing
+    ///     Executes scan using parallel processing with optimizations for single logs
     /// </summary>
-    private async Task<ScanResult> ExecuteSequentialScanAsync(ScanRequest request, CancellationToken cancellationToken)
+    private async Task<ScanResult> ExecuteParallelScanAsync(ScanRequest request, CancellationToken cancellationToken)
     {
-        var result = new ScanResult
+        var logCount = request.LogPaths.Count();
+        
+        // For single logs, process directly without parallel overhead
+        if (logCount == 1)
         {
-            IsSuccessful = true,
-            PerformanceMetrics = { UsedStrategy = ProcessingStrategy.Sequential, ThreadsUsed = 1 }
-        };
-
-        var results = new List<ScanResult>();
-
-        foreach (var logPath in request.LogPaths)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
+            var logPath = request.LogPaths.First();
             try
             {
                 var singleResult = await ProcessSingleLogAsync(logPath, cancellationToken);
-                results.Add(singleResult);
-
-                await _messageHandler.SendProgressAsync(
-                    results.Count,
-                    request.LogPaths.Count(),
-                    $"Processed {Path.GetFileName(logPath)}",
-                    cancellationToken);
+                await _messageHandler.SendProgressAsync(1, 1, $"Processed {Path.GetFileName(logPath)}", cancellationToken);
+                return singleResult;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process log: {LogPath}", logPath);
-                result.IsSuccessful = false;
-                result.ErrorMessage += $"Failed to process {logPath}: {ex.Message}\n";
+                return new ScanResult
+                {
+                    LogFileName = Path.GetFileName(logPath),
+                    IsSuccessful = false,
+                    ErrorMessage = ex.Message,
+                    PerformanceMetrics = { UsedStrategy = ProcessingStrategy.Parallel, ThreadsUsed = 1 }
+                };
             }
         }
 
-        // Aggregate results
-        result = AggregateResults(results);
-        return result;
-    }
-
-    /// <summary>
-    ///     Executes scan using parallel processing
-    /// </summary>
-    private async Task<ScanResult> ExecuteParallelScanAsync(ScanRequest request, CancellationToken cancellationToken)
-    {
+        // For multiple logs, use parallel processing
         var result = new ScanResult
         {
             IsSuccessful = true,
             PerformanceMetrics =
-                { UsedStrategy = ProcessingStrategy.Parallel, ThreadsUsed = Environment.ProcessorCount }
+                { UsedStrategy = ProcessingStrategy.Parallel, ThreadsUsed = Math.Min(_configuration.MaxConcurrentLogs, logCount) }
         };
 
         var parallelOptions = new ParallelOptions
@@ -270,7 +256,7 @@ public class AdaptiveScanOrchestrator : IScanOrchestrator
 
                     await _messageHandler.SendProgressAsync(
                         completedCount,
-                        request.LogPaths.Count(),
+                        logCount,
                         $"Processed {Path.GetFileName(logPath)}",
                         ct);
                 }
@@ -533,11 +519,10 @@ public class AdaptiveScanOrchestrator : IScanOrchestrator
     {
         return mode switch
         {
-            ProcessingMode.Sequential => ProcessingStrategy.Sequential,
             ProcessingMode.Parallel => ProcessingStrategy.Parallel,
             ProcessingMode.ProducerConsumer => ProcessingStrategy.ProducerConsumer,
-            ProcessingMode.Adaptive => ProcessingStrategy.Sequential, // Fallback
-            _ => ProcessingStrategy.Sequential
+            ProcessingMode.Adaptive => ProcessingStrategy.Parallel, // Fallback to parallel for better responsiveness
+            _ => ProcessingStrategy.Parallel
         };
     }
 }
