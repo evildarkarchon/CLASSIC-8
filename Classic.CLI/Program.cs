@@ -13,6 +13,7 @@ public class Program
         rootCommand.AddCommand(new ScanLogsCommand());
         rootCommand.AddCommand(new ScanGameCommand());
         rootCommand.AddCommand(new BatchCommand());
+        rootCommand.AddCommand(new ValidateFilesCommand());
 
         // Add global options  
         var versionOption = new Option<bool>(

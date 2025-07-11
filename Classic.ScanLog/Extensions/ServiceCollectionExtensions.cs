@@ -5,6 +5,7 @@ using Classic.ScanLog.Models;
 using Classic.ScanLog.Orchestration;
 using Classic.ScanLog.Parsers;
 using Classic.ScanLog.Utilities;
+using Classic.ScanLog.Validators;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Classic.ScanLog.Extensions;
@@ -37,6 +38,13 @@ public static class ServiceCollectionExtensions
         // Register utilities
         services.AddScoped<CrashLogReformatter>();
         services.AddScoped<IGpuDetector, GpuDetector>();
+
+        // Register file validators
+        services.AddScoped<TextureValidator>();
+        services.AddScoped<ArchiveValidator>();
+        services.AddScoped<AudioValidator>();
+        services.AddScoped<ScriptValidator>();
+        services.AddScoped<GameFileValidator>();
 
         // Register analyzers
         services.AddScoped<IPluginAnalyzer, PluginAnalyzer>();

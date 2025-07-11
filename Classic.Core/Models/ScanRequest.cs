@@ -18,6 +18,7 @@ public class ScanRequest
     public bool SimplifyLogs { get; set; }
     public bool MoveUnsolvedLogs { get; set; }
     public bool EnableStatisticalLogging { get; set; }
+    public bool EnableFileValidation { get; set; }
     public ProcessingMode PreferredMode { get; set; } = ProcessingMode.Adaptive;
     public int MaxConcurrentLogs { get; set; } = Environment.ProcessorCount;
     
@@ -35,6 +36,7 @@ public class ScanRequest
     public string? IniPath { get; set; }
     public string? DatabasePath { get; set; }
     public string? BackupPath { get; set; }
+    public List<string> FileValidationDirectories { get; set; } = new();
     
     // Output Configuration
     public ReportFormat ReportFormat { get; set; } = ReportFormat.Markdown;

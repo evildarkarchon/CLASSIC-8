@@ -3,6 +3,7 @@ using Classic.Core.Models;
 using Classic.Core.Enums;
 using Classic.ScanLog.Analyzers;
 using Classic.ScanLog.Utilities;
+using Classic.ScanLog.Validators;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -20,6 +21,7 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
     private readonly IFormIdAnalyzer _formIdAnalyzer;
     private readonly EnhancedSuspectScanner _suspectScanner;
     private readonly ModConflictDetector _modConflictDetector;
+    private readonly GameFileValidator _gameFileValidator;
     private readonly IReportGenerator _reportGenerator;
     private readonly IMessageHandler _messageHandler;
     private readonly CrashLogReformatter _reformatter;
@@ -35,6 +37,7 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
         IFormIdAnalyzer formIdAnalyzer,
         EnhancedSuspectScanner suspectScanner,
         ModConflictDetector modConflictDetector,
+        GameFileValidator gameFileValidator,
         IReportGenerator reportGenerator,
         IMessageHandler messageHandler,
         CrashLogReformatter reformatter,
@@ -46,6 +49,7 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
         _formIdAnalyzer = formIdAnalyzer;
         _suspectScanner = suspectScanner;
         _modConflictDetector = modConflictDetector;
+        _gameFileValidator = gameFileValidator;
         _reportGenerator = reportGenerator;
         _messageHandler = messageHandler;
         _reformatter = reformatter;
