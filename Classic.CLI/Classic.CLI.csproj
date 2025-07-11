@@ -10,11 +10,16 @@
     <ItemGroup>
         <ProjectReference Include="..\Classic.Core\Classic.Core.csproj"/>
         <ProjectReference Include="..\Classic.ScanLog\Classic.ScanLog.csproj"/>
+        <ProjectReference Include="..\Classic.ScanGame\Classic.ScanGame.csproj"/>
+        <ProjectReference Include="..\Classic.Infrastructure\Classic.Infrastructure.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7"/>
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1"/>
+        <PackageReference Include="Serilog" Version="4.3.0"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
     </ItemGroup>
 
 </Project>

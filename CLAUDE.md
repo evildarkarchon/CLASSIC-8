@@ -111,3 +111,7 @@ The project is in early development with placeholder implementations. Focus area
 ## Code Location
 
 - The code we are porting is in the "Code to Port" directory.
+
+## Logging Guidelines
+
+- This project standardized on Serilog for its logging framework, Microsoft.Extensions.Logging should not be used.

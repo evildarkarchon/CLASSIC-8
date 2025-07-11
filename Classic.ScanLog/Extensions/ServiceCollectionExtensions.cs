@@ -38,7 +38,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SuspectScanner>();
 
         // Register orchestrator
-        services.AddScoped<IScanOrchestrator, AdaptiveScanOrchestrator>();
+        services.AddScoped<IScanOrchestrator, ComprehensiveScanOrchestrator>();
 
         return services;
     }
