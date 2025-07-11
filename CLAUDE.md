@@ -115,3 +115,7 @@ The project is in early development with placeholder implementations. Focus area
 ## Logging Guidelines
 
 - This project standardized on Serilog for its logging framework, Microsoft.Extensions.Logging should not be used.
+
+## UI Design Considerations
+
+- Transition to more modern UI design patterns for improved user experience

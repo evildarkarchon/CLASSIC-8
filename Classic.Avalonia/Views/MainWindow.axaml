@@ -3,22 +3,364 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:Classic.Avalonia.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
         x:Class="Classic.Avalonia.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="Classic.Avalonia">
+        Title="Crash Log Auto Scanner &amp; Setup Integrity Checker"
+        MinWidth="800" MinHeight="600"
+        Width="900" Height="700">
 
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <Grid>
-        <TextBlock Text="{Binding Greeting}"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontSize="24" />
+    <Window.Styles>
+        <Style Selector="TabControl">
+            <Setter Property="Background" Value="#2D2D30" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        
+        <Style Selector="TabItem">
+            <Setter Property="Background" Value="#3C3C3C" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="Margin" Value="0,0,2,0" />
+        </Style>
+        
+        <Style Selector="TabItem:selected">
+            <Setter Property="Background" Value="#007ACC" />
+        </Style>
+        
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#007ACC" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#005A9E" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="MinHeight" Value="36" />
+        </Style>
+        
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#1F93FF" />
+        </Style>
+        
+        <Style Selector="Button.primary:pressed">
+            <Setter Property="Background" Value="#005A9E" />
+        </Style>
+        
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="#4D4D4D" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#666666" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+        
+        <Style Selector="Button.secondary:pointerover">
+            <Setter Property="Background" Value="#5A5A5A" />
+        </Style>
+        
+        <Style Selector="Button.success">
+            <Setter Property="Background" Value="#28A745" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#1E7E34" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+        
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#DC3545" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#C82333" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+        
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#3C3C3C" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#666666" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+        
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="#3C3C3C" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#666666" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+        
+        <Style Selector="Separator">
+            <Setter Property="Background" Value="#666666" />
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="0,12" />
+        </Style>
+        
+        <Style Selector="TextBlock.section-title">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+        
+        <Style Selector="TextBlock.help-text">
+            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,4" />
+        </Style>
+        
+        <Style Selector="Border.section">
+            <Setter Property="Background" Value="#3C3C3C" />
+            <Setter Property="BorderBrush" Value="#666666" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Margin" Value="0,8" />
+        </Style>
+    </Window.Styles>
+
+    <Grid Background="#2D2D30">
+        <TabControl SelectedIndex="{Binding SelectedTabIndex}">
+            <!-- Main Options Tab -->
+            <TabItem Header="MAIN OPTIONS">
+                <ScrollViewer Padding="20">
+                    <StackPanel Spacing="16">
+                        
+                        <!-- Folder Selection Section -->
+                        <Border Classes="section">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="FOLDER CONFIGURATION" Classes="section-title" />
+                                
+                                <!-- Staging Mods Folder -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="STAGING MODS FOLDER" FontWeight="Medium" Foreground="White" />
+                                    <TextBlock Text="Select the folder where your mod manager (e.g., MO2) stages your mods." Classes="help-text" />
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Classes="secondary" Content="Browse..." 
+                                                Command="{Binding SelectModsFolderCommand}" Margin="8,0,0,0" />
+                                        <TextBox Text="{Binding SelectedModsFolder}" 
+                                                 Watermark="Optional: Select your mod staging folder (e.g., MO2/mods)" />
+                                    </DockPanel>
+                                </StackPanel>
+                                
+                                <!-- Custom Scan Folder -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="CUSTOM SCAN FOLDER" FontWeight="Medium" Foreground="White" />
+                                    <TextBlock Text="Select a supplementary custom folder containing crash logs to scan. The game directory is always used for scanning." Classes="help-text" />
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Classes="secondary" Content="Browse..." 
+                                                Command="{Binding SelectScanFolderCommand}" Margin="8,0,0,0" />
+                                        <TextBox Text="{Binding SelectedScanFolder}" 
+                                                 Watermark="Optional: Select a supplementary custom folder with crash logs" />
+                                    </DockPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Scan Buttons -->
+                        <Border Classes="section">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="SCAN OPERATIONS" Classes="section-title" />
+                                
+                                <UniformGrid Rows="1" Columns="2" HorizontalAlignment="Stretch">
+                                    <Button Classes="primary" Content="SCAN CRASH LOGS" 
+                                            Command="{Binding ScanCrashLogsCommand}"
+                                            IsEnabled="{Binding !IsScanning}"
+                                            ToolTip.Tip="Scan all detected crash logs for issues."
+                                            Margin="0,0,8,0" MinHeight="48" />
+                                    <Button Classes="primary" Content="SCAN GAME FILES" 
+                                            Command="{Binding ScanGameFilesCommand}"
+                                            IsEnabled="{Binding !IsScanning}"
+                                            ToolTip.Tip="Scan game and mod files for potential problems (FCX Mode dependent)."
+                                            Margin="8,0,0,0" MinHeight="48" />
+                                </UniformGrid>
+                                
+                                <ProgressBar IsIndeterminate="{Binding IsScanning}" IsVisible="{Binding IsScanning}" />
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Settings Section -->
+                        <Border Classes="section">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="CLASSIC SETTINGS" Classes="section-title" />
+                                
+                                <!-- Settings Grid -->
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*">
+                                    <CheckBox Grid.Row="0" Grid.Column="0" Content="FCX MODE" IsChecked="{Binding FcxMode}"
+                                              ToolTip.Tip="Enable extended file integrity checks." Margin="0,4" />
+                                    <CheckBox Grid.Row="0" Grid.Column="1" Content="SIMPLIFY LOGS" IsChecked="{Binding SimplifyLogs}"
+                                              ToolTip.Tip="Remove redundant lines from crash logs." Margin="0,4" />
+                                    
+                                    <CheckBox Grid.Row="1" Grid.Column="0" Content="UPDATE CHECK" IsChecked="{Binding UpdateCheck}"
+                                              ToolTip.Tip="Automatically check for CLASSIC updates." Margin="0,4" />
+                                    <CheckBox Grid.Row="1" Grid.Column="1" Content="VR MODE" IsChecked="{Binding VrMode}"
+                                              ToolTip.Tip="Prioritize settings for VR version of the game." Margin="0,4" />
+                                    
+                                    <CheckBox Grid.Row="2" Grid.Column="0" Content="SHOW FID VALUES" IsChecked="{Binding ShowFormIdValues}"
+                                              ToolTip.Tip="Look up FormID names (slower scans)." Margin="0,4" />
+                                    <CheckBox Grid.Row="2" Grid.Column="1" Content="MOVE INVALID LOGS" IsChecked="{Binding MoveInvalidLogs}"
+                                              ToolTip.Tip="Move incomplete/unscannable logs to a separate folder." Margin="0,4" />
+                                    
+                                    <CheckBox Grid.Row="3" Grid.Column="0" Content="AUDIO NOTIFICATIONS" IsChecked="{Binding AudioNotifications}"
+                                              ToolTip.Tip="Play sounds for scan completion/errors." Margin="0,4" />
+                                </Grid>
+                                
+                                <!-- Update Source Selection -->
+                                <DockPanel Margin="0,12,0,0">
+                                    <TextBlock DockPanel.Dock="Left" Text="Update Source:" VerticalAlignment="Center" 
+                                               Foreground="White" Margin="0,0,12,0" />
+                                    <ComboBox ItemsSource="{Binding UpdateSourceOptions}" 
+                                              SelectedItem="{Binding UpdateSource}"
+                                              ToolTip.Tip="Select where CLASSIC checks for updates (Nexus for stable, GitHub for latest)." 
+                                              Width="120" />
+                                </DockPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Utility Buttons -->
+                        <Border Classes="section">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="UTILITIES" Classes="section-title" />
+                                
+                                <UniformGrid Rows="2" Columns="3">
+                                    <Button Classes="secondary" Content="ABOUT" Command="{Binding ShowAboutCommand}" 
+                                            ToolTip.Tip="Show application information." Margin="2" />
+                                    <Button Classes="secondary" Content="HELP" Command="{Binding ShowHelpCommand}" 
+                                            ToolTip.Tip="Show help information for main options." Margin="2" />
+                                    <Button Classes="secondary" Content="CHANGE INI PATH" Command="{Binding SelectIniFolderCommand}" 
+                                            ToolTip.Tip="Manually set the path to your game's INI files folder." Margin="2" />
+                                    
+                                    <Button Classes="secondary" Content="OPEN SETTINGS" Command="{Binding OpenSettingsCommand}" 
+                                            ToolTip.Tip="Open CLASSIC Settings.yaml file." Margin="2" />
+                                    <Button Classes="secondary" Content="OPEN CRASH LOGS" Command="{Binding OpenCrashLogsFolderCommand}" 
+                                            ToolTip.Tip="Open the Crash Logs directory in your file explorer." Margin="2" />
+                                    <Button Classes="secondary" Content="CHECK UPDATES" Command="{Binding CheckUpdatesCommand}" 
+                                            ToolTip.Tip="Manually check for CLASSIC updates." Margin="2" />
+                                </UniformGrid>
+                                
+                                <Button Classes="danger" Content="EXIT" Command="{Binding ExitCommand}" 
+                                        ToolTip.Tip="Close CLASSIC." HorizontalAlignment="Right" Width="100" />
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- File Backup Tab -->
+            <TabItem Header="FILE BACKUP">
+                <ScrollViewer Padding="20">
+                    <StackPanel Spacing="16">
+                        
+                        <!-- Instructions -->
+                        <Border Classes="section">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="FILE BACKUP OPERATIONS" Classes="section-title" />
+                                <TextBlock Text="BACKUP → Backup files from the game folder into the CLASSIC Backup folder." Classes="help-text" />
+                                <TextBlock Text="RESTORE → Restore file backup from the CLASSIC Backup folder into the game folder." Classes="help-text" />
+                                <TextBlock Text="REMOVE → Remove files only from the game folder without removing existing backups." Classes="help-text" />
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- XSE Section -->
+                        <Border Classes="section">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="XSE" Classes="section-title" TextAlignment="Center" />
+                                <UniformGrid Columns="3">
+                                    <Button Classes="secondary" Content="BACKUP XSE" Command="{Binding BackupXseCommand}" Margin="2" />
+                                    <Button Classes="success" Content="RESTORE XSE" Command="{Binding RestoreXseCommand}" Margin="2" />
+                                    <Button Classes="danger" Content="REMOVE XSE" Command="{Binding RemoveXseCommand}" Margin="2" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- RESHADE Section -->
+                        <Border Classes="section">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="RESHADE" Classes="section-title" TextAlignment="Center" />
+                                <UniformGrid Columns="3">
+                                    <Button Classes="secondary" Content="BACKUP RESHADE" Command="{Binding BackupReshadeCommand}" Margin="2" />
+                                    <Button Classes="success" Content="RESTORE RESHADE" Command="{Binding RestoreReshadeCommand}" Margin="2" />
+                                    <Button Classes="danger" Content="REMOVE RESHADE" Command="{Binding RemoveReshadeCommand}" Margin="2" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- VULKAN Section -->
+                        <Border Classes="section">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="VULKAN" Classes="section-title" TextAlignment="Center" />
+                                <UniformGrid Columns="3">
+                                    <Button Classes="secondary" Content="BACKUP VULKAN" Command="{Binding BackupVulkanCommand}" Margin="2" />
+                                    <Button Classes="success" Content="RESTORE VULKAN" Command="{Binding RestoreVulkanCommand}" Margin="2" />
+                                    <Button Classes="danger" Content="REMOVE VULKAN" Command="{Binding RemoveVulkanCommand}" Margin="2" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- ENB Section -->
+                        <Border Classes="section">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="ENB" Classes="section-title" TextAlignment="Center" />
+                                <UniformGrid Columns="3">
+                                    <Button Classes="secondary" Content="BACKUP ENB" Command="{Binding BackupEnbCommand}" Margin="2" />
+                                    <Button Classes="success" Content="RESTORE ENB" Command="{Binding RestoreEnbCommand}" Margin="2" />
+                                    <Button Classes="danger" Content="REMOVE ENB" Command="{Binding RemoveEnbCommand}" Margin="2" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Articles Tab -->
+            <TabItem Header="ARTICLES">
+                <ScrollViewer Padding="20">
+                    <StackPanel Spacing="16">
+                        
+                        <Border Classes="section">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="USEFUL RESOURCES &amp; LINKS" Classes="section-title" TextAlignment="Center" />
+                                
+                                <ItemsControl ItemsSource="{Binding ResourceLinks}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="3" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Classes="secondary" Content="{Binding Title}" 
+                                                    ToolTip.Tip="{Binding Url}"
+                                                    Margin="4" MinHeight="40" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
