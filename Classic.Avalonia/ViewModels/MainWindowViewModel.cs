@@ -14,6 +14,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using System.Linq;
 using System;
+using Classic.Infrastructure.Platform;
 
 namespace Classic.Avalonia.ViewModels;
 
@@ -21,6 +22,10 @@ public class MainWindowViewModel : ViewModelBase
 {
     private readonly IScanOrchestrator _scanOrchestrator;
     private readonly ILogger _logger;
+    private readonly ISettingsService _settingsService;
+    private readonly IGameFileManager _gameFileManager;
+    private readonly INotificationService _notificationService;
+    private readonly IProgressService _progressService;
     
     private string _selectedModsFolder = string.Empty;
     private string _selectedScanFolder = string.Empty;
@@ -35,10 +40,25 @@ public class MainWindowViewModel : ViewModelBase
     private bool _isScanning;
     private int _selectedTabIndex;
     
-    public MainWindowViewModel(IScanOrchestrator scanOrchestrator, ILogger logger)
+    // Progress tracking
+    private int _progressPercentage;
+    private string _progressMessage = string.Empty;
+    private string _progressDetails = string.Empty;
+    private bool _isProgressIndeterminate;
+    private TimeSpan? _estimatedTimeRemaining;
+    
+    // Scan results
+    private ScanResult? _lastScanResult;
+    private string _scanStatistics = string.Empty;
+    
+    public MainWindowViewModel(IScanOrchestrator scanOrchestrator, ILogger logger, ISettingsService settingsService, IGameFileManager gameFileManager, INotificationService notificationService, IProgressService progressService)
     {
         _scanOrchestrator = scanOrchestrator;
         _logger = logger;
+        _settingsService = settingsService;
+        _gameFileManager = gameFileManager;
+        _notificationService = notificationService;
+        _progressService = progressService;
         
         // Initialize commands
         ScanCrashLogsCommand = ReactiveCommand.CreateFromTask(ExecuteScanCrashLogs, this.WhenAnyValue(x => x.IsScanning, scanning => !scanning));
@@ -73,6 +93,9 @@ public class MainWindowViewModel : ViewModelBase
         // Initialize resource links
         InitializeResourceLinks();
         
+        // Subscribe to progress updates
+        _progressService.ProgressUpdated += OnProgressUpdated;
+        
         // Load settings
         LoadSettings();
     }
@@ -82,37 +105,61 @@ public class MainWindowViewModel : ViewModelBase
     public string SelectedModsFolder
     {
         get => _selectedModsFolder;
-        set => this.RaiseAndSetIfChanged(ref _selectedModsFolder, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _selectedModsFolder, value);
+            _ = SaveSettings();
+        }
     }
     
     public string SelectedScanFolder
     {
         get => _selectedScanFolder;
-        set => this.RaiseAndSetIfChanged(ref _selectedScanFolder, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _selectedScanFolder, value);
+            _ = SaveSettings();
+        }
     }
     
     public bool FcxMode
     {
         get => _fcxMode;
-        set => this.RaiseAndSetIfChanged(ref _fcxMode, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _fcxMode, value);
+            _ = SaveSettings();
+        }
     }
     
     public bool SimplifyLogs
     {
         get => _simplifyLogs;
-        set => this.RaiseAndSetIfChanged(ref _simplifyLogs, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _simplifyLogs, value);
+            _ = SaveSettings();
+        }
     }
     
     public bool UpdateCheck
     {
         get => _updateCheck;
-        set => this.RaiseAndSetIfChanged(ref _updateCheck, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _updateCheck, value);
+            _ = SaveSettings();
+        }
     }
     
     public bool VrMode
     {
         get => _vrMode;
-        set => this.RaiseAndSetIfChanged(ref _vrMode, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _vrMode, value);
+            _ = SaveSettings();
+        }
     }
     
     public bool ShowFormIdValues
@@ -130,13 +177,21 @@ public class MainWindowViewModel : ViewModelBase
     public bool AudioNotifications
     {
         get => _audioNotifications;
-        set => this.RaiseAndSetIfChanged(ref _audioNotifications, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _audioNotifications, value);
+            _ = SaveSettings();
+        }
     }
     
     public string UpdateSource
     {
         get => _updateSource;
-        set => this.RaiseAndSetIfChanged(ref _updateSource, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _updateSource, value);
+            _ = SaveSettings();
+        }
     }
     
     public bool IsScanning
@@ -157,6 +212,49 @@ public class MainWindowViewModel : ViewModelBase
     };
     
     public ObservableCollection<ResourceLinkViewModel> ResourceLinks { get; } = new();
+    
+    // Progress properties
+    public int ProgressPercentage
+    {
+        get => _progressPercentage;
+        set => this.RaiseAndSetIfChanged(ref _progressPercentage, value);
+    }
+    
+    public string ProgressMessage
+    {
+        get => _progressMessage;
+        set => this.RaiseAndSetIfChanged(ref _progressMessage, value);
+    }
+    
+    public string ProgressDetails
+    {
+        get => _progressDetails;
+        set => this.RaiseAndSetIfChanged(ref _progressDetails, value);
+    }
+    
+    public bool IsProgressIndeterminate
+    {
+        get => _isProgressIndeterminate;
+        set => this.RaiseAndSetIfChanged(ref _isProgressIndeterminate, value);
+    }
+    
+    public TimeSpan? EstimatedTimeRemaining
+    {
+        get => _estimatedTimeRemaining;
+        set => this.RaiseAndSetIfChanged(ref _estimatedTimeRemaining, value);
+    }
+    
+    public ScanResult? LastScanResult
+    {
+        get => _lastScanResult;
+        set => this.RaiseAndSetIfChanged(ref _lastScanResult, value);
+    }
+    
+    public string ScanStatistics
+    {
+        get => _scanStatistics;
+        set => this.RaiseAndSetIfChanged(ref _scanStatistics, value);
+    }
     
     #endregion
     
@@ -201,6 +299,7 @@ public class MainWindowViewModel : ViewModelBase
         try
         {
             _logger.Information("Starting crash logs scan");
+            _progressService.StartProgress("Scanning Crash Logs");
             
             var scanRequest = new ScanRequest
             {
@@ -209,7 +308,7 @@ public class MainWindowViewModel : ViewModelBase
                 SimplifyLogs = SimplifyLogs,
                 ShowFormIdValues = ShowFormIdValues,
                 MoveUnsolvedLogs = MoveInvalidLogs,
-                OutputDirectory = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "Classic", "CrashLogs")
+                OutputDirectory = CrossPlatformHelper.SafePathCombine(CrossPlatformHelper.GetApplicationDataDirectory(), "Classic", "CrashLogs")
             };
             
             // Add custom scan folder to log files if specified
@@ -221,12 +320,20 @@ public class MainWindowViewModel : ViewModelBase
             var result = await _scanOrchestrator.ExecuteScanAsync(scanRequest);
             
             _logger.Information("Crash logs scan completed successfully");
-            // TODO: Handle result and show notification
+            _progressService.CompleteProgress("Scan completed successfully");
+            
+            // Store results and update statistics
+            LastScanResult = result;
+            UpdateScanStatistics(result);
+            
+            // Show completion notification
+            await _notificationService.ShowScanCompletedAsync(result);
         }
         catch (System.Exception ex)
         {
             _logger.Error(ex, "Error during crash logs scan");
-            // TODO: Show error notification
+            _progressService.FailProgress($"Scan failed: {ex.Message}");
+            await _notificationService.ShowScanErrorAsync("Crash Log Scan", ex);
         }
         finally
         {
@@ -240,23 +347,32 @@ public class MainWindowViewModel : ViewModelBase
         try
         {
             _logger.Information("Starting game files scan");
+            _progressService.StartProgress("Scanning Game Files");
             
             var scanRequest = new ScanRequest
             {
                 ModsPath = !string.IsNullOrWhiteSpace(SelectedModsFolder) ? SelectedModsFolder : null,
                 EnableFcxMode = FcxMode,
-                OutputDirectory = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "Classic", "GameFiles")
+                OutputDirectory = CrossPlatformHelper.SafePathCombine(CrossPlatformHelper.GetApplicationDataDirectory(), "Classic", "GameFiles")
             };
             
             var result = await _scanOrchestrator.ExecuteScanAsync(scanRequest);
             
             _logger.Information("Game files scan completed successfully");
-            // TODO: Handle result and show notification
+            _progressService.CompleteProgress("Game files scan completed successfully");
+            
+            // Store results and update statistics
+            LastScanResult = result;
+            UpdateScanStatistics(result);
+            
+            // Show completion notification
+            await _notificationService.ShowScanCompletedAsync(result);
         }
         catch (System.Exception ex)
         {
             _logger.Error(ex, "Error during game files scan");
-            // TODO: Show error notification
+            _progressService.FailProgress($"Game files scan failed: {ex.Message}");
+            await _notificationService.ShowScanErrorAsync("Game Files Scan", ex);
         }
         finally
         {
@@ -386,7 +502,7 @@ public class MainWindowViewModel : ViewModelBase
             };
 
             // Try to suggest Documents folder as starting location for INI files
-            var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var documentsPath = CrossPlatformHelper.GetDocumentsDirectory();
             if (Directory.Exists(documentsPath))
             {
                 var documentsFolder = await topLevel.StorageProvider.TryGetFolderFromPathAsync(documentsPath);
@@ -457,8 +573,39 @@ public class MainWindowViewModel : ViewModelBase
     private async Task ManageGameFiles(string category, string action)
     {
         _logger.Information("Managing game files: {Action} {Category}", action, category);
-        // TODO: Implement game file management
-        await Task.CompletedTask;
+        
+        try
+        {
+            GameFileOperationResult result = action.ToUpperInvariant() switch
+            {
+                "BACKUP" => await _gameFileManager.BackupFilesAsync(category),
+                "RESTORE" => await _gameFileManager.RestoreFilesAsync(category),
+                "REMOVE" => await _gameFileManager.RemoveFilesAsync(category),
+                _ => new GameFileOperationResult { Success = false, Message = $"Unknown action: {action}" }
+            };
+
+            if (result.Success)
+            {
+                _logger.Information("Game file operation completed successfully: {Message}", result.Message);
+            }
+            else
+            {
+                _logger.Warning("Game file operation failed: {Message}", result.Message);
+            }
+
+            // Show result to user via notification
+            await _notificationService.ShowGameFileOperationAsync(action, category, result);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error during game file operation: {Action} {Category}", action, category);
+            var errorResult = new GameFileOperationResult 
+            { 
+                Success = false, 
+                Message = $"Operation failed: {ex.Message}" 
+            };
+            await _notificationService.ShowGameFileOperationAsync(action, category, errorResult);
+        }
     }
     
     #endregion
@@ -486,8 +633,41 @@ public class MainWindowViewModel : ViewModelBase
     
     private void LoadSettings()
     {
-        // TODO: Load settings from configuration
-        _logger.Information("Loading settings");
+        _logger.Information("Loading settings from YAML");
+        
+        var settings = _settingsService.Settings;
+        
+        // Load UI properties from settings
+        SelectedModsFolder = settings.StagingModsPath ?? string.Empty;
+        SelectedScanFolder = settings.CustomScanPath ?? string.Empty;
+        FcxMode = settings.FCXMode;
+        SimplifyLogs = settings.SimplifyLogs;
+        UpdateCheck = settings.UpdateCheck;
+        VrMode = settings.VRMode;
+        AudioNotifications = settings.SoundOnCompletion;
+        UpdateSource = settings.UpdateSource;
+        
+        // Note: ShowFormIdValues, MoveInvalidLogs are UI-only settings not persisted
+    }
+    
+    private async Task SaveSettings()
+    {
+        _logger.Information("Saving settings to YAML");
+        
+        var settings = _settingsService.Settings;
+        
+        // Update settings object
+        settings.StagingModsPath = SelectedModsFolder;
+        settings.CustomScanPath = SelectedScanFolder;
+        settings.FCXMode = FcxMode;
+        settings.SimplifyLogs = SimplifyLogs;
+        settings.UpdateCheck = UpdateCheck;
+        settings.VRMode = VrMode;
+        settings.SoundOnCompletion = AudioNotifications;
+        settings.UpdateSource = UpdateSource;
+        
+        // Save to disk
+        await _settingsService.SaveAsync();
     }
     
     /// <summary>
@@ -509,8 +689,12 @@ public class MainWindowViewModel : ViewModelBase
                 return false;
             }
 
-            // Test read access
-            var testAccess = Directory.EnumerateDirectories(folderPath).Take(1).Any();
+            // Test read access using cross-platform helper
+            if (!CrossPlatformHelper.TryAccessDirectory(folderPath))
+            {
+                _logger.Warning("Cannot access {FolderType} folder: {Path}", folderType, folderPath);
+                return false;
+            }
             
             _logger.Information("Successfully validated {FolderType} folder: {Path}", folderType, folderPath);
             return true;
@@ -567,6 +751,44 @@ public class MainWindowViewModel : ViewModelBase
             _logger.Error(ex, "Error validating INI folder: {Path}", folderPath);
             return false;
         }
+    }
+    
+    private void OnProgressUpdated(object? sender, ProgressUpdateEventArgs e)
+    {
+        var state = e.State;
+        
+        ProgressPercentage = state.Percentage;
+        ProgressMessage = state.CurrentOperation;
+        ProgressDetails = state.Details ?? string.Empty;
+        IsProgressIndeterminate = state.IsIndeterminate;
+        EstimatedTimeRemaining = state.EstimatedTimeRemaining;
+    }
+    
+    private void UpdateScanStatistics(ScanResult result)
+    {
+        if (result == null)
+        {
+            ScanStatistics = string.Empty;
+            return;
+        }
+        
+        var stats = new System.Text.StringBuilder();
+        stats.AppendLine($"Last Scan: {result.EndTime:yyyy-MM-dd HH:mm:ss}");
+        stats.AppendLine($"Total Logs: {result.TotalLogs}");
+        stats.AppendLine($"Successful: {result.SuccessfulScans} ({result.SuccessRate:F1}%)");
+        stats.AppendLine($"Failed: {result.FailedScans} ({result.FailureRate:F1}%)");
+        stats.AppendLine($"Processing Time: {result.ProcessingTime:mm\\:ss}");
+        
+        if (result.ModConflicts.Any())
+        {
+            stats.AppendLine("Top Conflicts:");
+            foreach (var conflict in result.ModConflicts.Take(3))
+            {
+                stats.AppendLine($"  • {conflict.Key} ({conflict.Value}x)");
+            }
+        }
+        
+        ScanStatistics = stats.ToString();
     }
     
     #endregion

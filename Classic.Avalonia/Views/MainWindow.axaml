@@ -193,7 +193,42 @@
                                             Margin="8,0,0,0" MinHeight="48" />
                                 </UniformGrid>
                                 
-                                <ProgressBar IsIndeterminate="{Binding IsScanning}" IsVisible="{Binding IsScanning}" />
+                                <!-- Enhanced Progress Display -->
+                                <StackPanel IsVisible="{Binding IsScanning}" Spacing="8">
+                                    <ProgressBar Value="{Binding ProgressPercentage}" 
+                                                 IsIndeterminate="{Binding IsProgressIndeterminate}" 
+                                                 MinHeight="20" />
+                                    <TextBlock Text="{Binding ProgressMessage}" 
+                                               Foreground="White" 
+                                               FontWeight="SemiBold" 
+                                               TextAlignment="Center" />
+                                    <TextBlock Text="{Binding ProgressDetails}" 
+                                               Foreground="#CCCCCC" 
+                                               FontSize="11" 
+                                               TextAlignment="Center" 
+                                               TextWrapping="Wrap" 
+                                               IsVisible="{Binding ProgressDetails, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                    <TextBlock Text="{Binding EstimatedTimeRemaining, StringFormat='ETA: {0:mm\\:ss}'}" 
+                                               Foreground="#CCCCCC" 
+                                               FontSize="11" 
+                                               TextAlignment="Center" 
+                                               IsVisible="{Binding EstimatedTimeRemaining, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Scan Statistics Section -->
+                        <Border Classes="section" IsVisible="{Binding ScanStatistics, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="LAST SCAN RESULTS" Classes="section-title" />
+                                <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto">
+                                    <TextBlock Text="{Binding ScanStatistics}" 
+                                               Foreground="#CCCCCC" 
+                                               FontSize="11" 
+                                               FontFamily="Consolas,Monaco,monospace" 
+                                               TextWrapping="Wrap" 
+                                               Margin="8" />
+                                </ScrollViewer>
                             </StackPanel>
                         </Border>
                         
@@ -362,5 +397,8 @@
                 </ScrollViewer>
             </TabItem>
         </TabControl>
+        
+        <!-- Toast Notification Container -->
+        <ContentControl Name="ToastContainer" />
     </Grid>
 </Window>

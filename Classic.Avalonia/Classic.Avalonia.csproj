@@ -24,10 +24,13 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.2"/>
-        <PackageReference Include="Serilog" Version="4.1.0"/>
+        <PackageReference Include="Serilog" Version="4.3.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Classic.Core\Classic.Core.csproj" />
+        <ProjectReference Include="..\Classic.Infrastructure\Classic.Infrastructure.csproj" />
+        <ProjectReference Include="..\Classic.ScanLog\Classic.ScanLog.csproj" />
     </ItemGroup>
 </Project>
