@@ -8,16 +8,16 @@ namespace Classic.ScanLog.Models;
 public class ModConflictDatabase
 {
     [YamlMember(Alias = "mods_core")]
-    public Dictionary<string, string> ModsCore { get; set; } = new();
+    public Dictionary<string, object> ModsCore { get; set; } = new();
 
     [YamlMember(Alias = "mods_freq")]
-    public Dictionary<string, string> ModsFreq { get; set; } = new();
+    public Dictionary<string, object> ModsFreq { get; set; } = new();
 
     [YamlMember(Alias = "mods_conf")]
-    public Dictionary<string, string> ModsConf { get; set; } = new();
+    public Dictionary<string, object> ModsConf { get; set; } = new();
 
     [YamlMember(Alias = "mods_solu")]
-    public Dictionary<string, string> ModsSolu { get; set; } = new();
+    public Dictionary<string, object> ModsSolu { get; set; } = new();
 
     [YamlMember(Alias = "gpu_compatibility")]
     public GpuCompatibility? GpuCompatibility { get; set; }
@@ -39,6 +39,18 @@ public class GpuCompatibility
 }
 
 /// <summary>
+/// Represents a mod entry with optional GPU constraints
+/// </summary>
+public class ModEntry
+{
+    [YamlMember(Alias = "gpu_constraint")]
+    public string? GpuConstraint { get; set; }
+
+    [YamlMember(Alias = "description")]
+    public string Description { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// Represents a detected mod conflict
 /// </summary>
 public class ModConflictResult
@@ -46,6 +58,7 @@ public class ModConflictResult
     public string ModName { get; set; } = string.Empty;
     public string PluginId { get; set; } = string.Empty;
     public string Warning { get; set; } = string.Empty;
+    public string Solution { get; set; } = string.Empty;
     public ConflictSeverity Severity { get; set; }
     public ConflictType Type { get; set; }
     public string? GpuSpecific { get; set; }

@@ -4,6 +4,8 @@ using Classic.ScanLog.Configuration;
 using Classic.ScanLog.Models;
 using Classic.ScanLog.Orchestration;
 using Classic.ScanLog.Parsers;
+using Classic.ScanLog.Reporting;
+using Classic.ScanLog.Services;
 using Classic.ScanLog.Utilities;
 using Classic.ScanLog.Validators;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +48,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ScriptValidator>();
         services.AddScoped<GameFileValidator>();
 
+        // Register advanced reporting
+        services.AddScoped<GameHintsLoader>();
+        services.AddScoped<AdvancedReportGenerator>();
+        services.AddScoped<ReportDataMapper>();
+
         // Register analyzers
         services.AddScoped<IPluginAnalyzer, PluginAnalyzer>();
         services.AddScoped<IFormIdAnalyzer, FormIdAnalyzer>();
@@ -55,6 +62,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ModDatabaseLoader>();
         services.AddScoped<ModConflictDetector>();
 
+        // Register enhanced async processing services
+        services.AddSingleton<SqliteConnectionPool>();
+        services.AddSingleton<PerformanceMonitor>();
+        services.AddSingleton<ResourceManager>();
+        services.AddSingleton<AdaptiveProcessingEngine>();
+        
         // Register orchestrator
         services.AddScoped<IScanOrchestrator, ComprehensiveScanOrchestrator>();
 

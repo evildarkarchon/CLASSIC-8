@@ -6,6 +6,7 @@ using Classic.Core.Interfaces;
 using Classic.Core.Models;
 using Classic.ScanLog.Models;
 using Classic.ScanLog.Parsers;
+using Classic.ScanLog.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Classic.ScanLog.Analyzers;
@@ -18,6 +19,7 @@ public class FormIdAnalyzer : IFormIdAnalyzer
 {
     private readonly ScanLogConfiguration _configuration;
     private readonly ILogger<FormIdAnalyzer> _logger;
+    private readonly SqliteConnectionPool _connectionPool;
     private readonly bool _showFormIdValues;
     private readonly bool _formIdDbExists;
     private readonly List<string> _databasePaths;
@@ -26,11 +28,13 @@ public class FormIdAnalyzer : IFormIdAnalyzer
     public FormIdAnalyzer(
         ILogger<FormIdAnalyzer> logger,
         ScanLogConfiguration configuration,
+        SqliteConnectionPool connectionPool,
         bool showFormIdValues = false,
         IEnumerable<string>? databasePaths = null)
     {
         _logger = logger;
         _configuration = configuration;
+        _connectionPool = connectionPool;
         _showFormIdValues = showFormIdValues;
         _databasePaths = databasePaths?.ToList() ?? new List<string>();
         _formIdDbExists = _databasePaths.Any(path => File.Exists(path));
@@ -407,7 +411,7 @@ public class FormIdAnalyzer : IFormIdAnalyzer
             return cachedResult;
         }
 
-        // Try each database path
+        // Try each database path using connection pool
         foreach (var dbPath in _databasePaths)
         {
             if (!File.Exists(dbPath))
@@ -415,23 +419,20 @@ public class FormIdAnalyzer : IFormIdAnalyzer
 
             try
             {
-                using var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;");
-                await connection.OpenAsync();
-                
                 var query = $"SELECT entry FROM {gameName} WHERE formid = @formid AND plugin = @plugin COLLATE NOCASE";
-                using var command = new SQLiteCommand(query, connection);
-                command.Parameters.AddWithValue("@formid", formId);
-                command.Parameters.AddWithValue("@plugin", plugin);
-                
-                var result = await command.ExecuteScalarAsync();
-                if (result != null)
-                {
-                    var entry = result.ToString();
-                    if (!string.IsNullOrEmpty(entry))
+                var result = await _connectionPool.ExecuteScalarAsync<string>(
+                    dbPath, 
+                    query,
+                    command =>
                     {
-                        _queryCache.TryAdd(cacheKey, entry);
-                        return entry;
-                    }
+                        command.Parameters.AddWithValue("@formid", formId);
+                        command.Parameters.AddWithValue("@plugin", plugin);
+                    });
+                
+                if (!string.IsNullOrEmpty(result))
+                {
+                    _queryCache.TryAdd(cacheKey, result);
+                    return result;
                 }
             }
             catch (Exception ex)

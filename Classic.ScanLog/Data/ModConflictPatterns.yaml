@@ -20,13 +20,13 @@ mods_core:
     This is the essential bug-fixing mod that should be in every load order.
     Link: https://www.nexusmods.com/fallout4/mods/4598?tab=files
 
-  NvidiaWeaponDebrisCrashFix | NVIDIA Weapon Debris Crash Fix: |
-    Essential fix for NVIDIA users to prevent weapon debris crashes.
-    Link: https://www.nexusmods.com/fallout4/mods/48078?tab=files
+  WeaponDebrisCrashFix | Weapon Debris Crash Fix:
+    gpu_constraint: nvidia
+    description: |
+      Fix for weapon debris crashes that specifically affect NVIDIA GPUs.
+      This crash is caused by an NVIDIA driver bug with certain weapon mods.
+      Link: https://www.nexusmods.com/fallout4/mods/48078?tab=files
 
-  WeaponDebrisCrashFix | Weapon Debris Crash Fix: |
-    Universal fix for weapon debris crashes affecting all GPU types.
-    Link: https://www.nexusmods.com/fallout4/mods/48078?tab=files
 
 # Mods that cause frequent crashes (Mods_FREQ)
 mods_freq:
@@ -75,6 +75,14 @@ mods_freq:
         - Can cause crashes with certain dialogue mods or during conversations.
         - Check for compatibility patches if issues occur.
         -----
+
+  ENBSeries:
+    gpu_constraint: nvidia
+    description: |
+      ENB Series (ENBoost/ENBLocal)
+          - ENB mods work best with NVIDIA GPUs and may cause issues on AMD.
+          - AMD users should consider lighter alternatives or AMD-optimized presets.
+          -----
 
 # Conflicting mod pairs (Mods_CONF)
 mods_conf:
@@ -134,6 +142,16 @@ mods_solu:
           VR Framework: https://www.nexusmods.com/fallout4/mods/31657
         -----
 
+  AMDRadeonSettings | AMD Radeon Anti-Lag:
+    gpu_constraint: amd
+    description: |
+      AMD Radeon Anti-Lag for Fallout 4
+          - AMD-specific performance enhancement that reduces input lag.
+          - Only beneficial for AMD GPUs. NVIDIA users should use Reflex instead.
+          Link: https://www.amd.com/en/technologies/radeon-anti-lag
+          -----
+
+
   Armor and Weapon Keywords Community Resource: |
     AWKCR (Armor and Weapon Keywords Community Resource)
         - This mod can cause save bloat and performance issues.
@@ -157,11 +175,9 @@ mods_solu:
 gpu_compatibility:
   nvidia_specific:
     - WeaponDebrisCrashFix
-    - NvidiaWeaponDebrisCrashFix
     - ENB mods
   
   amd_specific:
-    - WeaponDebrisCrashFix
     - AMD-specific ENB configurations
 
 # Important load order warnings

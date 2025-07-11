@@ -4,6 +4,7 @@ using Classic.Core.Enums;
 using Classic.ScanLog.Analyzers;
 using Classic.ScanLog.Utilities;
 using Classic.ScanLog.Validators;
+using Classic.ScanLog.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -28,6 +29,11 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ComprehensiveScanOrchestrator> _logger;
     
+    // Enhanced async processing services
+    private readonly PerformanceMonitor _performanceMonitor;
+    private readonly ResourceManager _resourceManager;
+    private readonly AdaptiveProcessingEngine _adaptiveEngine;
+    
     private readonly Dictionary<ProcessingMode, Func<ScanRequest, CancellationToken, Task<ScanResult>>> _strategies;
     private readonly PerformanceMetrics _performanceMetrics = new();
 
@@ -42,7 +48,10 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
         IMessageHandler messageHandler,
         CrashLogReformatter reformatter,
         IServiceProvider serviceProvider,
-        ILogger<ComprehensiveScanOrchestrator> logger)
+        ILogger<ComprehensiveScanOrchestrator> logger,
+        PerformanceMonitor performanceMonitor,
+        ResourceManager resourceManager,
+        AdaptiveProcessingEngine adaptiveEngine)
     {
         _parser = parser;
         _pluginAnalyzer = pluginAnalyzer;
@@ -55,6 +64,9 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
         _reformatter = reformatter;
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _performanceMonitor = performanceMonitor;
+        _resourceManager = resourceManager;
+        _adaptiveEngine = adaptiveEngine;
         
         _strategies = new Dictionary<ProcessingMode, Func<ScanRequest, CancellationToken, Task<ScanResult>>>
         {
@@ -101,18 +113,47 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
                 await ReformatCrashLogsAsync(request, cancellationToken);
             }
 
-            // Determine optimal processing strategy
+            // Determine optimal processing strategy using adaptive engine
             var processingMode = request.PreferredMode == ProcessingMode.Adaptive
-                ? await GetOptimalProcessingModeAsync(request, cancellationToken)
+                ? await _adaptiveEngine.GetOptimalProcessingModeAsync(request, cancellationToken)
                 : request.PreferredMode;
 
             result.UsedProcessingMode = processingMode;
-            result.WorkersUsed = request.MaxConcurrentLogs;
+            
+            // Calculate optimal worker count and batch size
+            var optimalWorkers = _adaptiveEngine.CalculateOptimalWorkerCount(processingMode, request);
+            var optimalBatchSize = _adaptiveEngine.CalculateOptimalBatchSize(processingMode, request);
+            
+            // Update request with optimal values
+            request.MaxConcurrentLogs = optimalWorkers;
+            request.BatchSize = optimalBatchSize;
+            result.WorkersUsed = optimalWorkers;
 
-            // Execute using the selected strategy
+            // Execute using the selected strategy with performance monitoring
             if (_strategies.TryGetValue(processingMode, out var strategy))
             {
+                var strategyStopwatch = Stopwatch.StartNew();
                 var strategyResult = await strategy(request, cancellationToken);
+                strategyStopwatch.Stop();
+                
+                // Record performance data for adaptive engine
+                var performanceData = new ProcessingPerformanceData
+                {
+                    ProcessingTime = strategyStopwatch.Elapsed,
+                    FilesProcessed = strategyResult.SuccessfulScans + strategyResult.PartialScans,
+                    TotalFiles = request.LogFiles.Count,
+                    ErrorCount = strategyResult.FailedScans,
+                    PeakMemoryUsage = _performanceMonitor.GetStatisticsAsync().Result.PeakMemoryUsage,
+                    AverageCpuUsage = _performanceMonitor.GetStatisticsAsync().Result.AverageCpuUsage,
+                    Context = new ProcessingDecisionContext
+                    {
+                        FileCount = request.LogFiles.Count,
+                        MemoryUsagePercent = _resourceManager.GetResourceUsage().MemoryUsagePercent,
+                        SystemLoad = _performanceMonitor.GetStatisticsAsync().Result.CpuUsagePercent / 100.0
+                    }
+                };
+                
+                _adaptiveEngine.RecordPerformanceData(processingMode, performanceData);
                 
                 // Merge results
                 result.SuccessfulScans = strategyResult.SuccessfulScans;
@@ -255,14 +296,8 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
 
     public async Task<ProcessingMode> GetOptimalProcessingModeAsync(ScanRequest request, CancellationToken cancellationToken = default)
     {
-        // Simple heuristic for selecting processing mode
-        if (request.LogFiles.Count <= 5)
-            return ProcessingMode.Sequential;
-        
-        if (request.LogFiles.Count <= 50)
-            return ProcessingMode.Parallel;
-        
-        return ProcessingMode.ProducerConsumer;
+        // Delegate to adaptive engine for optimal mode selection
+        return await _adaptiveEngine.GetOptimalProcessingModeAsync(request, cancellationToken);
     }
 
     public async Task<TimeSpan> EstimateProcessingTimeAsync(ScanRequest request, CancellationToken cancellationToken = default)
@@ -413,9 +448,103 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
 
     private async Task<ScanResult> ExecuteAdaptiveAsync(ScanRequest request, CancellationToken cancellationToken)
     {
-        // For now, delegate to the optimal processing mode
-        var optimalMode = await GetOptimalProcessingModeAsync(request, cancellationToken);
-        return await _strategies[optimalMode](request, cancellationToken);
+        // Enhanced adaptive processing with real-time monitoring
+        var optimalMode = await _adaptiveEngine.GetOptimalProcessingModeAsync(request, cancellationToken);
+        var result = new ScanResult();
+        
+        // Start with optimal mode
+        var currentMode = optimalMode;
+        var processedFiles = 0;
+        var remainingFiles = new List<string>(request.LogFiles);
+        
+        while (remainingFiles.Count > 0 && !cancellationToken.IsCancellationRequested)
+        {
+            // Create batch request
+            var batchSize = _adaptiveEngine.CalculateOptimalBatchSize(currentMode, request);
+            var batchFiles = remainingFiles.Take(batchSize).ToList();
+            remainingFiles = remainingFiles.Skip(batchSize).ToList();
+            
+            var batchRequest = new ScanRequest
+            {
+                LogFiles = batchFiles,
+                OutputDirectory = request.OutputDirectory,
+                PreferredMode = currentMode,
+                MaxConcurrentLogs = _adaptiveEngine.CalculateOptimalWorkerCount(currentMode, request),
+                BatchSize = batchSize,
+                // Copy other settings
+                EnablePluginAnalysis = request.EnablePluginAnalysis,
+                EnableFormIdAnalysis = request.EnableFormIdAnalysis,
+                EnableSuspectScanning = request.EnableSuspectScanning,
+                EnableModDetection = request.EnableModDetection,
+                ContinueOnError = request.ContinueOnError
+            };
+            
+            // Process batch
+            var batchStopwatch = Stopwatch.StartNew();
+            var batchResult = await _strategies[currentMode](batchRequest, cancellationToken);
+            batchStopwatch.Stop();
+            
+            // Create performance data for this batch
+            var batchPerformanceData = new ProcessingPerformanceData
+            {
+                ProcessingTime = batchStopwatch.Elapsed,
+                FilesProcessed = batchResult.SuccessfulScans + batchResult.PartialScans,
+                TotalFiles = batchFiles.Count,
+                ErrorCount = batchResult.FailedScans,
+                PeakMemoryUsage = _performanceMonitor.GetStatisticsAsync().Result.PeakMemoryUsage,
+                AverageCpuUsage = _performanceMonitor.GetStatisticsAsync().Result.AverageCpuUsage,
+                Context = new ProcessingDecisionContext
+                {
+                    FileCount = batchFiles.Count,
+                    MemoryUsagePercent = _resourceManager.GetResourceUsage().MemoryUsagePercent,
+                    SystemLoad = _performanceMonitor.GetStatisticsAsync().Result.CpuUsagePercent / 100.0
+                }
+            };
+            
+            // Check for adaptation recommendations
+            var adaptation = await _adaptiveEngine.MonitorAndAdaptAsync(currentMode, batchPerformanceData, cancellationToken);
+            if (adaptation != null && adaptation.Confidence > 0.7)
+            {
+                _logger.LogInformation("Adapting processing mode from {CurrentMode} to {SuggestedMode}: {Reason}",
+                    currentMode, adaptation.SuggestedMode, adaptation.Reason);
+                
+                currentMode = adaptation.SuggestedMode;
+                batchRequest.MaxConcurrentLogs = adaptation.SuggestedWorkerCount;
+                batchRequest.BatchSize = adaptation.SuggestedBatchSize;
+            }
+            
+            // Merge batch results
+            result.SuccessfulScans += batchResult.SuccessfulScans;
+            result.FailedScans += batchResult.FailedScans;
+            result.PartialScans += batchResult.PartialScans;
+            result.DetailedResults.AddRange(batchResult.DetailedResults);
+            result.Errors.AddRange(batchResult.Errors);
+            result.Warnings.AddRange(batchResult.Warnings);
+            result.UnsolvedLogs.AddRange(batchResult.UnsolvedLogs);
+            result.ProcessedLogs.AddRange(batchResult.ProcessedLogs);
+            
+            foreach (var gameDistribution in batchResult.GameDistribution)
+            {
+                result.GameDistribution.TryGetValue(gameDistribution.Key, out var count);
+                result.GameDistribution[gameDistribution.Key] = count + gameDistribution.Value;
+            }
+            
+            foreach (var modConflict in batchResult.ModConflicts)
+            {
+                result.ModConflicts.TryGetValue(modConflict.Key, out var count);
+                result.ModConflicts[modConflict.Key] = count + modConflict.Value;
+            }
+            
+            processedFiles += batchFiles.Count;
+            
+            // Report progress
+            _messageHandler.ReportProgress("Adaptive scan", processedFiles, request.LogFiles.Count);
+            
+            // Record performance data
+            _adaptiveEngine.RecordPerformanceData(currentMode, batchPerformanceData);
+        }
+        
+        return result;
     }
 
     private async Task GenerateReportsAsync(ScanResult result, ScanRequest request, CancellationToken cancellationToken)

@@ -14,6 +14,7 @@ public class Program
         rootCommand.AddCommand(new ScanGameCommand());
         rootCommand.AddCommand(new BatchCommand());
         rootCommand.AddCommand(new ValidateFilesCommand());
+        rootCommand.AddCommand(new GenerateReportCommand());
 
         // Add global options  
         var versionOption = new Option<bool>(

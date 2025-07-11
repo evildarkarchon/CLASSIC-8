@@ -268,18 +268,193 @@ public class ScanSummary
 }
 
 /// <summary>
-/// Performance metrics for the scan operation
+/// Enhanced performance metrics for the scan operation with real-time monitoring
 /// </summary>
 public class PerformanceMetrics
 {
+    // Memory Metrics
     public long TotalMemoryUsed { get; set; }
     public long PeakMemoryUsage { get; set; }
+    public long CurrentMemoryUsage { get; set; }
+    public long GCCollections { get; set; }
+    public long GCMemoryReleased { get; set; }
+    
+    // CPU Metrics
     public double CpuUsagePercent { get; set; }
+    public double PeakCpuUsage { get; set; }
+    public double AverageCpuUsage { get; set; }
+    public int CpuCores { get; set; }
+    
+    // Throughput Metrics
     public int FilesReadPerSecond { get; set; }
+    public int PeakThroughput { get; set; }
+    public int CurrentThroughput { get; set; }
+    public long TotalBytesRead { get; set; }
+    public double MegabytesPerSecond { get; set; }
+    
+    // Processing Metrics
     public Dictionary<string, TimeSpan> ComponentTimes { get; set; } = new();
     public Dictionary<ProcessingMode, TimeSpan> StrategyTimes { get; set; } = new();
+    public Dictionary<string, int> ComponentCounts { get; set; } = new();
+    public Dictionary<string, long> ComponentMemoryUsage { get; set; } = new();
+    
+    // Caching Metrics
     public int CacheHits { get; set; }
     public int CacheMisses { get; set; }
+    public long CacheMemoryUsage { get; set; }
     public double CacheHitRate => (CacheHits + CacheMisses) > 0 ? 
         (double)CacheHits / (CacheHits + CacheMisses) * 100 : 0;
+    
+    // Worker Thread Metrics
+    public int TotalFilesProcessed { get; set; }
+    public int WorkerThreadsUsed { get; set; }
+    public int OptimalWorkerThreads { get; set; }
+    public int IdleWorkerThreads { get; set; }
+    public double WorkerEfficiency { get; set; }
+    
+    // Database/IO Metrics
+    public int DatabaseQueries { get; set; }
+    public TimeSpan TotalDatabaseTime { get; set; }
+    public int FileSystemOperations { get; set; }
+    public TimeSpan TotalFileIOTime { get; set; }
+    
+    // Real-time Tracking
+    public DateTime StartTime { get; set; }
+    public DateTime LastUpdateTime { get; set; }
+    public List<PerformanceSnapshot> Snapshots { get; set; } = new();
+    
+    // Bottleneck Detection
+    public List<string> DetectedBottlenecks { get; set; } = new();
+    public string? PrimaryBottleneck { get; set; }
+    public double BottleneckSeverity { get; set; }
+    
+    // Adaptive Processing Data
+    public Dictionary<ProcessingMode, double> ModeEfficiencies { get; set; } = new();
+    public int ProcessingModeChanges { get; set; }
+    public ProcessingMode OptimalMode { get; set; }
+    
+    /// <summary>
+    /// Calculates the overall system efficiency score (0-100)
+    /// </summary>
+    public double OverallEfficiency
+    {
+        get
+        {
+            var factors = new List<double>();
+            
+            // CPU efficiency (inverse of usage - lower is better for efficiency)
+            if (AverageCpuUsage > 0)
+                factors.Add(Math.Max(0, 100 - AverageCpuUsage));
+            
+            // Memory efficiency
+            if (PeakMemoryUsage > 0)
+                factors.Add(Math.Max(0, 100 - (CurrentMemoryUsage / (double)PeakMemoryUsage * 100)));
+            
+            // Cache efficiency
+            factors.Add(CacheHitRate);
+            
+            // Worker efficiency
+            factors.Add(WorkerEfficiency);
+            
+            return factors.Count > 0 ? factors.Average() : 0;
+        }
+    }
+    
+    /// <summary>
+    /// Gets the current processing rate in files per second
+    /// </summary>
+    public double CurrentProcessingRate
+    {
+        get
+        {
+            var elapsed = DateTime.Now - StartTime;
+            return elapsed.TotalSeconds > 0 ? TotalFilesProcessed / elapsed.TotalSeconds : 0;
+        }
+    }
+    
+    /// <summary>
+    /// Records a performance snapshot for trend analysis
+    /// </summary>
+    public void RecordSnapshot()
+    {
+        var snapshot = new PerformanceSnapshot
+        {
+            Timestamp = DateTime.Now,
+            MemoryUsage = CurrentMemoryUsage,
+            CpuUsage = CpuUsagePercent,
+            Throughput = CurrentThroughput,
+            FilesProcessed = TotalFilesProcessed,
+            WorkerThreadsActive = WorkerThreadsUsed - IdleWorkerThreads
+        };
+        
+        Snapshots.Add(snapshot);
+        LastUpdateTime = DateTime.Now;
+        
+        // Keep only last 1000 snapshots to prevent memory bloat
+        if (Snapshots.Count > 1000)
+        {
+            Snapshots.RemoveAt(0);
+        }
+    }
+    
+    /// <summary>
+    /// Detects performance bottlenecks based on current metrics
+    /// </summary>
+    public void DetectBottlenecks()
+    {
+        DetectedBottlenecks.Clear();
+        
+        // CPU bottleneck
+        if (AverageCpuUsage > 85)
+        {
+            DetectedBottlenecks.Add("CPU");
+        }
+        
+        // Memory bottleneck
+        if (CurrentMemoryUsage > PeakMemoryUsage * 0.9)
+        {
+            DetectedBottlenecks.Add("Memory");
+        }
+        
+        // Cache bottleneck
+        if (CacheHitRate < 70)
+        {
+            DetectedBottlenecks.Add("Cache");
+        }
+        
+        // Worker thread bottleneck
+        if (WorkerEfficiency < 60)
+        {
+            DetectedBottlenecks.Add("Worker Threads");
+        }
+        
+        // IO bottleneck
+        if (TotalFileIOTime.TotalMilliseconds > ComponentTimes.Values.Sum(t => t.TotalMilliseconds) * 0.5)
+        {
+            DetectedBottlenecks.Add("File I/O");
+        }
+        
+        // Database bottleneck
+        if (TotalDatabaseTime.TotalMilliseconds > ComponentTimes.Values.Sum(t => t.TotalMilliseconds) * 0.3)
+        {
+            DetectedBottlenecks.Add("Database");
+        }
+        
+        // Determine primary bottleneck
+        PrimaryBottleneck = DetectedBottlenecks.FirstOrDefault();
+        BottleneckSeverity = DetectedBottlenecks.Count * 20; // Simple severity calculation
+    }
+}
+
+/// <summary>
+/// Performance snapshot for trend analysis
+/// </summary>
+public class PerformanceSnapshot
+{
+    public DateTime Timestamp { get; set; }
+    public long MemoryUsage { get; set; }
+    public double CpuUsage { get; set; }
+    public int Throughput { get; set; }
+    public int FilesProcessed { get; set; }
+    public int WorkerThreadsActive { get; set; }
 }

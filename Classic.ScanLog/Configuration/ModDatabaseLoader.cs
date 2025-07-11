@@ -111,10 +111,10 @@ public class ModDatabaseLoader
     {
         return new ModConflictDatabase
         {
-            ModsCore = new Dictionary<string, string>(),
-            ModsFreq = new Dictionary<string, string>(),
-            ModsConf = new Dictionary<string, string>(),
-            ModsSolu = new Dictionary<string, string>(),
+            ModsCore = new Dictionary<string, object>(),
+            ModsFreq = new Dictionary<string, object>(),
+            ModsConf = new Dictionary<string, object>(),
+            ModsSolu = new Dictionary<string, object>(),
             GpuCompatibility = new GpuCompatibility(),
             LoadOrderWarnings = new Dictionary<string, string>()
         };
