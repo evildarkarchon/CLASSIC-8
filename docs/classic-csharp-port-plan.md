@@ -124,16 +124,16 @@ ClassicCS/
   - [ ] Implement help system
 
 ### 4.2 CLI Features
-- [ ] Port CLASSIC_ScanLogs functionality
-  - [ ] Implement scan command
-  - [ ] Add progress reporting
-  - [ ] Handle file output
-- [ ] Port CLASSIC_ScanGame functionality
-  - [ ] Implement game scan command
-  - [ ] Add integrity checking
-- [ ] Implement CLI-specific features
-  - [ ] Batch processing
-  - [ ] Quiet/verbose modes
+- [x] Port CLASSIC_ScanLogs functionality
+  - [x] Implement scan command
+  - [x] Add progress reporting
+  - [x] Handle file output
+- [x] Port CLASSIC_ScanGame functionality
+  - [x] Implement game scan command
+  - [x] Add integrity checking
+- [x] Implement CLI-specific features
+  - [x] Batch processing
+  - [x] Quiet/verbose modes
 
 ## Phase 5: GUI Integration (Week 7-8)
 
