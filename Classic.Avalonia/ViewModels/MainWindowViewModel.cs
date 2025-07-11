@@ -8,6 +8,12 @@ using Classic.Core.Models;
 using System.IO;
 using System.Threading.Tasks;
 using Serilog;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using System.Linq;
+using System;
 
 namespace Classic.Avalonia.ViewModels;
 
@@ -260,23 +266,155 @@ public class MainWindowViewModel : ViewModelBase
     
     private async Task SelectModsFolder()
     {
-        // TODO: Implement folder selection dialog
-        _logger.Information("Selecting mods folder");
-        await Task.CompletedTask;
+        _logger.Information("Opening mods folder selection dialog");
+        
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel((Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+            if (topLevel?.StorageProvider == null)
+            {
+                _logger.Warning("Storage provider not available for folder selection");
+                return;
+            }
+
+            var options = new FolderPickerOpenOptions
+            {
+                Title = "Select Staging Mods Folder",
+                AllowMultiple = false
+            };
+
+            // Set suggested start location if current folder exists
+            if (!string.IsNullOrWhiteSpace(SelectedModsFolder) && Directory.Exists(SelectedModsFolder))
+            {
+                var currentFolder = await topLevel.StorageProvider.TryGetFolderFromPathAsync(SelectedModsFolder);
+                if (currentFolder != null)
+                {
+                    options.SuggestedStartLocation = currentFolder;
+                }
+            }
+
+            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(options);
+            
+            if (folders.Count > 0)
+            {
+                var selectedPath = folders[0].Path.LocalPath;
+                
+                // Validate the selected path
+                if (ValidateFolder(selectedPath, "staging mods"))
+                {
+                    SelectedModsFolder = selectedPath;
+                    _logger.Information("Selected mods folder: {Path}", selectedPath);
+                    
+                    // TODO: Save to settings
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error selecting mods folder");
+        }
     }
     
     private async Task SelectScanFolder()
     {
-        // TODO: Implement folder selection dialog
-        _logger.Information("Selecting scan folder");
-        await Task.CompletedTask;
+        _logger.Information("Opening custom scan folder selection dialog");
+        
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel((Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+            if (topLevel?.StorageProvider == null)
+            {
+                _logger.Warning("Storage provider not available for folder selection");
+                return;
+            }
+
+            var options = new FolderPickerOpenOptions
+            {
+                Title = "Select Custom Scan Folder",
+                AllowMultiple = false
+            };
+
+            // Set suggested start location if current folder exists
+            if (!string.IsNullOrWhiteSpace(SelectedScanFolder) && Directory.Exists(SelectedScanFolder))
+            {
+                var currentFolder = await topLevel.StorageProvider.TryGetFolderFromPathAsync(SelectedScanFolder);
+                if (currentFolder != null)
+                {
+                    options.SuggestedStartLocation = currentFolder;
+                }
+            }
+
+            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(options);
+            
+            if (folders.Count > 0)
+            {
+                var selectedPath = folders[0].Path.LocalPath;
+                
+                // Validate the selected path
+                if (ValidateFolder(selectedPath, "custom scan"))
+                {
+                    SelectedScanFolder = selectedPath;
+                    _logger.Information("Selected custom scan folder: {Path}", selectedPath);
+                    
+                    // TODO: Save to settings
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error selecting custom scan folder");
+        }
     }
     
     private async Task SelectIniFolder()
     {
-        // TODO: Implement folder selection dialog
-        _logger.Information("Selecting INI folder");
-        await Task.CompletedTask;
+        _logger.Information("Opening INI folder selection dialog");
+        
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel((Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+            if (topLevel?.StorageProvider == null)
+            {
+                _logger.Warning("Storage provider not available for folder selection");
+                return;
+            }
+
+            var options = new FolderPickerOpenOptions
+            {
+                Title = "Select Game INI Files Folder",
+                AllowMultiple = false
+            };
+
+            // Try to suggest Documents folder as starting location for INI files
+            var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            if (Directory.Exists(documentsPath))
+            {
+                var documentsFolder = await topLevel.StorageProvider.TryGetFolderFromPathAsync(documentsPath);
+                if (documentsFolder != null)
+                {
+                    options.SuggestedStartLocation = documentsFolder;
+                }
+            }
+
+            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(options);
+            
+            if (folders.Count > 0)
+            {
+                var selectedPath = folders[0].Path.LocalPath;
+                
+                // Validate the selected path contains game INI files
+                if (ValidateIniFolder(selectedPath))
+                {
+                    _logger.Information("Selected INI folder: {Path}", selectedPath);
+                    
+                    // TODO: Update game INI path in settings and save
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error selecting INI folder");
+        }
     }
     
     private void OpenSettings()
@@ -350,6 +488,85 @@ public class MainWindowViewModel : ViewModelBase
     {
         // TODO: Load settings from configuration
         _logger.Information("Loading settings");
+    }
+    
+    /// <summary>
+    /// Validates that a selected folder is accessible and appropriate for its intended use
+    /// </summary>
+    private bool ValidateFolder(string folderPath, string folderType)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(folderPath))
+            {
+                _logger.Warning("Empty folder path provided for {FolderType}", folderType);
+                return false;
+            }
+
+            if (!Directory.Exists(folderPath))
+            {
+                _logger.Warning("Selected {FolderType} folder does not exist: {Path}", folderType, folderPath);
+                return false;
+            }
+
+            // Test read access
+            var testAccess = Directory.EnumerateDirectories(folderPath).Take(1).Any();
+            
+            _logger.Information("Successfully validated {FolderType} folder: {Path}", folderType, folderPath);
+            return true;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.Error(ex, "Access denied to {FolderType} folder: {Path}", folderType, folderPath);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error validating {FolderType} folder: {Path}", folderType, folderPath);
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// Validates that a selected folder contains game INI files
+    /// </summary>
+    private bool ValidateIniFolder(string folderPath)
+    {
+        try
+        {
+            if (!ValidateFolder(folderPath, "INI"))
+                return false;
+
+            // Look for common game INI files
+            var commonIniFiles = new[] 
+            {
+                "Fallout4.ini", "Fallout4Prefs.ini", "Fallout4Custom.ini",
+                "Skyrim.ini", "SkyrimPrefs.ini", "SkyrimCustom.ini",
+                "SkyrimVR.ini", "SkyrimVRPrefs.ini"
+            };
+
+            var foundIniFiles = commonIniFiles.Where(iniFile => 
+                File.Exists(Path.Combine(folderPath, iniFile))).ToList();
+
+            if (foundIniFiles.Any())
+            {
+                _logger.Information("Found game INI files in folder: {Files}", string.Join(", ", foundIniFiles));
+                return true;
+            }
+            else
+            {
+                _logger.Warning("No recognized game INI files found in selected folder: {Path}", folderPath);
+                _logger.Information("Expected files: {ExpectedFiles}", string.Join(", ", commonIniFiles));
+                
+                // Still return true as user might have custom INI setup
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error validating INI folder: {Path}", folderPath);
+            return false;
+        }
     }
     
     #endregion

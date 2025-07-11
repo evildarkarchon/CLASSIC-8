@@ -68,6 +68,9 @@ public class CrashLogParser : ICrashLogParser
             // Extract all segments
             crashLog.Segments = await ExtractSegmentsAsync(content, cancellationToken);
 
+            // Extract plugins as structured data
+            crashLog.Plugins = ExtractPluginList(crashLog.Segments);
+
             _logger.LogDebug("Successfully parsed crash log: {FileName}", fileName);
             return crashLog;
         }
@@ -79,91 +82,214 @@ public class CrashLogParser : ICrashLogParser
     }
 
     /// <summary>
-    ///     Extracts structured segments from crash log content
+    ///     Extracts structured segments from crash log content using Python-style boundary detection
     /// </summary>
     public async Task<Dictionary<string, List<string>>> ExtractSegmentsAsync(string[] content,
         CancellationToken cancellationToken = default)
     {
         return await Task.Run(() =>
         {
-            var segments = new Dictionary<string, List<string>>();
-            string? currentSegment = null;
-            var currentLines = new List<string>();
+            cancellationToken.ThrowIfCancellationRequested();
 
-            for (var i = 0; i < content.Length; i++)
+            // Define segment boundaries similar to Python implementation
+            var segmentBoundaries = new List<(string start, string end)>
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                ("\t[Compatibility]", "SYSTEM SPECS:"),        // Compatibility/Crashgen info
+                ("SYSTEM SPECS:", "PROBABLE CALL STACK:"),     // System specifications
+                ("PROBABLE CALL STACK:", "MODULES:"),          // Call stack information
+                ("MODULES:", "F4SE PLUGINS:"),                 // All modules
+                ("F4SE PLUGINS:", "PLUGINS:"),                 // XSE/F4SE plugins
+                ("PLUGINS:", "EOF")                            // Game plugins
+            };
 
-                var line = content[i].Trim();
+            var segmentNames = new[] 
+            { 
+                "Compatibility", "SystemSpecs", "CallStack", 
+                "Modules", "F4SEPlugins", "Plugins" 
+            };
 
-                // Check if this line starts a new segment
-                var newSegment = DetermineSegmentType(line);
-
-                if (newSegment != null)
+            var extractedSegments = ExtractSegments(content.ToList(), segmentBoundaries, "EOF");
+            
+            // Convert to dictionary with proper names
+            var segments = new Dictionary<string, List<string>>();
+            
+            for (var i = 0; i < segmentNames.Length; i++)
+            {
+                if (i < extractedSegments.Count)
                 {
-                    // Save previous segment if it exists
-                    if (currentSegment != null && currentLines.Count > 0)
-                        segments[currentSegment] = new List<string>(currentLines);
-
-                    // Start new segment
-                    currentSegment = newSegment;
-                    currentLines.Clear();
-                    currentLines.Add(line); // Include the header line
+                    // Strip whitespace from each line in the segment
+                    var processedSegment = extractedSegments[i]
+                        .Select(line => line.Trim())
+                        .Where(line => !string.IsNullOrEmpty(line))
+                        .ToList();
+                    
+                    segments[segmentNames[i]] = processedSegment;
                 }
-                else if (currentSegment != null)
+                else
                 {
-                    // Add line to current segment
-                    currentLines.Add(line);
-                }
-                else if (string.IsNullOrEmpty(currentSegment))
-                {
-                    // Header section before any named segments
-                    if (!segments.ContainsKey("Header"))
-                        segments["Header"] = new List<string>();
-                    segments["Header"].Add(line);
+                    // Add empty list for missing segments
+                    segments[segmentNames[i]] = new List<string>();
                 }
             }
 
-            // Save the last segment
-            if (currentSegment != null && currentLines.Count > 0) segments[currentSegment] = currentLines;
+            // Also extract header information (everything before first segment)
+            var headerLines = new List<string>();
+            foreach (var line in content)
+            {
+                if (line.StartsWith("\t[Compatibility]") || line.StartsWith("SYSTEM SPECS:"))
+                    break;
+                headerLines.Add(line.Trim());
+            }
+            segments["Header"] = headerLines;
 
             return segments;
         }, cancellationToken);
     }
 
     /// <summary>
-    ///     Extracts basic header information from crash log
+    /// Extracts multiple segments from crash data based on specified boundaries
+    /// Port of Python extract_segments function
+    /// </summary>
+    private static List<List<string>> ExtractSegments(
+        List<string> crashData, 
+        List<(string start, string end)> segmentBoundaries, 
+        string eofMarker)
+    {
+        var segments = new List<List<string>>();
+        var totalLines = crashData.Count;
+        var currentIndex = 0;
+        var segmentIndex = 0;
+        var collecting = false;
+        var segmentStartIndex = 0;
+        var currentBoundary = segmentBoundaries[0].start;
+
+        while (currentIndex < totalLines && segmentIndex < segmentBoundaries.Count)
+        {
+            var line = crashData[currentIndex];
+
+            // Check if we've hit a boundary
+            if (line.StartsWith(currentBoundary))
+            {
+                if (collecting)
+                {
+                    // End of current segment
+                    var segmentEndIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
+                    var segmentContent = crashData.GetRange(segmentStartIndex, segmentEndIndex - segmentStartIndex + 1);
+                    segments.Add(segmentContent);
+                    segmentIndex++;
+
+                    // Check if we've processed all segments
+                    if (segmentIndex >= segmentBoundaries.Count)
+                        break;
+                }
+                else
+                {
+                    // Start of a new segment
+                    segmentStartIndex = currentIndex + 1 < totalLines ? currentIndex + 1 : currentIndex;
+                }
+
+                // Toggle collection state and update boundary
+                collecting = !collecting;
+                if (segmentIndex < segmentBoundaries.Count)
+                {
+                    currentBoundary = collecting ? 
+                        segmentBoundaries[segmentIndex].end : 
+                        segmentBoundaries[segmentIndex].start;
+                }
+
+                // Handle special EOF case
+                if (collecting && currentBoundary == eofMarker)
+                {
+                    // Add all remaining lines
+                    var remainingContent = crashData.GetRange(segmentStartIndex, totalLines - segmentStartIndex);
+                    segments.Add(remainingContent);
+                    break;
+                }
+
+                if (!collecting)
+                {
+                    // Don't increment index in case current line is also next start boundary
+                    currentIndex--;
+                }
+            }
+
+            // Check if we've reached the end while still collecting
+            if (collecting && currentIndex == totalLines - 1)
+            {
+                var finalContent = crashData.GetRange(segmentStartIndex, totalLines - segmentStartIndex);
+                segments.Add(finalContent);
+            }
+
+            currentIndex++;
+        }
+
+        return segments;
+    }
+
+    /// <summary>
+    ///     Extracts basic header information from crash log using Python-style parsing
     /// </summary>
     private async Task ExtractHeaderInformationAsync(CrashLog crashLog, string[] content,
         CancellationToken cancellationToken)
     {
         await Task.Run(() =>
         {
-            // Extract game version (first line)
-            if (content.Length > 0)
-            {
-                var gameVersionMatch = Regex.Match(content[0], _patterns.GameVersionPattern);
-                if (gameVersionMatch.Success) crashLog.GameVersion = gameVersionMatch.Groups[2].Value;
-            }
+            var headerInfo = ParseCrashHeader(content.ToList(), "Buffout", "Fallout4");
+            
+            crashLog.GameVersion = headerInfo.gameVersion;
+            crashLog.CrashGenVersion = headerInfo.crashGenVersion;
+            crashLog.MainError = headerInfo.mainError;
+        }, cancellationToken);
+    }
 
-            // Extract Buffout version (second line)
-            if (content.Length > 1)
-            {
-                var buffoutMatch = Regex.Match(content[1], _patterns.BuffoutVersionPattern);
-                if (buffoutMatch.Success) crashLog.CrashGenVersion = buffoutMatch.Groups[1].Value;
-            }
+    /// <summary>
+    /// Extract metadata from crash data including game version, crash generator version, and main error.
+    /// Port of Python parse_crash_header function.
+    /// </summary>
+    /// <param name="crashData">List of strings representing lines of the crash data</param>
+    /// <param name="crashGenName">Name of the crash generator to be identified</param>
+    /// <param name="gameRootName">Root name of the game to identify game version</param>
+    /// <returns>Tuple containing game version, crash generator version, and main error</returns>
+    private static (string gameVersion, string crashGenVersion, string mainError) ParseCrashHeader(
+        List<string> crashData, 
+        string crashGenName, 
+        string gameRootName)
+    {
+        var gameVersion = "UNKNOWN";
+        var crashGenVersion = "UNKNOWN";
+        var mainError = "UNKNOWN";
 
-            // Extract main error (third line usually)
-            for (var i = 0; i < Math.Min(10, content.Length); i++) // Check first 10 lines
+        foreach (var line in crashData)
+        {
+            // Check for game version (line starting with game root name)
+            if (!string.IsNullOrEmpty(gameRootName) && line.StartsWith(gameRootName))
             {
-                var errorMatch = Regex.Match(content[i], _patterns.MainErrorPattern);
-                if (errorMatch.Success)
+                gameVersion = line.Trim();
+            }
+            
+            // Check for crash generator version
+            if (line.StartsWith(crashGenName))
+            {
+                crashGenVersion = line.Trim();
+            }
+            
+            // Check for main error (unhandled exception)
+            if (line.StartsWith("Unhandled exception"))
+            {
+                // Replace | with newline for better formatting (first occurrence only)
+                var pipeIndex = line.IndexOf('|');
+                if (pipeIndex >= 0)
                 {
-                    crashLog.MainError = content[i].Trim();
-                    break;
+                    mainError = line.Substring(0, pipeIndex) + "\n" + line.Substring(pipeIndex + 1);
+                }
+                else
+                {
+                    mainError = line;
                 }
             }
-        }, cancellationToken);
+        }
+
+        return (gameVersion, crashGenVersion, mainError);
     }
 
     /// <summary>
@@ -248,6 +374,68 @@ public class CrashLogParser : ICrashLogParser
 
         // Fallback to current time
         return DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Extracts plugin information from crash log segments
+    /// </summary>
+    private List<PluginInfo> ExtractPluginList(Dictionary<string, List<string>> segments)
+    {
+        var plugins = new List<PluginInfo>();
+
+        if (!segments.TryGetValue("Plugins", out var pluginLines))
+        {
+            _logger.LogDebug("No plugin section found in crash log");
+            return plugins;
+        }
+
+        try
+        {
+            var loadOrder = 0;
+            var pluginPattern = @"^\s*\[([^\]]+)\]\s*(.+)$"; // [XX] Plugin Name.esp
+            var pluginLimitPattern = @"^\s*\[FF\]"; // Plugin limit marker
+
+            foreach (var line in pluginLines)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                // Skip header lines
+                if (line.Contains("Light:") || line.Contains("Regular:") || line.Contains("Total:"))
+                    continue;
+
+                var match = Regex.Match(line, pluginPattern);
+                if (match.Success)
+                {
+                    var loadOrderHex = match.Groups[1].Value.Trim();
+                    var pluginName = match.Groups[2].Value.Trim();
+
+                    var hasPluginLimit = Regex.IsMatch(line, pluginLimitPattern);
+
+                    var plugin = new PluginInfo
+                    {
+                        FileName = pluginName,
+                        DisplayName = pluginName,
+                        LoadOrder = loadOrder++,
+                        IsEsl = pluginName.EndsWith(".esl", StringComparison.OrdinalIgnoreCase),
+                        IsEsm = pluginName.EndsWith(".esm", StringComparison.OrdinalIgnoreCase),
+                        HasPluginLimit = hasPluginLimit
+                    };
+
+                    plugins.Add(plugin);
+
+                    _logger.LogTrace("Parsed plugin: [{LoadOrder}] {PluginName}", 
+                        loadOrderHex, pluginName);
+                }
+            }
+
+            _logger.LogDebug("Extracted {PluginCount} plugins from crash log", plugins.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error extracting plugin list from crash log");
+        }
+
+        return plugins;
     }
 }
 
@@ -334,6 +522,40 @@ public static class CrashLogParserExtensions
             var memoryMatch = Regex.Match(line, memoryPattern);
             if (memoryMatch.Success)
                 result.MemoryInfo = $"{memoryMatch.Groups[1].Value.Trim()}/{memoryMatch.Groups[2].Value.Trim()}";
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Extracts module names from a set of provided module texts.
+    /// Port of Python extract_module_names function.
+    /// </summary>
+    /// <param name="moduleTexts">Set of strings containing module names and optional metadata</param>
+    /// <returns>Set of strings representing the extracted module names</returns>
+    public static HashSet<string> ExtractModuleNames(IEnumerable<string> moduleTexts)
+    {
+        var moduleTextsList = moduleTexts.ToList();
+        if (!moduleTextsList.Any())
+            return new HashSet<string>();
+
+        // Pattern matches module name potentially followed by version
+        var pattern = new Regex(@"(.*?\.dll)\s*v?.*", RegexOptions.IgnoreCase);
+        var result = new HashSet<string>();
+
+        foreach (var text in moduleTextsList)
+        {
+            var trimmedText = text.Trim();
+            var match = pattern.Match(trimmedText);
+            
+            if (match.Success)
+            {
+                result.Add(match.Groups[1].Value);
+            }
+            else
+            {
+                result.Add(trimmedText);
+            }
         }
 
         return result;

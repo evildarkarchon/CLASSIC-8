@@ -14,6 +14,7 @@ public class ScanRequest
     // Processing Options
     public bool EnableFcxMode { get; set; }
     public bool ShowFormIdValues { get; set; }
+    public bool ReformatLogs { get; set; } = true;
     public bool SimplifyLogs { get; set; }
     public bool MoveUnsolvedLogs { get; set; }
     public bool EnableStatisticalLogging { get; set; }

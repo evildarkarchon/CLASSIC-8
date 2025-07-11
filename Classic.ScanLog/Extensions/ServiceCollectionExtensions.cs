@@ -1,8 +1,10 @@
 using Classic.Core.Interfaces;
 using Classic.ScanLog.Analyzers;
+using Classic.ScanLog.Configuration;
 using Classic.ScanLog.Models;
 using Classic.ScanLog.Orchestration;
 using Classic.ScanLog.Parsers;
+using Classic.ScanLog.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Classic.ScanLog.Extensions;
@@ -32,10 +34,18 @@ public static class ServiceCollectionExtensions
         // Register parsers
         services.AddScoped<ICrashLogParser, CrashLogParser>();
 
+        // Register utilities
+        services.AddScoped<CrashLogReformatter>();
+        services.AddScoped<IGpuDetector, GpuDetector>();
+
         // Register analyzers
         services.AddScoped<IPluginAnalyzer, PluginAnalyzer>();
         services.AddScoped<IFormIdAnalyzer, FormIdAnalyzer>();
         services.AddScoped<SuspectScanner>();
+        services.AddScoped<EnhancedSuspectScanner>();
+        services.AddScoped<SuspectPatternLoader>();
+        services.AddScoped<ModDatabaseLoader>();
+        services.AddScoped<ModConflictDetector>();
 
         // Register orchestrator
         services.AddScoped<IScanOrchestrator, ComprehensiveScanOrchestrator>();

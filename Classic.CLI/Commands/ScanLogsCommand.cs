@@ -1,10 +1,12 @@
 using System.CommandLine;
+using System.CommandLine.Invocation;
 using Classic.Core.Enums;
 using Classic.Core.Interfaces;
 using Classic.Core.Models;
 using Classic.Infrastructure.Extensions;
 using Classic.ScanLog.Extensions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
 
@@ -92,13 +94,14 @@ public class ScanLogsCommand : Command
             var verbose = context.ParseResult.GetValueForOption(verboseOption);
             var quiet = context.ParseResult.GetValueForOption(quietOption);
 
-            await ExecuteAsync(fcxMode, showFidValues, statLogging, moveUnsolved,
+            await ExecuteAsync(context, fcxMode, showFidValues, statLogging, moveUnsolved,
                 iniPath, scanPath, modsPath, simplifyLogs, disableProgress, verbose, quiet,
                 context.GetCancellationToken());
         });
     }
 
     private async Task ExecuteAsync(
+        InvocationContext context,
         bool fcxMode,
         bool showFidValues,
         bool statLogging,
@@ -122,6 +125,19 @@ public class ScanLogsCommand : Command
 
         // Configure services
         var services = new ServiceCollection();
+
+        // Add logging services  
+        services.AddLogging(builder => 
+        {
+            builder.ClearProviders();
+            builder.AddConsole();
+            builder.SetMinimumLevel(logLevel switch
+            {
+                LogEventLevel.Debug => LogLevel.Debug,
+                LogEventLevel.Warning => LogLevel.Warning,
+                _ => LogLevel.Information
+            });
+        });
 
         // Add infrastructure services
         services.AddClassicInfrastructure();
@@ -150,7 +166,7 @@ public class ScanLogsCommand : Command
             if (!Directory.Exists(crashLogsPath))
             {
                 logger.Error("Crash logs directory not found: {Path}", crashLogsPath);
-                Environment.Exit(1);
+                context.ExitCode = 1;
                 return;
             }
 
@@ -195,7 +211,7 @@ public class ScanLogsCommand : Command
             if (!validation.IsValid)
             {
                 logger.Error("Invalid scan configuration: {Issues}", validation.GetSummary());
-                Environment.Exit(1);
+                context.ExitCode = 1;
                 return;
             }
 
@@ -251,12 +267,13 @@ public class ScanLogsCommand : Command
                 }
             }
 
-            Environment.Exit(result.FailedScans > 0 ? 1 : 0);
+            // Return exit code instead of calling Environment.Exit to allow proper cleanup
+            context.ExitCode = result.FailedScans > 0 ? 1 : 0;
         }
         catch (Exception ex)
         {
             logger.Error(ex, "Scan failed with error");
-            Environment.Exit(1);
+            context.ExitCode = 1;
         }
         finally
         {

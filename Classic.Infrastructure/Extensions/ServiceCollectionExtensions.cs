@@ -3,8 +3,11 @@ using Classic.Core.Interfaces;
 using Classic.Infrastructure.Configuration;
 using Classic.Infrastructure.Logging;
 using Classic.Infrastructure.Messaging;
+using Classic.Infrastructure.Reporting;
+using Classic.Infrastructure.Reporting.Templates;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System.IO.Abstractions;
 
 namespace Classic.Infrastructure.Extensions;
 
@@ -16,6 +19,7 @@ public static class ServiceCollectionExtensions
         Log.Logger = LoggingConfiguration.CreateLogger();
 
         // Register core services
+        services.AddSingleton<IFileSystem, FileSystem>();
         services.AddSingleton<IYamlSettingsCache, YamlSettingsCache>();
         services.AddSingleton<IGameConfiguration, GameConfiguration>();
 
@@ -38,6 +42,10 @@ public static class ServiceCollectionExtensions
         // Register default message handler as CLI
         services.AddSingleton<IMessageHandler>(provider =>
             provider.GetRequiredService<ConsoleMessageHandler>());
+
+        // Register reporting services
+        services.AddScoped<IReportTemplate, MarkdownReportTemplate>();
+        services.AddScoped<IReportGenerator, ReportGenerator>();
 
         // Register Serilog logger as singleton
         services.AddSingleton(Log.Logger);

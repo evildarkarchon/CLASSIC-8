@@ -1,6 +1,8 @@
 using Classic.Core.Interfaces;
 using Classic.Core.Models;
 using Classic.Core.Enums;
+using Classic.ScanLog.Analyzers;
+using Classic.ScanLog.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -16,8 +18,11 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
     private readonly ICrashLogParser _parser;
     private readonly IPluginAnalyzer _pluginAnalyzer;
     private readonly IFormIdAnalyzer _formIdAnalyzer;
+    private readonly EnhancedSuspectScanner _suspectScanner;
+    private readonly ModConflictDetector _modConflictDetector;
     private readonly IReportGenerator _reportGenerator;
     private readonly IMessageHandler _messageHandler;
+    private readonly CrashLogReformatter _reformatter;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ComprehensiveScanOrchestrator> _logger;
     
@@ -28,16 +33,22 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
         ICrashLogParser parser,
         IPluginAnalyzer pluginAnalyzer,
         IFormIdAnalyzer formIdAnalyzer,
+        EnhancedSuspectScanner suspectScanner,
+        ModConflictDetector modConflictDetector,
         IReportGenerator reportGenerator,
         IMessageHandler messageHandler,
+        CrashLogReformatter reformatter,
         IServiceProvider serviceProvider,
         ILogger<ComprehensiveScanOrchestrator> logger)
     {
         _parser = parser;
         _pluginAnalyzer = pluginAnalyzer;
         _formIdAnalyzer = formIdAnalyzer;
+        _suspectScanner = suspectScanner;
+        _modConflictDetector = modConflictDetector;
         _reportGenerator = reportGenerator;
         _messageHandler = messageHandler;
+        _reformatter = reformatter;
         _serviceProvider = serviceProvider;
         _logger = logger;
         
@@ -79,6 +90,12 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
 
             // Ensure output directory exists
             Directory.CreateDirectory(request.OutputDirectory);
+
+            // Reformat crash logs if requested
+            if (request.ReformatLogs)
+            {
+                await ReformatCrashLogsAsync(request, cancellationToken);
+            }
 
             // Determine optimal processing strategy
             var processingMode = request.PreferredMode == ProcessingMode.Adaptive
@@ -178,6 +195,29 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
                 result.AnalyzerTimes["FormIdAnalyzer"] = formIdStopwatch.Elapsed;
                 // FormID count would be determined from analysis results
             }
+
+            if (config?.EnableSuspectScanning == true)
+            {
+                var suspectStopwatch = Stopwatch.StartNew();
+                var suspects = await _suspectScanner.ScanForSuspectsAsync(crashLog, cancellationToken);
+                result.AnalyzerTimes["SuspectScanner"] = suspectStopwatch.Elapsed;
+                
+                // Store suspects in the result
+                result.Suspects.AddRange(suspects.Select(s => s.Name));
+                
+                _logger.LogDebug("Found {Count} suspects in {LogPath}", suspects.Count, logPath);
+            }
+
+            // Mod conflict detection
+            var modConflictStopwatch = Stopwatch.StartNew();
+            var crashLogData = CreateCrashLogData(crashLog);
+            var modConflicts = await _modConflictDetector.DetectModConflictsAsync(crashLogData);
+            result.AnalyzerTimes["ModConflictDetector"] = modConflictStopwatch.Elapsed;
+            
+            // Store mod conflicts in the result
+            result.ModConflicts.AddRange(modConflicts.Select(mc => $"[{mc.Type}] {mc.ModName}: {mc.Warning}"));
+            
+            _logger.LogDebug("Found {Count} mod conflicts in {LogPath}", modConflicts.Count, logPath);
 
             // Additional analyzers would go here...
             
@@ -445,6 +485,16 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
             report.AppendLine();
         }
         
+        if (logResult.ModConflicts.Count > 0)
+        {
+            report.AppendLine("## Mod Conflicts");
+            foreach (var conflict in logResult.ModConflicts)
+            {
+                report.AppendLine($"- {conflict}");
+            }
+            report.AppendLine();
+        }
+        
         await File.WriteAllTextAsync(reportPath, report.ToString(), cancellationToken);
     }
 
@@ -538,5 +588,69 @@ public class ComprehensiveScanOrchestrator : IScanOrchestrator
         }
         
         return recommendations;
+    }
+
+    /// <summary>
+    /// Reformats crash log files according to configuration settings
+    /// </summary>
+    private async Task ReformatCrashLogsAsync(ScanRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogDebug("Starting crash log reformatting for {Count} files", request.LogFiles.Count);
+            
+            await _messageHandler.SendMessageAsync("Reformatting crash logs...", cancellationToken);
+
+            // Get remove patterns from configuration (default patterns for simplification)
+            var removePatterns = new List<string>
+            {
+                "XINPUT1_3.dll",
+                "steam_api64.dll", 
+                "gameoverlayrenderer64.dll",
+                "d3d11.dll",
+                "d3d9.dll"
+            };
+
+            await _reformatter.ReformatCrashLogsAsync(
+                request.LogFiles,
+                removePatterns,
+                request.SimplifyLogs,
+                cancellationToken);
+
+            _logger.LogDebug("Completed crash log reformatting");
+            
+            await _messageHandler.SendMessageAsync("Crash log reformatting completed", cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to reformat crash logs");
+            
+            // Don't fail the entire scan if reformatting fails
+            await _messageHandler.SendMessageAsync($"Warning: Reformatting failed - {ex.Message}", cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Creates CrashLogData from parsed CrashLog for mod conflict detection
+    /// </summary>
+    private static CrashLogData CreateCrashLogData(CrashLog crashLog)
+    {
+        return new CrashLogData
+        {
+            MainError = crashLog.MainError,
+            SystemSpecs = crashLog.Segments.TryGetValue("SystemSpecs", out var systemSpecs) 
+                ? string.Join("\n", systemSpecs) 
+                : null,
+            CallStack = crashLog.Segments.TryGetValue("CallStack", out var callStack) 
+                ? string.Join("\n", callStack) 
+                : null,
+            Plugins = crashLog.Plugins,
+            Headers = new Dictionary<string, object>
+            {
+                ["GameVersion"] = crashLog.GameVersion,
+                ["CrashGenVersion"] = crashLog.CrashGenVersion,
+                ["FileName"] = crashLog.FileName
+            }
+        };
     }
 }

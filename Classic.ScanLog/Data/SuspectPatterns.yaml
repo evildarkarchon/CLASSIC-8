@@ -1,0 +1,321 @@
+# CLASSIC Suspect Patterns Database
+# Ported from Python CLASSIC v7.35.0
+# Pattern format: "severity | name": signal or [signal_list]
+
+# Simple Error Patterns - detected only in main error section
+crashlog_error_check:
+  5 | Stack Overflow Crash: EXCEPTION_STACK_OVERFLOW
+  5 | Active Effects Crash: "0x000100000000"
+  3 | C++ Redist Crash: MSVC
+  4 | Rendering Crash: d3d11
+  5 | Bad Math Crash: EXCEPTION_INT_DIVIDE_BY_ZERO
+  2 | Generic Crash: tbbmalloc
+  5 | Null Crash: "0x000000000000"
+  1 | Creation Club Crash: 01B59A4
+  4 | GPU Driver Crash: nvwgf2umx
+  4 | Audio Driver Crash: dsound
+  5 | Memory Management Crash: HEAP_CORRUPTION
+  4 | Graphics API Crash: vulkan-1
+  3 | F4SE Version Crash: F4SE
+  5 | Thread Synchronization: WAIT_FAILED
+
+# Complex Stack Patterns - detected in call stack and/or main error
+crashlog_stack_check:
+  5 | Scaleform Gfx Crash:
+    - ME-OPT|Scaleform::Gfx::Value::ObjectInterface
+    - InstalledContentPanelBackground_mc
+    - BackgroundAndBracketsInstalledContentTopic_mc
+
+  5 | DLL Crash, Downgrade Crash, LOD Crash:
+    - ME-OPT|24A48D48
+    - ME-OPT|bdhkm64.dll
+    - usvfs::hook_DeleteFileW
+    - ::Manager
+    - ::zlibStreamDetail
+
+  3 | MCM Crash:
+    - ModConfigurationMenu
+    - MCM_Quest
+    - ModSettingsQuest
+
+  5 | Animation Crash:
+    - hkbBehaviorGraph
+    - BSAnimationGraphManager
+    - hkbStateMachine
+    - AnimationFileManagerSingleton
+
+  4 | Physics Crash:
+    - bhkWorld
+    - hkpWorld
+    - havok
+    - bhkRigidBody
+
+  5 | Texture Crash:
+    - BSTextureStreamer
+    - CreateTexture2D
+    - ID3D11Device
+    - DXGI_ERROR
+
+  3 | Script Crash:
+    - Papyrus
+    - ScriptObject
+    - VMStackFrame
+    - BSScript
+
+  4 | Plugin Limit Crash:
+    - TESFile
+    - DataHandler
+    - GetLoadedModByName
+    - ModInfo
+
+  5 | BA2 Archive Crash:
+    - BSResource::LooseFileLocation
+    - BSResource::ArchiveCache
+    - Archive2
+    - BSArchive
+
+  6 | Water Collision Crash:
+    - TESWaterObject
+    - BSWaterShaderProperty
+    - bhkCollisionObject
+    - WaterManager
+
+  4 | Mesh Crash:
+    - NiTriShape
+    - BSGeometry
+    - NiNode
+    - BSTriShape
+
+  3 | Save Game Crash:
+    - BGSSaveLoadManager
+    - SaveGame
+    - LoadGame
+    - BGSSaveFormBuffer
+
+  5 | Memory Pool Crash:
+    - MemoryManager
+    - ScrapHeap
+    - BSSmallBlockAllocator
+    - MemoryHeap
+
+  4 | Navmesh Crash:
+    - BSNavmesh
+    - kNAVM
+    - PathManager
+    - FindPortalTriangles
+
+  3 | Equipment Crash:
+    - EquipManager
+    - Actor::EquipObject
+    - ExtraDataList
+    - TESObjectWEAP
+
+  4 | Location Crash:
+    - TESObjectCELL
+    - TESWorldSpace
+    - GridCellArray
+    - CellAttachDetachEvent
+
+  5 | Precombine Crash:
+    - PreCombinedMesh
+    - CombinedMeshes
+    - MultiBoundNode
+    - BSMultiBound
+
+  4 | Quest Crash:
+    - TESQuest
+    - QuestManager
+    - BGSStoryManagerQuestNode
+    - QuestObjectiveManager
+
+  3 | Workshop Crash:
+    - WorkshopFramework
+    - WorkshopScript
+    - WorkshopObjectScript
+    - BuildableAreaScript
+
+  4 | Companion Crash:
+    - CompanionActorScript
+    - FollowerScript
+    - DialogueFollower
+    - CompanionReadyWeapon
+
+  5 | Form ID Crash:
+    - TESForm::GetFormID
+    - FormID
+    - TESDataHandler::LookupForm
+    - GetFormFromMod
+
+  3 | Interaction Crash:
+    - PlayerCharacter::ActivateRef
+    - TESObjectREFR::Activate
+    - ProcessActivate
+    - ActivateChoice
+
+  4 | Inventory Crash:
+    - ExtraContainerChanges
+    - InventoryChanges
+    - ContainerMenu
+    - ItemCard
+
+  5 | GPU Memory Crash:
+    - DXGI_ERROR_DEVICE_REMOVED
+    - DXGI_ERROR_DEVICE_HUNG
+    - D3DDDIERR_DEVICEREMOVED
+    - CreateCommittedResource
+
+  4 | Sound Crash:
+    - BSAudioManager
+    - BSSoundHandle
+    - XAudio2
+    - AudioEngine
+
+  3 | Weather Crash:
+    - TESWeather
+    - Sky
+    - SkyManager
+    - TESClimate
+
+  5 | Threading Crash:
+    - BSTaskPool
+    - TaskQueueInterface
+    - CriticalSection
+    - BSReadWriteLock
+
+  4 | ENB Crash:
+    - d3d11.dll
+    - enbhelper
+    - enbseries
+    - dxgi.dll
+
+  3 | UI Crash:
+    - GameMenuBase
+    - IMenu
+    - MenuManager
+    - Scaleform
+
+  5 | Vertex Buffer Crash:
+    - ID3D11Buffer
+    - CreateBuffer
+    - VertexBuffer
+    - IndexBuffer
+
+  4 | Shader Crash:
+    - BSShader
+    - CreateVertexShader
+    - CreatePixelShader
+    - ShaderCache
+
+  3 | Combat Crash:
+    - CombatMagicCaster
+    - AttackData
+    - TESCombatStyle
+    - ActorCombatController
+
+  5 | Reference Crash:
+    - TESObjectREFR
+    - BaseExtraList
+    - ExtraDataList
+    - HandleManager
+
+  4 | Package Crash:
+    - TESPackage
+    - PackageManager
+    - AIProcess
+    - ActorPackage
+
+  3 | Perk Crash:
+    - BGSPerk
+    - PerkEntry
+    - BGSEntryPointPerkEntry
+    - PerkRankArray
+
+  5 | Race Crash:
+    - TESRace
+    - TESNPC
+    - ActorBase
+    - FaceGenData
+
+  4 | Landscape Crash:
+    - TESObjectLAND
+    - GridArray
+    - TerrainManager
+    - LandscapeTexture
+
+  3 | Book Crash:
+    - TESObjectBOOK
+    - BookMenu
+    - BSString
+    - MenuTopicManager
+
+  5 | Cell Transition Crash:
+    - CellAttachDetachEvent
+    - LoadingScreens
+    - TESObjectCELL
+    - GridCellArray
+
+  4 | Lighting Crash:
+    - TESObjectLIGH
+    - BSLight
+    - ShadowSceneNode
+    - ImageSpaceManager
+
+  3 | Radio Crash:
+    - BGSRadioStation
+    - TESTopicInfo
+    - DialogueManager
+    - TESTopic
+
+  5 | Faction Crash:
+    - TESFaction
+    - FactionRank
+    - Actor::GetFactionRank
+    - TESActorBase
+
+  4 | AI Crash:
+    - AIProcess
+    - ActorMover
+    - PathingLockRequest
+    - MovementAgent
+
+  3 | Magic Effect Crash:
+    - EffectSetting
+    - MagicItem
+    - ActiveEffect
+    - SpellItem
+
+  5 | Data Handler Crash:
+    - TESDataHandler
+    - ModInfo
+    - TESFile
+    - GetLoadedModList
+
+  4 | Particle Crash:
+    - NiPSysModifier
+    - BSParticleShaderProperty
+    - NiParticleSystem
+    - ParticleManager
+
+  3 | Lockpicking Crash:
+    - LockpickingMenu
+    - TESObjectDOOR
+    - TESObjectCONT
+    - LockpickingMeter
+
+  5 | Model Crash:
+    - TESModel
+    - BSModelDB
+    - NiAVObject
+    - ModelLoader
+
+  4 | Region Crash:
+    - TESRegion
+    - TESRegionData
+    - RegionManager
+    - TESRegionDataMap
+
+  3 | Crafting Crash:
+    - CraftingSubMenus
+    - ConstructibleObjectMenu
+    - BGSConstructibleObject
+    - WorkBenchScript

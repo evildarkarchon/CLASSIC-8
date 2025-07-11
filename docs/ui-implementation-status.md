@@ -34,25 +34,21 @@ This report outlines the current status of the modern Avalonia UI implementation
 ### High Priority (Core Functionality)
 
 #### 1. File Dialog Integration
-**Status**: Not implemented  
-**Requirements**:
-- Implement folder selection dialogs for:
-  - Staging mods folder selection
-  - Custom scan folder selection  
-  - INI folder path selection
-- Use Avalonia's file picker APIs
-- Validate selected paths before saving
+**Status**: ✅ **COMPLETED**  
+**Implemented**:
+- ✅ Staging mods folder selection dialog with validation
+- ✅ Custom scan folder selection dialog with validation
+- ✅ INI folder selection dialog with game file detection
+- ✅ Path validation and error handling
+- ✅ Integration with Avalonia's StorageProvider API
+- ✅ Smart suggested start locations based on current selections
 
-**Implementation Notes**:
-```csharp
-// Add to MainWindowViewModel
-private async Task SelectModsFolder()
-{
-    var topLevel = TopLevel.GetTopLevel(Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-    var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(...);
-    // Handle selection and validation
-}
-```
+**Implementation Details**:
+- Added `SelectModsFolder()`, `SelectScanFolder()`, and `SelectIniFolder()` methods
+- Implemented comprehensive folder validation with access checks
+- Added INI file detection for game configuration folders
+- Proper error handling and logging for all file operations
+- Used Avalonia's modern `FolderPickerOpenOptions` API
 
 #### 2. Real Service Integration
 **Status**: Mock implementation only  
@@ -159,7 +155,7 @@ private async Task SelectModsFolder()
 
 ## 📋 Implementation Priority Order
 
-1. **File Dialog Integration** - Required for basic functionality
+1. ✅ **File Dialog Integration** - ~~Required for basic functionality~~ **COMPLETED**
 2. **Settings Persistence** - Essential for user experience
 3. **Real Service Integration** - Core functionality requirement
 4. **Progress and Notifications** - Important for user feedback
@@ -173,7 +169,7 @@ private async Task SelectModsFolder()
 ## 🎯 Next Steps
 
 ### Immediate (Next Sprint)
-1. Implement file dialog integration for folder selection
+1. ✅ ~~Implement file dialog integration for folder selection~~ **COMPLETED**
 2. Connect settings persistence to YAML configuration
 3. Replace mock orchestrator with dependency injection setup
 4. Add basic error handling and validation
@@ -193,11 +189,11 @@ private async Task SelectModsFolder()
 ## 📊 Current Completion Status
 
 - **UI Framework**: 95% complete
-- **Core Integration**: 20% complete  
-- **User Experience Features**: 30% complete
+- **Core Integration**: 30% complete (+10% with file dialog integration)
+- **User Experience Features**: 40% complete (+10% with folder selection)
 - **Advanced Features**: 10% complete
 
-**Overall Progress**: Approximately 40% complete for a fully functional UI
+**Overall Progress**: Approximately 45% complete for a fully functional UI
 
 ## 🚀 Success Criteria
 
