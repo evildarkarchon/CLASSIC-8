@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
         
         // Register progress and notification services
         services.AddSingleton<IProgressService, Services.ProgressService>();
+        services.AddSingleton<IAudioService, Services.AudioService>();
         services.AddSingleton<INotificationService, Services.NotificationService>();
 
         // Register message handlers

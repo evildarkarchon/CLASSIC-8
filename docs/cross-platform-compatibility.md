@@ -32,13 +32,15 @@ CLASSIC-8 has been designed with cross-platform compatibility in mind, supportin
 - **Fallback Directories**: Automatic fallback to `~/.local/share` on Linux/macOS when standard directories aren't available
 
 ### 2. Audio Notifications
-- **Windows**: Uses `rundll32` for system sounds with `Console.Beep()` fallback
+- **Embedded Audio Files**: Custom notification and error sounds embedded as resources
+- **Windows**: Uses PowerShell MediaPlayer for .WAV playback with volume control
 - **Linux**: Supports multiple audio systems:
   - PulseAudio (`paplay`)
   - ALSA (`aplay`)
-  - Speaker test (`speaker-test`)
-  - Bell character (`echo`)
-- **macOS**: Uses `afplay` for system sounds with `osascript` fallback
+  - FFmpeg (`ffplay`)
+  - MPV (`mpv`)
+- **macOS**: Uses `afplay` for .WAV playback with volume control
+- **Volume Control**: All platforms support 50% volume as requested
 - **Fallback**: Graceful degradation when audio isn't available
 
 ### 3. UI Framework
@@ -51,6 +53,30 @@ CLASSIC-8 has been designed with cross-platform compatibility in mind, supportin
 - **Avalonia Dispatcher**: Cross-platform UI thread management
 - **Task-based Async**: Standard .NET async/await patterns
 - **Thread-safe Operations**: Proper synchronization for all platforms
+
+## Audio Resources
+
+### Embedded Sound Files
+The application includes custom sound files embedded as resources:
+- **classic_notify.wav**: Used for success, information, and warning notifications
+- **classic_error.wav**: Used for error notifications  
+- **Volume**: All audio playback is set to 50% volume as requested
+- **Format**: WAV files for broad cross-platform compatibility
+
+### AudioService Class
+Located in `Classic.Infrastructure.Services.AudioService`, provides:
+
+```csharp
+// Play embedded notification sounds
+await audioService.PlayNotificationAsync(NotificationType.Success, volume: 0.5);
+await audioService.PlayNotificationAsync(NotificationType.Error, volume: 0.5);
+
+// Play any embedded resource
+await audioService.PlayEmbeddedResourceAsync("classic_notify.wav", volume: 0.5);
+
+// Check audio support
+bool isSupported = audioService.IsAudioSupported();
+```
 
 ## Cross-Platform Helpers
 
@@ -94,9 +120,9 @@ Emergency Fallback: /tmp or %TEMP%
 
 ### 2. Audio Notification Fallbacks
 ```
-Windows: rundll32 → Console.Beep() → Silent
-Linux: paplay → aplay → speaker-test → echo → Silent  
-macOS: afplay → osascript → Silent
+Windows: PowerShell MediaPlayer → Silent (with logging)
+Linux: paplay → aplay → ffplay → mpv → Silent (with logging)
+macOS: afplay → Silent (with logging)
 Other: Silent (with logging)
 ```
 
@@ -138,8 +164,13 @@ Emergency: Graceful degradation with user notification
 #### Linux Audio Issues
 ```bash
 # Install audio dependencies
-sudo apt-get install pulseaudio-utils alsa-utils  # Ubuntu/Debian
-sudo dnf install pulseaudio-utils alsa-utils      # Fedora
+sudo apt-get install pulseaudio-utils alsa-utils ffmpeg mpv  # Ubuntu/Debian
+sudo dnf install pulseaudio-utils alsa-utils ffmpeg mpv      # Fedora
+
+# Test audio playback manually
+paplay /path/to/classic_notify.wav
+aplay /path/to/classic_notify.wav
+ffplay -nodisp -autoexit /path/to/classic_notify.wav
 ```
 
 #### macOS Permission Issues
