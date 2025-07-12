@@ -25,10 +25,10 @@ public class PerformanceMonitor : IDisposable
     private long _lastBytesRead = 0;
     private DateTime _lastUpdateTime;
     
-    public PerformanceMonitor(ILogger<PerformanceMonitor> logger, PerformanceMetrics metrics)
+    public PerformanceMonitor(ILogger<PerformanceMonitor> logger)
     {
         _logger = logger;
-        _metrics = metrics;
+        _metrics = new PerformanceMetrics();
         _currentProcess = Process.GetCurrentProcess();
         _processorCount = Environment.ProcessorCount;
         _lastUpdateTime = DateTime.Now;
