@@ -371,7 +371,6 @@ FodyWeavers.xsd
 
 # globs
 Makefile.in
-*.userprefs
 *.usertasks
 config.make
 config.status
@@ -455,3 +454,4 @@ $RECYCLE.BIN/
 *.bak
 Reports/
 !Examples/*.log
+*.code-workspace
