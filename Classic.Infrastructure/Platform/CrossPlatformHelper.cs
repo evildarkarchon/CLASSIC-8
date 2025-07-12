@@ -193,4 +193,22 @@ public static class CrossPlatformHelper
                $"Framework: {RuntimeInformation.FrameworkDescription}, " +
                $"Process Architecture: {RuntimeInformation.ProcessArchitecture}";
     }
+    
+    /// <summary>
+    /// Gracefully exits the application in a platform-independent way
+    /// </summary>
+    public static void ExitApplication(int exitCode = 0)
+    {
+        try
+        {
+            _logger.Information("Gracefully exiting application with code {ExitCode}", exitCode);
+            Environment.Exit(exitCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to exit application gracefully");
+            // Force exit if graceful exit fails
+            Environment.FailFast("Application exit failed", ex);
+        }
+    }
 }

@@ -656,8 +656,10 @@ public class MainWindowViewModel : ViewModelBase
     
     private void Exit()
     {
-        _logger.Information("Exiting application");
-        // TODO: Implement exit logic
+        _logger.Information("Exit command triggered");
+        
+        // Use platform-independent exit method
+        CrossPlatformHelper.ExitApplication(0);
     }
     
     private async Task ManageGameFiles(string category, string action)
