@@ -552,16 +552,50 @@ public class MainWindowViewModel : ViewModelBase
         await Task.CompletedTask;
     }
     
-    private void ShowAbout()
+    private async void ShowAbout()
     {
         _logger.Information("Showing about dialog");
-        // TODO: Show about dialog
+        
+        try
+        {
+            var aboutDialog = new Views.AboutDialog
+            {
+                DataContext = new AboutDialogViewModel()
+            };
+            
+            var mainWindow = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (mainWindow != null)
+            {
+                await aboutDialog.ShowDialog(mainWindow);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to show about dialog");
+        }
     }
     
-    private void ShowHelp()
+    private async void ShowHelp()
     {
-        _logger.Information("Showing help");
-        // TODO: Show help dialog
+        _logger.Information("Showing help dialog");
+        
+        try
+        {
+            var helpDialog = new Views.HelpDialog
+            {
+                DataContext = new HelpDialogViewModel()
+            };
+            
+            var mainWindow = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (mainWindow != null)
+            {
+                await helpDialog.ShowDialog(mainWindow);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to show help dialog");
+        }
     }
     
     private void Exit()
