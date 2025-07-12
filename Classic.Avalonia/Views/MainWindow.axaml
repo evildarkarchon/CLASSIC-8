@@ -185,11 +185,15 @@
                                             Command="{Binding ScanCrashLogsCommand}"
                                             IsEnabled="{Binding !IsScanning}"
                                             ToolTip.Tip="Scan all detected crash logs for issues."
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
                                             Margin="0,0,8,0" MinHeight="48" />
                                     <Button Classes="primary" Content="SCAN GAME FILES" 
                                             Command="{Binding ScanGameFilesCommand}"
                                             IsEnabled="{Binding !IsScanning}"
                                             ToolTip.Tip="Scan game and mod files for potential problems (FCX Mode dependent)."
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
                                             Margin="8,0,0,0" MinHeight="48" />
                                 </UniformGrid>
                                 

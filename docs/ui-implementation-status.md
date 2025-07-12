@@ -150,7 +150,6 @@ This report outlines the current status of the modern Avalonia UI implementation
 **Requirements**:
 - Keyboard shortcuts and accessibility features
 - Drag-and-drop file support for crash logs
-- Advanced filtering and search in results
 - Theme customization options
 - Window state persistence
 
