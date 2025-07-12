@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime;
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Classic.Core.Models;
 
@@ -13,8 +14,8 @@ public class PerformanceMonitor : IDisposable
     private readonly ILogger<PerformanceMonitor> _logger;
     private readonly PerformanceMetrics _metrics;
     private readonly Timer _monitoringTimer;
-    private readonly PerformanceCounter _cpuCounter;
-    private readonly PerformanceCounter _memoryCounter;
+    private readonly PerformanceCounter? _cpuCounter;
+    private readonly PerformanceCounter? _memoryCounter;
     private readonly object _lock = new();
     private bool _disposed = false;
     
@@ -25,6 +26,10 @@ public class PerformanceMonitor : IDisposable
     private long _lastBytesRead = 0;
     private DateTime _lastUpdateTime;
     
+    // Cross-platform CPU tracking
+    private long _lastTotalCpuTime = 0;
+    private long _lastIdleCpuTime = 0;
+    
     public PerformanceMonitor(ILogger<PerformanceMonitor> logger)
     {
         _logger = logger;
@@ -33,9 +38,19 @@ public class PerformanceMonitor : IDisposable
         _processorCount = Environment.ProcessorCount;
         _lastUpdateTime = DateTime.Now;
         
-        // Initialize performance counters
-        _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-        _memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+        // Initialize performance counters (Windows only)
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            try
+            {
+                _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                _memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to initialize Windows performance counters, using cross-platform metrics only");
+            }
+        }
         
         // Initialize metrics
         _metrics.StartTime = DateTime.Now;
@@ -101,10 +116,308 @@ public class PerformanceMonitor : IDisposable
             _metrics.PeakMemoryUsage = workingSet;
         }
         
-        // Get available system memory
-        var availableMemory = _memoryCounter.NextValue() * 1024 * 1024; // Convert MB to bytes
+        // Get available system memory using platform-specific methods
+        var availableMemory = GetAvailableMemoryBytes();
         _logger.LogTrace("Memory: Working={WorkingMB}MB, Private={PrivateMB}MB, Available={AvailableMB}MB", 
             workingSet / 1024 / 1024, privateMemory / 1024 / 1024, availableMemory / 1024 / 1024);
+    }
+
+    /// <summary>
+    /// Gets available system memory in bytes using platform-specific methods
+    /// </summary>
+    private long GetAvailableMemoryBytes()
+    {
+        try
+        {
+            if (_memoryCounter != null && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // Windows - use performance counter
+                return (long)(_memoryCounter.NextValue() * 1024 * 1024); // Convert MB to bytes
+            }
+            
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return GetAvailableMemoryLinux();
+            }
+            
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return GetAvailableMemoryMacOS();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get available memory, using fallback");
+        }
+        
+        // Fallback: estimate based on GC info (rough approximation)
+        var gcInfo = GC.GetGCMemoryInfo();
+        return Math.Max(0, gcInfo.TotalAvailableMemoryBytes - gcInfo.MemoryLoadBytes);
+    }
+
+    /// <summary>
+    /// Gets available memory on Linux by reading /proc/meminfo
+    /// </summary>
+    private long GetAvailableMemoryLinux()
+    {
+        try
+        {
+            var memInfo = File.ReadAllText("/proc/meminfo");
+            var lines = memInfo.Split('\n');
+            
+            long memAvailable = 0;
+            long memFree = 0;
+            long buffers = 0;
+            long cached = 0;
+            
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("MemAvailable:"))
+                {
+                    var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2 && long.TryParse(parts[1], out memAvailable))
+                    {
+                        return memAvailable * 1024; // Convert kB to bytes
+                    }
+                }
+                else if (line.StartsWith("MemFree:"))
+                {
+                    var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2) long.TryParse(parts[1], out memFree);
+                }
+                else if (line.StartsWith("Buffers:"))
+                {
+                    var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2) long.TryParse(parts[1], out buffers);
+                }
+                else if (line.StartsWith("Cached:"))
+                {
+                    var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2) long.TryParse(parts[1], out cached);
+                }
+            }
+            
+            // If MemAvailable wasn't found, calculate as MemFree + Buffers + Cached
+            if (memAvailable == 0 && memFree > 0)
+            {
+                memAvailable = memFree + buffers + cached;
+            }
+            
+            return memAvailable * 1024; // Convert kB to bytes
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to read Linux memory info from /proc/meminfo");
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Gets available memory on macOS using vm_stat command
+    /// </summary>
+    private long GetAvailableMemoryMacOS()
+    {
+        try
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "vm_stat",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            };
+            
+            using var process = Process.Start(processInfo);
+            if (process == null) return 0;
+            
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+            
+            if (process.ExitCode != 0) return 0;
+            
+            var lines = output.Split('\n');
+            long pageSize = 4096; // Default page size
+            long freePages = 0;
+            
+            foreach (var line in lines)
+            {
+                if (line.Contains("page size of"))
+                {
+                    var parts = line.Split(' ');
+                    for (int i = 0; i < parts.Length - 1; i++)
+                    {
+                        if (parts[i] == "of" && long.TryParse(parts[i + 1], out var size))
+                        {
+                            pageSize = size;
+                            break;
+                        }
+                    }
+                }
+                else if (line.StartsWith("Pages free:"))
+                {
+                    var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 3 && long.TryParse(parts[2].TrimEnd('.'), out freePages))
+                    {
+                        break;
+                    }
+                }
+            }
+            
+            return freePages * pageSize;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get macOS memory info using vm_stat");
+            return 0;
+        }
+    }
+    
+    /// <summary>
+    /// Gets system-wide CPU usage percentage using platform-specific methods
+    /// </summary>
+    private double GetSystemCpuUsagePercent()
+    {
+        try
+        {
+            if (_cpuCounter != null && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // Windows - use performance counter
+                return 100.0 - _cpuCounter.NextValue(); // PerformanceCounter returns idle time, so we subtract from 100
+            }
+            
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return GetCpuUsageLinux();
+            }
+            
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return GetCpuUsageMacOS();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get system CPU usage, using process-only metrics");
+        }
+        
+        return 0; // Fallback - will use process CPU only
+    }
+
+    /// <summary>
+    /// Gets CPU usage on Linux by reading /proc/stat
+    /// </summary>
+    private double GetCpuUsageLinux()
+    {
+        try
+        {
+            var statInfo = File.ReadAllText("/proc/stat");
+            var firstLine = statInfo.Split('\n')[0];
+            
+            // Parse: cpu  user nice system idle iowait irq softirq steal guest guest_nice
+            var parts = firstLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 5 || parts[0] != "cpu") return 0;
+            
+            long user = long.Parse(parts[1]);
+            long nice = long.Parse(parts[2]);
+            long system = long.Parse(parts[3]);
+            long idle = long.Parse(parts[4]);
+            long iowait = parts.Length > 5 ? long.Parse(parts[5]) : 0;
+            long irq = parts.Length > 6 ? long.Parse(parts[6]) : 0;
+            long softirq = parts.Length > 7 ? long.Parse(parts[7]) : 0;
+            long steal = parts.Length > 8 ? long.Parse(parts[8]) : 0;
+            
+            long totalIdle = idle + iowait;
+            long totalNonIdle = user + nice + system + irq + softirq + steal;
+            long total = totalIdle + totalNonIdle;
+            
+            if (_lastTotalCpuTime == 0)
+            {
+                // First measurement, store values and return 0
+                _lastTotalCpuTime = total;
+                _lastIdleCpuTime = totalIdle;
+                return 0;
+            }
+            
+            long totalDelta = total - _lastTotalCpuTime;
+            long idleDelta = totalIdle - _lastIdleCpuTime;
+            
+            _lastTotalCpuTime = total;
+            _lastIdleCpuTime = totalIdle;
+            
+            if (totalDelta == 0) return 0;
+            
+            return ((double)(totalDelta - idleDelta) / totalDelta) * 100.0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to read Linux CPU info from /proc/stat");
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Gets CPU usage on macOS using top command
+    /// </summary>
+    private double GetCpuUsageMacOS()
+    {
+        try
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "top",
+                Arguments = "-l 1 -n 0",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            };
+            
+            using var process = Process.Start(processInfo);
+            if (process == null) return 0;
+            
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+            
+            if (process.ExitCode != 0) return 0;
+            
+            var lines = output.Split('\n');
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("CPU usage:"))
+                {
+                    // Parse: CPU usage: 5.12% user, 7.69% sys, 87.17% idle
+                    var parts = line.Split(',');
+                    foreach (var part in parts)
+                    {
+                        if (part.Contains("idle"))
+                        {
+                            var idleStr = part.Trim();
+                            var percentIndex = idleStr.IndexOf('%');
+                            if (percentIndex > 0)
+                            {
+                                var idleSpan = idleStr.AsSpan(0, percentIndex);
+                                var spaceIndex = idleSpan.LastIndexOf(' ');
+                                if (spaceIndex >= 0)
+                                {
+                                    idleSpan = idleSpan.Slice(spaceIndex + 1);
+                                }
+                                
+                                if (double.TryParse(idleSpan, out var idlePercent))
+                                {
+                                    return 100.0 - idlePercent;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get macOS CPU info using top");
+            return 0;
+        }
     }
     
     /// <summary>
@@ -114,28 +427,36 @@ public class PerformanceMonitor : IDisposable
     {
         try
         {
+            // Get system-wide CPU usage using cross-platform methods
+            var systemCpuUsage = GetSystemCpuUsagePercent();
+            
+            // Calculate process-specific CPU usage as well
             var totalProcessorTime = _currentProcess.TotalProcessorTime.TotalMilliseconds;
             var currentTime = DateTime.Now;
             var elapsedTime = (currentTime - _lastUpdateTime).TotalMilliseconds;
             
+            double processCpuUsage = 0;
             if (elapsedTime > 0)
             {
                 // Calculate CPU usage for this process
-                var cpuUsage = (totalProcessorTime / elapsedTime) * 100 / _processorCount;
-                _metrics.CpuUsagePercent = Math.Min(100, Math.Max(0, cpuUsage));
-                
-                // Update peak and average
-                if (_metrics.CpuUsagePercent > _metrics.PeakCpuUsage)
-                {
-                    _metrics.PeakCpuUsage = _metrics.CpuUsagePercent;
-                }
-                
-                // Simple moving average for CPU usage
-                _metrics.AverageCpuUsage = (_metrics.AverageCpuUsage * 0.7) + (_metrics.CpuUsagePercent * 0.3);
+                processCpuUsage = (totalProcessorTime / elapsedTime) * 100 / _processorCount;
+                processCpuUsage = Math.Min(100, Math.Max(0, processCpuUsage));
             }
             
-            _logger.LogTrace("CPU: Current={CpuUsage:F1}%, Peak={PeakCpu:F1}%, Average={AvgCpu:F1}%", 
-                _metrics.CpuUsagePercent, _metrics.PeakCpuUsage, _metrics.AverageCpuUsage);
+            // Use system CPU if available, otherwise fall back to process CPU
+            _metrics.CpuUsagePercent = systemCpuUsage > 0 ? systemCpuUsage : processCpuUsage;
+            
+            // Update peak and average
+            if (_metrics.CpuUsagePercent > _metrics.PeakCpuUsage)
+            {
+                _metrics.PeakCpuUsage = _metrics.CpuUsagePercent;
+            }
+            
+            // Simple moving average for CPU usage
+            _metrics.AverageCpuUsage = (_metrics.AverageCpuUsage * 0.7) + (_metrics.CpuUsagePercent * 0.3);
+            
+            _logger.LogTrace("CPU: System={SystemCpu:F1}%, Process={ProcessCpu:F1}%, Current={CpuUsage:F1}%, Peak={PeakCpu:F1}%, Average={AvgCpu:F1}%", 
+                systemCpuUsage, processCpuUsage, _metrics.CpuUsagePercent, _metrics.PeakCpuUsage, _metrics.AverageCpuUsage);
         }
         catch (Exception ex)
         {
