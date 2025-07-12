@@ -126,6 +126,37 @@ public class NotificationService : INotificationService
         _logger.Information("All notifications cleared");
     }
 
+    public async Task ShowUpdateAvailableAsync(string currentVersion, string latestVersion, string downloadUrl)
+    {
+        var title = "Update Available!";
+        var message = $"A new version of CLASSIC is available.\n\n" +
+                     $"Current version: {currentVersion}\n" +
+                     $"Latest version: {latestVersion}\n\n" +
+                     (!string.IsNullOrEmpty(downloadUrl) ? $"Download: {downloadUrl}" : "Check GitHub or Nexus for the latest version");
+
+        await ShowToastAsync(title, message, NotificationType.Information);
+    }
+
+    public async Task ShowNoUpdateAvailableAsync(string currentVersion, string updateSource)
+    {
+        var title = "No Updates Available";
+        var message = $"You have the latest version of CLASSIC!\n\n" +
+                     $"Current version: {currentVersion}\n" +
+                     $"Source checked: {updateSource}";
+
+        await ShowToastAsync(title, message, NotificationType.Success);
+    }
+
+    public async Task ShowUpdateCheckErrorAsync(string errorMessage)
+    {
+        var title = "Update Check Failed";
+        var message = $"Unable to check for updates.\n\n" +
+                     $"Error: {errorMessage}\n\n" +
+                     "Please check your internet connection and try again.";
+
+        await ShowToastAsync(title, message, NotificationType.Warning);
+    }
+
     private int GetDurationForType(NotificationType type)
     {
         return type switch

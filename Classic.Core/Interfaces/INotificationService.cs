@@ -36,4 +36,19 @@ public interface INotificationService
     /// Clears all notifications
     /// </summary>
     void ClearNotifications();
+    
+    /// <summary>
+    /// Shows an update available notification
+    /// </summary>
+    Task ShowUpdateAvailableAsync(string currentVersion, string latestVersion, string downloadUrl);
+    
+    /// <summary>
+    /// Shows a no update available notification
+    /// </summary>
+    Task ShowNoUpdateAvailableAsync(string currentVersion, string updateSource);
+    
+    /// <summary>
+    /// Shows an update check error notification
+    /// </summary>
+    Task ShowUpdateCheckErrorAsync(string errorMessage);
 }

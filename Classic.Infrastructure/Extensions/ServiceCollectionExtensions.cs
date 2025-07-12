@@ -1,4 +1,4 @@
-﻿using Classic.Core.Enums;
+using Classic.Core.Enums;
 using Classic.Core.Interfaces;
 using Classic.Infrastructure.Configuration;
 using Classic.Infrastructure.GameManagement;
@@ -6,6 +6,7 @@ using Classic.Infrastructure.Logging;
 using Classic.Infrastructure.Messaging;
 using Classic.Infrastructure.Reporting;
 using Classic.Infrastructure.Reporting.Templates;
+using Classic.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.IO.Abstractions;
@@ -35,6 +36,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProgressService, Services.ProgressService>();
         services.AddSingleton<IAudioService, Services.AudioService>();
         services.AddSingleton<INotificationService, Services.NotificationService>();
+        
+        // Register HTTP client for update services
+        services.AddHttpClient<IGitHubApiService, GitHubApiService>();
+        services.AddHttpClient<INexusModsService, NexusModsService>();
+        
+        // Register update services
+        services.AddSingleton<IVersionService, VersionService>();
+        services.AddScoped<IUpdateService, UpdateService>();
 
         // Register message handlers
         services.AddSingleton<ConsoleMessageHandler>();

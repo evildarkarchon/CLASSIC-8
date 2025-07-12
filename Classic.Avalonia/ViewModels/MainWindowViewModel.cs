@@ -26,6 +26,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IGameFileManager _gameFileManager;
     private readonly INotificationService _notificationService;
     private readonly IProgressService _progressService;
+    private readonly IUpdateService _updateService;
     
     private string _selectedModsFolder = string.Empty;
     private string _selectedScanFolder = string.Empty;
@@ -51,7 +52,7 @@ public class MainWindowViewModel : ViewModelBase
     private ScanResult? _lastScanResult;
     private string _scanStatistics = string.Empty;
     
-    public MainWindowViewModel(IScanOrchestrator scanOrchestrator, ILogger logger, ISettingsService settingsService, IGameFileManager gameFileManager, INotificationService notificationService, IProgressService progressService)
+    public MainWindowViewModel(IScanOrchestrator scanOrchestrator, ILogger logger, ISettingsService settingsService, IGameFileManager gameFileManager, INotificationService notificationService, IProgressService progressService, IUpdateService updateService)
     {
         _scanOrchestrator = scanOrchestrator;
         _logger = logger;
@@ -59,6 +60,7 @@ public class MainWindowViewModel : ViewModelBase
         _gameFileManager = gameFileManager;
         _notificationService = notificationService;
         _progressService = progressService;
+        _updateService = updateService;
         
         // Initialize commands
         ScanCrashLogsCommand = ReactiveCommand.CreateFromTask(ExecuteScanCrashLogs, this.WhenAnyValue(x => x.IsScanning, scanning => !scanning));
@@ -547,9 +549,63 @@ public class MainWindowViewModel : ViewModelBase
     
     private async Task CheckForUpdates()
     {
-        _logger.Information("Checking for updates");
-        // TODO: Implement update check
-        await Task.CompletedTask;
+        _logger.Information("Starting manual update check from source: {UpdateSource}", UpdateSource);
+        
+        try
+        {
+            _progressService.StartProgress("Checking for updates...");
+            
+            // Check for updates using the update service
+            var updateResult = await _updateService.CheckForUpdatesAsync();
+            
+            if (updateResult.IsSuccess)
+            {
+                if (updateResult.IsUpdateAvailable)
+                {
+                    var message = $"Update available!\n\n" +
+                                  $"Current version: {updateResult.CurrentVersion}\n" +
+                                  $"Latest version: {updateResult.LatestVersion}\n" +
+                                  $"Source: {updateResult.UpdateSource}";
+                    
+                    _logger.Information("Update available - Current: {Current}, Latest: {Latest}", 
+                        updateResult.CurrentVersion, updateResult.LatestVersion);
+                    
+                    await _notificationService.ShowUpdateAvailableAsync(
+                        updateResult.CurrentVersion?.ToString() ?? "Unknown",
+                        updateResult.LatestVersion?.ToString() ?? "Unknown",
+                        updateResult.LatestRelease?.HtmlUrl ?? "");
+                }
+                else
+                {
+                    var message = $"You have the latest version!\n\n" +
+                                  $"Current version: {updateResult.CurrentVersion}\n" +
+                                  $"Source: {updateResult.UpdateSource}";
+                    
+                    _logger.Information("No update available - Current version: {Current}", updateResult.CurrentVersion);
+                    
+                    await _notificationService.ShowNoUpdateAvailableAsync(
+                        updateResult.CurrentVersion?.ToString() ?? "Unknown",
+                        updateResult.UpdateSource);
+                }
+            }
+            else
+            {
+                _logger.Warning("Update check failed: {Error}", updateResult.ErrorMessage);
+                
+                await _notificationService.ShowUpdateCheckErrorAsync(
+                    updateResult.ErrorMessage ?? "Unknown error occurred during update check");
+            }
+            
+            _progressService.CompleteProgress("Update check completed");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Unexpected error during manual update check");
+            _progressService.FailProgress($"Update check failed: {ex.Message}");
+            
+            await _notificationService.ShowUpdateCheckErrorAsync(
+                $"Update check failed: {ex.Message}");
+        }
     }
     
     private async void ShowAbout()
