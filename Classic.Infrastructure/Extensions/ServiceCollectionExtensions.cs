@@ -2,6 +2,7 @@ using Classic.Core.Enums;
 using Classic.Core.Interfaces;
 using Classic.Infrastructure.Configuration;
 using Classic.Infrastructure.GameManagement;
+using Classic.Infrastructure.GameManagement.Strategies;
 using Classic.Infrastructure.Logging;
 using Classic.Infrastructure.Messaging;
 using Classic.Infrastructure.Reporting;
@@ -37,6 +38,13 @@ public static class ServiceCollectionExtensions
 
         // Register game file management
         services.AddScoped<IGameFileManager, GameFileManager>();
+
+        // Register file operation strategies
+        services.AddScoped<IFileOperationStrategy, XseFileOperationStrategy>();
+        services.AddScoped<IFileOperationStrategy, ReshadeFileOperationStrategy>();
+        services.AddScoped<IFileOperationStrategy, VulkanFileOperationStrategy>();
+        services.AddScoped<IFileOperationStrategy, EnbFileOperationStrategy>();
+        services.AddScoped<IFileOperationStrategyFactory, FileOperationStrategyFactory>();
 
         // Register progress and notification services
         services.AddSingleton<IProgressService, ProgressService>();
