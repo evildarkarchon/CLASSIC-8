@@ -1,5 +1,6 @@
 using Classic.Core.Enums;
 using Classic.Core.Interfaces;
+using Classic.Infrastructure.Messaging;
 using Serilog;
 
 namespace Classic.CLI.Commands;
@@ -7,11 +8,13 @@ namespace Classic.CLI.Commands;
 public class CliMessageHandler : IMessageHandler
 {
     private readonly bool _showProgress;
+    private readonly IMessageFormattingService? _formattingService;
     private int _lastProgressLength;
 
-    public CliMessageHandler(bool showProgress = true)
+    public CliMessageHandler(bool showProgress = true, IMessageFormattingService? formattingService = null)
     {
         _showProgress = showProgress;
+        _formattingService = formattingService;
     }
 
     public void SendMessage(string message, MessageType type, MessageTarget target)
@@ -19,23 +22,49 @@ public class CliMessageHandler : IMessageHandler
         if (target == MessageTarget.Gui)
             return; // Skip GUI-only messages in CLI
 
-        switch (type)
+        // Use formatting service if available, otherwise use direct Serilog
+        if (_formattingService != null)
         {
-            case MessageType.Error:
-                Log.Error("{Message}", message);
-                break;
-            case MessageType.Warning:
-                Log.Warning("{Message}", message);
-                break;
-            case MessageType.Success:
-                Log.Information("[SUCCESS] {Message}", message);
-                break;
-            case MessageType.Debug:
-                Log.Debug("{Message}", message);
-                break;
-            default:
-                Log.Information("{Message}", message);
-                break;
+            var formattedMessage = _formattingService.FormatMessage(message, type);
+            switch (type)
+            {
+                case MessageType.Error:
+                    Log.Error("{Message}", formattedMessage);
+                    break;
+                case MessageType.Warning:
+                    Log.Warning("{Message}", formattedMessage);
+                    break;
+                case MessageType.Success:
+                    Log.Information("{Message}", formattedMessage);
+                    break;
+                case MessageType.Debug:
+                    Log.Debug("{Message}", formattedMessage);
+                    break;
+                default:
+                    Log.Information("{Message}", formattedMessage);
+                    break;
+            }
+        }
+        else
+        {
+            switch (type)
+            {
+                case MessageType.Error:
+                    Log.Error("{Message}", message);
+                    break;
+                case MessageType.Warning:
+                    Log.Warning("{Message}", message);
+                    break;
+                case MessageType.Success:
+                    Log.Information("[SUCCESS] {Message}", message);
+                    break;
+                case MessageType.Debug:
+                    Log.Debug("{Message}", message);
+                    break;
+                default:
+                    Log.Information("{Message}", message);
+                    break;
+            }
         }
     }
 
@@ -68,7 +97,7 @@ public class CliMessageHandler : IMessageHandler
     {
         if (_showProgress)
             Log.Information("Starting: {Operation} (Total: {Total})", operation, total);
-        return new ProgressContext();
+        return new ProgressContext(this, operation, total);
     }
 
     public Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
@@ -89,10 +118,5 @@ public class CliMessageHandler : IMessageHandler
         var filledLength = (int)(barLength * percentage / 100);
         var bar = new string('█', filledLength) + new string('░', barLength - filledLength);
         return $"[{bar}]";
-    }
-
-    private class ProgressContext : IDisposable
-    {
-        public void Dispose() { }
     }
 }

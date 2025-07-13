@@ -49,6 +49,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPapyrusMonitoringService, PapyrusMonitoringService>();
         services.AddHttpClient<IPastebinService, PastebinService>();
 
+        // Register message formatting service
+        services.AddSingleton<IMessageFormattingService, MessageFormattingService>();
+
         // Register message handlers
         services.AddSingleton<ConsoleMessageHandler>();
         services.AddSingleton<GuiMessageHandler>();

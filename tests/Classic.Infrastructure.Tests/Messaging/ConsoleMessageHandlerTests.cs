@@ -1,5 +1,6 @@
 using Classic.Infrastructure.Messaging;
 using Classic.Core.Enums;
+using Classic.Core.Interfaces;
 using FluentAssertions;
 using Serilog;
 using Moq;
@@ -10,17 +11,26 @@ namespace Classic.Infrastructure.Tests.Messaging;
 public class ConsoleMessageHandlerTests
 {
     private readonly Mock<ILogger> _mockLogger;
+    private readonly Mock<IMessageFormattingService> _mockFormattingService;
     private readonly ConsoleMessageHandler _handler;
 
     public ConsoleMessageHandlerTests()
     {
         _mockLogger = new Mock<ILogger>();
-        _handler = new ConsoleMessageHandler(_mockLogger.Object);
+        _mockFormattingService = new Mock<IMessageFormattingService>();
+        
+        // Setup default behavior for formatting service
+        _mockFormattingService.Setup(x => x.FormatMessage(It.IsAny<string>(), It.IsAny<MessageType>()))
+            .Returns<string, MessageType>((msg, type) => $"[{type}] {msg}");
+        _mockFormattingService.Setup(x => x.GetConsoleColor(It.IsAny<MessageType>()))
+            .Returns(ConsoleColor.White);
+        
+        _handler = new ConsoleMessageHandler(_mockLogger.Object, _mockFormattingService.Object);
     }
 
     [Theory]
-    [InlineData(MessageTarget.CLI, true)]
-    [InlineData(MessageTarget.GUI, false)]
+    [InlineData(MessageTarget.Cli, true)]
+    [InlineData(MessageTarget.Gui, false)]
     [InlineData(MessageTarget.Both, true)]
     public void SendMessage_ShouldRespectMessageTarget(MessageTarget target, bool shouldOutput)
     {

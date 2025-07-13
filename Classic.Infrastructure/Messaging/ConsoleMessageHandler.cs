@@ -1,26 +1,28 @@
 ﻿using Classic.Core.Enums;
+using Classic.Core.Interfaces;
 using Serilog;
 
 namespace Classic.Infrastructure.Messaging;
 
-public class ConsoleMessageHandler(ILogger logger) : MessageHandlerBase(logger)
+public class ConsoleMessageHandler : MessageHandlerBase
 {
+    private readonly IMessageFormattingService _formattingService;
+
+    public ConsoleMessageHandler(ILogger logger, IMessageFormattingService formattingService) 
+        : base(logger)
+    {
+        _formattingService = formattingService ?? throw new ArgumentNullException(nameof(formattingService));
+    }
+
     public override void SendMessage(string message, MessageType type, MessageTarget target)
     {
         if (!target.HasFlag(MessageTarget.Cli)) return;
 
-        var color = type switch
-        {
-            MessageType.Error => ConsoleColor.Red,
-            MessageType.Critical => ConsoleColor.DarkRed,
-            MessageType.Warning => ConsoleColor.Yellow,
-            MessageType.Success => ConsoleColor.Green,
-            MessageType.Debug => ConsoleColor.Gray,
-            _ => ConsoleColor.White
-        };
+        var color = _formattingService.GetConsoleColor(type);
+        var formattedMessage = _formattingService.FormatMessage(message, type);
 
         Console.ForegroundColor = color;
-        Console.WriteLine($"[{type}] {message}");
+        Console.WriteLine(formattedMessage);
         Console.ResetColor();
 
         Logger.Information("Message sent: [{Type}] {Message}", type, message);
@@ -37,35 +39,5 @@ public class ConsoleMessageHandler(ILogger logger) : MessageHandlerBase(logger)
     public override IDisposable BeginProgressContext(string operation, int total)
     {
         return new ProgressContext(this, operation, total);
-    }
-
-    private class ProgressContext : IDisposable
-    {
-        private readonly ConsoleMessageHandler _handler;
-        private readonly string _operation;
-        private readonly int _total;
-        private int _current;
-
-        public ProgressContext(ConsoleMessageHandler handler, string operation, int total)
-        {
-            _handler = handler;
-            _operation = operation;
-            _total = total;
-            _current = 0;
-
-            Console.WriteLine($"Starting: {operation}");
-        }
-
-        public void Dispose()
-        {
-            if (_current < _total) _handler.ReportProgress(_operation, _total, _total);
-            Console.WriteLine($"Completed: {_operation}");
-        }
-
-        public void Increment()
-        {
-            _current++;
-            _handler.ReportProgress(_operation, _current, _total);
-        }
     }
 }
