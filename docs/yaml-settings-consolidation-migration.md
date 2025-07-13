@@ -171,12 +171,6 @@ public class GameConfiguration : IGameConfiguration
 }
 ```
 
-## Timeline
-
-- **Phase 1** (Current): New system available, old interfaces marked obsolete
-- **Phase 2** (Next release): Migration warnings in logs for usage of old interfaces  
-- **Phase 3** (Future release): Remove obsolete interfaces entirely
-
 ## Need Help?
 
 If you encounter issues during migration:
