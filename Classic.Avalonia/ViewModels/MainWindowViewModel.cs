@@ -1089,7 +1089,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.Error(ex, "Failed to start Papyrus monitoring");
             IsPapyrusMonitoring = false;
-            
+
             await _notificationService.ShowNotificationAsync(
                 "Papyrus Monitoring Failed",
                 $"Failed to start Papyrus monitoring: {ex.Message}",
@@ -1107,7 +1107,7 @@ public class MainWindowViewModel : ViewModelBase
         try
         {
             _logger.Information("Stopping Papyrus monitoring");
-            
+
             await _papyrusService.StopMonitoringAsync();
             IsPapyrusMonitoring = false;
 
@@ -1119,7 +1119,7 @@ public class MainWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             _logger.Error(ex, "Failed to stop Papyrus monitoring");
-            
+
             await _notificationService.ShowNotificationAsync(
                 "Papyrus Monitoring Error",
                 $"Failed to stop Papyrus monitoring: {ex.Message}",
@@ -1146,7 +1146,7 @@ public class MainWindowViewModel : ViewModelBase
             // In a real implementation, you'd show this as a modal dialog
             // For now, we'll just log that it would be shown
             _logger.Information("Papyrus monitor dialog would be shown here");
-            
+
             // TODO: Implement actual dialog showing logic
             // This would typically involve getting the main window and showing the dialog
         }
@@ -1182,7 +1182,7 @@ public class MainWindowViewModel : ViewModelBase
             // In a real implementation, you'd show this as a modal dialog
             // For now, we'll just log that it would be shown
             _logger.Information("Pastebin dialog would be shown here");
-            
+
             // TODO: Implement actual dialog showing logic
             // This would typically involve getting the main window and showing the dialog
         }
@@ -1197,7 +1197,7 @@ public class MainWindowViewModel : ViewModelBase
         if (result.Success)
         {
             _logger.Information("Pastebin log fetched successfully: {FilePath}", result.FilePath);
-            
+
             await _notificationService.ShowNotificationAsync(
                 "Log Downloaded",
                 $"Crash log downloaded from Pastebin and saved to: {result.FilePath}",

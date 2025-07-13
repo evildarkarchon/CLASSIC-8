@@ -13,22 +13,23 @@ public class PastebinDialogViewModel : ViewModelBase
     private readonly IPastebinService _pastebinService;
     private readonly INotificationService _notificationService;
     private readonly ILogger _logger;
-    
+
     private string _urlOrId = string.Empty;
     private bool _isFetching;
     private string _statusMessage = "Enter a Pastebin URL or ID to fetch a crash log";
 
-    public PastebinDialogViewModel(IPastebinService pastebinService, INotificationService notificationService, ILogger logger)
+    public PastebinDialogViewModel(IPastebinService pastebinService, INotificationService notificationService,
+        ILogger logger)
     {
         _pastebinService = pastebinService ?? throw new ArgumentNullException(nameof(pastebinService));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Commands
-        FetchLogCommand = ReactiveCommand.CreateFromTask(FetchLog, 
-            this.WhenAnyValue(x => x.UrlOrId, x => x.IsFetching, 
+        FetchLogCommand = ReactiveCommand.CreateFromTask(FetchLog,
+            this.WhenAnyValue(x => x.UrlOrId, x => x.IsFetching,
                 (url, fetching) => !string.IsNullOrWhiteSpace(url) && !fetching));
-                
+
         ClearCommand = ReactiveCommand.Create(Clear);
         CancelCommand = ReactiveCommand.Create(Cancel);
     }
@@ -38,8 +39,8 @@ public class PastebinDialogViewModel : ViewModelBase
     public string UrlOrId
     {
         get => _urlOrId;
-        set 
-        { 
+        set
+        {
             this.RaiseAndSetIfChanged(ref _urlOrId, value);
             ValidateInput();
         }
@@ -57,7 +58,8 @@ public class PastebinDialogViewModel : ViewModelBase
         private set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
     }
 
-    public bool IsInputValid => !string.IsNullOrWhiteSpace(UrlOrId) && _pastebinService.IsValidPastebinReference(UrlOrId);
+    public bool IsInputValid =>
+        !string.IsNullOrWhiteSpace(UrlOrId) && _pastebinService.IsValidPastebinReference(UrlOrId);
 
     #endregion
 
@@ -97,14 +99,14 @@ public class PastebinDialogViewModel : ViewModelBase
             if (result.Success)
             {
                 StatusMessage = $"Successfully fetched log ({result.ContentSize:N0} bytes)";
-                
+
                 await _notificationService.ShowNotificationAsync(
                     "Pastebin Fetch Success",
                     $"Log fetched successfully and saved to: {result.FilePath}",
                     NotificationType.Success);
 
                 LogFetched?.Invoke(this, result);
-                
+
                 // Auto-close after success
                 await Task.Delay(1500); // Show success message briefly
                 DialogClosed?.Invoke(this, EventArgs.Empty);
@@ -112,7 +114,7 @@ public class PastebinDialogViewModel : ViewModelBase
             else
             {
                 StatusMessage = $"Failed to fetch log: {result.ErrorMessage}";
-                
+
                 await _notificationService.ShowNotificationAsync(
                     "Pastebin Fetch Failed",
                     result.ErrorMessage ?? "Unknown error occurred",
@@ -123,7 +125,7 @@ public class PastebinDialogViewModel : ViewModelBase
         {
             _logger.Error(ex, "Unexpected error while fetching Pastebin log");
             StatusMessage = $"Unexpected error: {ex.Message}";
-            
+
             await _notificationService.ShowNotificationAsync(
                 "Pastebin Fetch Error",
                 $"Unexpected error: {ex.Message}",
@@ -149,7 +151,7 @@ public class PastebinDialogViewModel : ViewModelBase
     private void ValidateInput()
     {
         this.RaisePropertyChanged(nameof(IsInputValid));
-        
+
         if (string.IsNullOrWhiteSpace(UrlOrId))
         {
             StatusMessage = "Enter a Pastebin URL or ID to fetch a crash log";

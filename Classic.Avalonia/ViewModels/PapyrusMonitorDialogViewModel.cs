@@ -11,13 +11,13 @@ public class PapyrusMonitorDialogViewModel : ViewModelBase, IDisposable
 {
     private readonly IPapyrusMonitoringService _papyrusService;
     private readonly ILogger _logger;
-    
+
     private PapyrusStats _currentStats = new()
     {
         Timestamp = DateTime.Now,
         LogFileExists = false
     };
-    
+
     private string _statusMessage = "Initializing...";
     private bool _isMonitoring;
 
@@ -32,7 +32,7 @@ public class PapyrusMonitorDialogViewModel : ViewModelBase, IDisposable
         // Subscribe to events
         _papyrusService.StatsUpdated += OnStatsUpdated;
         _papyrusService.MonitoringError += OnMonitoringError;
-        
+
         // Initialize with current stats
         InitializeAsync();
     }
@@ -68,10 +68,10 @@ public class PapyrusMonitorDialogViewModel : ViewModelBase, IDisposable
     // Status indicators
     public string RatioStatus => GetRatioStatus(CurrentStats.Ratio);
     public string RatioStatusColor => GetRatioStatusColor(CurrentStats.Ratio);
-    
+
     public string WarningsStatus => CurrentStats.Warnings > 0 ? "⚠️" : "✓";
     public string WarningsStatusColor => CurrentStats.Warnings > 0 ? "Orange" : "Green";
-    
+
     public string ErrorsStatus => CurrentStats.Errors > 0 ? "❌" : "✓";
     public string ErrorsStatusColor => CurrentStats.Errors > 0 ? "Red" : "Green";
 
@@ -90,7 +90,7 @@ public class PapyrusMonitorDialogViewModel : ViewModelBase, IDisposable
         try
         {
             IsMonitoring = _papyrusService.IsMonitoring;
-            
+
             if (!IsMonitoring)
             {
                 // Get initial stats
@@ -134,7 +134,7 @@ public class PapyrusMonitorDialogViewModel : ViewModelBase, IDisposable
     private void UpdateStats(PapyrusStats stats)
     {
         CurrentStats = stats;
-        
+
         // Update status message based on stats
         if (!stats.LogFileExists)
         {

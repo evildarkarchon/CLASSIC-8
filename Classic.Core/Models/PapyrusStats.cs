@@ -52,10 +52,10 @@ public class PapyrusStats : IEquatable<PapyrusStats>
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
-        
-        return Dumps == other.Dumps && 
-               Stacks == other.Stacks && 
-               Warnings == other.Warnings && 
+
+        return Dumps == other.Dumps &&
+               Stacks == other.Stacks &&
+               Warnings == other.Warnings &&
                Errors == other.Errors &&
                Math.Abs(Ratio - other.Ratio) < 0.001 &&
                LogFileExists == other.LogFileExists;

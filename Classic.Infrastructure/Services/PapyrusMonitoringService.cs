@@ -20,11 +20,14 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
     private CancellationTokenSource? _monitoringCancellation;
     private Task? _monitoringTask;
     private PapyrusStats? _lastStats;
-    
+
     // Regex patterns for parsing Papyrus log content
     private static readonly Regex DumpsRegex = new(@"Dumping Stacks", RegexOptions.Compiled);
     private static readonly Regex StacksRegex = new(@"Dumping Stack", RegexOptions.Compiled);
-    private static readonly Regex WarningsRegex = new(@"\s+warning:\s+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    private static readonly Regex WarningsRegex =
+        new(@"\s+warning:\s+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
     private static readonly Regex ErrorsRegex = new(@"\s+error:\s+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public event EventHandler<PapyrusStats>? StatsUpdated;
@@ -43,7 +46,7 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
         try
         {
             var papyrusLogPath = GetPapyrusLogPath();
-            
+
             if (string.IsNullOrEmpty(papyrusLogPath) || !File.Exists(papyrusLogPath))
             {
                 return new PapyrusStats
@@ -55,9 +58,10 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
             }
 
             var stats = await ParsePapyrusLogAsync(papyrusLogPath, cancellationToken).ConfigureAwait(false);
-            _logger.Debug("Retrieved current Papyrus stats: {Dumps} dumps, {Stacks} stacks, {Warnings} warnings, {Errors} errors",
+            _logger.Debug(
+                "Retrieved current Papyrus stats: {Dumps} dumps, {Stacks} stacks, {Warnings} warnings, {Errors} errors",
                 stats.Dumps, stats.Stacks, stats.Warnings, stats.Errors);
-            
+
             return stats;
         }
         catch (Exception ex)
@@ -81,10 +85,10 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
         }
 
         _logger.Information("Starting Papyrus log monitoring");
-        
+
         _monitoringCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _monitoringTask = MonitoringLoopAsync(_monitoringCancellation.Token);
-        
+
         await Task.Yield(); // Allow the monitoring task to start
     }
 
@@ -96,9 +100,9 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
         }
 
         _logger.Information("Stopping Papyrus log monitoring");
-        
+
         _monitoringCancellation?.Cancel();
-        
+
         if (_monitoringTask != null)
         {
             try
@@ -114,7 +118,7 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
         _monitoringCancellation?.Dispose();
         _monitoringCancellation = null;
         _monitoringTask = null;
-        
+
         _logger.Information("Papyrus log monitoring stopped");
     }
 
@@ -127,7 +131,7 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
                 try
                 {
                     var currentStats = await GetCurrentStatsAsync(cancellationToken).ConfigureAwait(false);
-                    
+
                     // Only emit if stats have changed
                     if (_lastStats == null || !_lastStats.Equals(currentStats))
                     {
@@ -147,7 +151,7 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
                 {
                     _logger.Error(ex, "Error during Papyrus monitoring loop");
                     MonitoringError?.Invoke(this, ex.Message);
-                    
+
                     // Wait a bit before retrying
                     await Task.Delay(5000, cancellationToken).ConfigureAwait(false);
                 }
@@ -169,7 +173,7 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
         try
         {
             string content;
-            
+
             // Read the file content with proper encoding detection
             using var fileStream = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var reader = new StreamReader(fileStream, Encoding.UTF8, true);
@@ -214,14 +218,15 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
             // Try to get the Papyrus log path from settings
             // This would need to be implemented based on your settings structure
             var settings = _settingsService.Settings;
-            
+
             // For now, return a placeholder - this should be implemented based on your game configuration
             // The Python code references: yaml_settings(Path, YAML.Game_Local, f"Game{GlobalRegistry.get_vr()}_Info.Docs_File_PapyrusLog")
-            
-            // This is a common Papyrus log location for Skyrim SE
+
+            // This is a common Papyrus log location for Fallout 4
             var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var papyrusLogPath = Path.Combine(documentsPath, "My Games", "Skyrim Special Edition", "Logs", "Script", "Papyrus.0.log");
-            
+            var papyrusLogPath = Path.Combine(documentsPath, "My Games", "Fallout4", "Logs", "Script",
+                "Papyrus.0.log");
+
             return File.Exists(papyrusLogPath) ? papyrusLogPath : null;
         }
         catch (Exception ex)

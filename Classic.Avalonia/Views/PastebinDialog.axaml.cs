@@ -19,7 +19,7 @@ public partial class PastebinDialog : UserControl
     protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);
-        
+
         // Subscribe to ViewModel events
         if (DataContext is PastebinDialogViewModel viewModel)
         {
@@ -36,7 +36,7 @@ public partial class PastebinDialog : UserControl
             viewModel.LogFetched -= OnLogFetched;
             viewModel.DialogClosed -= OnDialogClosed;
         }
-        
+
         base.OnUnloaded(e);
     }
 

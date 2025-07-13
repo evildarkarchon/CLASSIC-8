@@ -14,7 +14,7 @@ public partial class PapyrusMonitorDialog : UserControl
     protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);
-        
+
         // Subscribe to dialog close events if needed
         if (DataContext is PapyrusMonitorDialogViewModel viewModel)
         {
@@ -29,7 +29,7 @@ public partial class PapyrusMonitorDialog : UserControl
         {
             viewModel.Dispose();
         }
-        
+
         base.OnUnloaded(e);
     }
 }
