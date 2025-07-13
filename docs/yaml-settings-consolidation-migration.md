@@ -4,6 +4,32 @@
 
 The YAML settings system has been consolidated from multiple interfaces into a single, comprehensive `ISettingsService` interface. This guide helps you migrate from the old interfaces to the new consolidated system.
 
+## Migration Progress
+
+### ✅ Step 1: Update Constructor Dependencies - COMPLETED
+All constructor dependencies have been successfully migrated from deprecated interfaces to `ISettingsService`:
+
+**Files Updated:**
+- `Classic.ScanGame/Configuration/ConfigFileCache.cs`
+- `Classic.ScanGame/Checkers/CrashgenChecker.cs`
+- `Classic.ScanGame/Checkers/ModIniScanner.cs`
+- `Classic.ScanGame/Checkers/WryeBashChecker.cs`
+- `Classic.ScanGame/Checkers/XsePluginChecker.cs`
+
+**Changes Made:**
+- Updated constructor parameters from `IYamlSettingsCache` to `ISettingsService`
+- Updated field declarations and assignments
+- Updated method calls to use proper `YamlStore` enum syntax
+- Added required `using Classic.Core.Enums;` statements
+
+**Verification:**
+- ✅ All projects compile successfully
+- ✅ No remaining active references to deprecated interfaces
+- ✅ Proper API usage with `YamlStore` enums
+
+### 🔄 Step 2: Update Method Calls - PENDING
+### 🔄 Step 3: Access Strongly-Typed Settings - PENDING
+
 ## Changes Made
 
 ### New Unified Interface

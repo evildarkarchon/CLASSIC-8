@@ -3,6 +3,7 @@ using System.Text;
 using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
+using Classic.Core.Enums;
 using Classic.Core.Interfaces;
 using Classic.Infrastructure;
 using Serilog;
@@ -16,7 +17,7 @@ namespace Classic.ScanGame.Checkers;
 public class WryeBashChecker : IWryeBashChecker
 {
     private readonly IFileSystem _fileSystem;
-    private readonly IYamlSettingsCache _yamlSettings;
+    private readonly ISettingsService _settingsService;
     private readonly IGameConfiguration _gameConfiguration;
     private readonly ILogger _logger;
 
@@ -29,12 +30,12 @@ public class WryeBashChecker : IWryeBashChecker
 
     public WryeBashChecker(
         IFileSystem fileSystem,
-        IYamlSettingsCache yamlSettings,
+        ISettingsService settingsService,
         IGameConfiguration gameConfiguration,
         ILogger logger)
     {
         _fileSystem = fileSystem;
-        _yamlSettings = yamlSettings;
+        _settingsService = settingsService;
         _gameConfiguration = gameConfiguration;
         _logger = logger;
     }
@@ -58,12 +59,13 @@ public class WryeBashChecker : IWryeBashChecker
         {
             // Load settings from YAML
             var missingHtmlSetting =
-                await _yamlSettings.GetSettingAsync<string>("Game", "Warnings_MODS.Warn_WRYE_MissingHTML");
+                await _settingsService.GetSettingAsync<string>(YamlStore.Game, "Warnings_MODS.Warn_WRYE_MissingHTML");
             var vrSuffix = _gameConfiguration.IsVrMode ? "VR" : "";
             var pluginCheckPath =
-                await _yamlSettings.GetSettingAsync<string>("Game_Local", $"Game{vrSuffix}_Info.Docs_File_WryeBashPC");
+                await _settingsService.GetSettingAsync<string>(YamlStore.GameLocal,
+                    $"Game{vrSuffix}_Info.Docs_File_WryeBashPC");
             var wryeWarnings =
-                await _yamlSettings.GetSettingAsync<Dictionary<string, string>>("Main", "Warnings_WRYE") ??
+                await _settingsService.GetSettingAsync<Dictionary<string, string>>(YamlStore.Main, "Warnings_WRYE") ??
                 new Dictionary<string, string>();
 
             // Return early if report not found

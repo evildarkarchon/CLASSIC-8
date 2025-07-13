@@ -1,4 +1,5 @@
 using System.IO.Abstractions;
+using Classic.Core.Enums;
 using Classic.Core.Interfaces;
 using Classic.Infrastructure;
 using Serilog;
@@ -11,16 +12,16 @@ namespace Classic.ScanGame.Checkers;
 public class XsePluginChecker : IXsePluginChecker
 {
     private readonly IFileSystem _fileSystem;
-    private readonly IYamlSettingsCache _yamlSettings;
+    private readonly ISettingsService _settingsService;
     private readonly ILogger _logger;
 
     public XsePluginChecker(
         IFileSystem fileSystem,
-        IYamlSettingsCache yamlSettings,
+        ISettingsService settingsService,
         ILogger logger)
     {
         _fileSystem = fileSystem;
-        _yamlSettings = yamlSettings;
+        _settingsService = settingsService;
         _logger = logger;
     }
 
@@ -105,7 +106,7 @@ public class XsePluginChecker : IXsePluginChecker
         var isVrMode = await GetVrModeAsync();
         var vrSuffix = isVrMode ? "VR" : "";
         var key = $"Game{vrSuffix}_Info.Game_Folder_Plugins";
-        return await _yamlSettings.GetSettingAsync<string>("Game_Local", key);
+        return await _settingsService.GetSettingAsync<string>(YamlStore.GameLocal, key);
     }
 
     private async Task<string?> GetGameExePathAsync()
@@ -113,7 +114,7 @@ public class XsePluginChecker : IXsePluginChecker
         var isVrMode = await GetVrModeAsync();
         var vrSuffix = isVrMode ? "VR" : "";
         var key = $"Game{vrSuffix}_Info.Game_File_EXE";
-        return await _yamlSettings.GetSettingAsync<string>("Game_Local", key);
+        return await _settingsService.GetSettingAsync<string>(YamlStore.GameLocal, key);
     }
 
     private async Task<string> GetGameVersionAsync(string gameExePath)
@@ -126,7 +127,7 @@ public class XsePluginChecker : IXsePluginChecker
 
     private async Task<bool> GetVrModeAsync()
     {
-        var vrMode = await _yamlSettings.GetSettingAsync<bool?>("Classic", "VR Mode");
+        var vrMode = await _settingsService.GetSettingAsync<bool?>(YamlStore.Settings, "VR Mode");
         return vrMode ?? false;
     }
 

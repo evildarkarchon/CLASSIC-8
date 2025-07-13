@@ -12,7 +12,7 @@ namespace Classic.ScanGame.Checkers;
 public class ModIniScanner : IModIniScanner
 {
     private readonly IFileSystem _fileSystem;
-    private readonly IYamlSettingsCache _yamlSettings;
+    private readonly ISettingsService _settingsService;
     private readonly IGameConfiguration _gameConfiguration;
     private readonly ILogger _logger;
 
@@ -26,12 +26,12 @@ public class ModIniScanner : IModIniScanner
 
     public ModIniScanner(
         IFileSystem fileSystem,
-        IYamlSettingsCache yamlSettings,
+        ISettingsService settingsService,
         IGameConfiguration gameConfiguration,
         ILogger logger)
     {
         _fileSystem = fileSystem;
-        _yamlSettings = yamlSettings;
+        _settingsService = settingsService;
         _gameConfiguration = gameConfiguration;
         _logger = logger;
     }
@@ -55,7 +55,7 @@ public class ModIniScanner : IModIniScanner
         {
             var messageList = new List<string>();
             var configFiles =
-                await ConfigFileCache.CreateAsync(_fileSystem, _yamlSettings, _gameConfiguration, _logger);
+                await ConfigFileCache.CreateAsync(_fileSystem, _settingsService, _gameConfiguration, _logger);
 
             // Check for console command settings that might slow down startup
             await CheckStartingConsoleCommandAsync(configFiles, messageList);

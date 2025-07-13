@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.IO.Abstractions;
 using System.Text;
+using Classic.Core.Enums;
 using Classic.Core.Interfaces;
 using Classic.Infrastructure;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +16,7 @@ namespace Classic.ScanGame.Configuration;
 public class ConfigFileCache
 {
     private readonly IFileSystem _fileSystem;
-    private readonly IYamlSettingsCache _yamlSettings;
+    private readonly ISettingsService _settingsService;
     private readonly IGameConfiguration _gameConfiguration;
     private readonly ILogger _logger;
 
@@ -27,13 +28,13 @@ public class ConfigFileCache
 
     private ConfigFileCache(
         IFileSystem fileSystem,
-        IYamlSettingsCache yamlSettings,
+        ISettingsService settingsService,
         IGameConfiguration gameConfiguration,
         ILogger logger,
         string? gameRootPath)
     {
         _fileSystem = fileSystem;
-        _yamlSettings = yamlSettings;
+        _settingsService = settingsService;
         _gameConfiguration = gameConfiguration;
         _logger = logger;
         _gameRootPath = gameRootPath;
@@ -44,15 +45,15 @@ public class ConfigFileCache
     /// </summary>
     public static async Task<ConfigFileCache> CreateAsync(
         IFileSystem fileSystem,
-        IYamlSettingsCache yamlSettings,
+        ISettingsService settingsService,
         IGameConfiguration gameConfiguration,
         ILogger logger)
     {
         var vrSuffix = gameConfiguration.IsVrMode ? "VR" : "";
         var gameRootPath =
-            await yamlSettings.GetSettingAsync<string>("Game_Local", $"Game{vrSuffix}_Info.Root_Folder_Game");
+            await settingsService.GetSettingAsync<string>(YamlStore.GameLocal, $"Game{vrSuffix}_Info.Root_Folder_Game");
 
-        var cache = new ConfigFileCache(fileSystem, yamlSettings, gameConfiguration, logger, gameRootPath);
+        var cache = new ConfigFileCache(fileSystem, settingsService, gameConfiguration, logger, gameRootPath);
         await cache.ScanConfigurationFilesAsync();
         return cache;
     }

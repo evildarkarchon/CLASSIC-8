@@ -1,4 +1,5 @@
 using System.IO.Abstractions;
+using Classic.Core.Enums;
 using Classic.Core.Interfaces;
 using Classic.Infrastructure;
 using Classic.ScanGame.Configuration;
@@ -12,7 +13,7 @@ namespace Classic.ScanGame.Checkers;
 public class CrashgenChecker : ICrashgenChecker
 {
     private readonly IFileSystem _fileSystem;
-    private readonly IYamlSettingsCache _yamlSettings;
+    private readonly ISettingsService _settingsService;
     private readonly IGameConfiguration _gameConfiguration;
     private readonly ILogger _logger;
     private readonly IMessageHandler _messageHandler;
@@ -25,13 +26,13 @@ public class CrashgenChecker : ICrashgenChecker
 
     public CrashgenChecker(
         IFileSystem fileSystem,
-        IYamlSettingsCache yamlSettings,
+        ISettingsService settingsService,
         IGameConfiguration gameConfiguration,
         ILogger logger,
         IMessageHandler messageHandler)
     {
         _fileSystem = fileSystem;
-        _yamlSettings = yamlSettings;
+        _settingsService = settingsService;
         _gameConfiguration = gameConfiguration;
         _logger = logger;
         _messageHandler = messageHandler;
@@ -91,14 +92,14 @@ public class CrashgenChecker : ICrashgenChecker
     {
         var vrSuffix = _gameConfiguration.IsVrMode ? "VR" : "";
         var key = $"Game{vrSuffix}_Info.Game_Folder_Plugins";
-        return await _yamlSettings.GetSettingAsync<string>("Game_Local", key);
+        return await _settingsService.GetSettingAsync<string>(YamlStore.GameLocal, key);
     }
 
     private async Task<string> GetCrashgenNameAsync()
     {
         var vrSuffix = _gameConfiguration.IsVrMode ? "VR" : "";
         var key = $"Game{vrSuffix}_Info.CRASHGEN_LogName";
-        var crashgenName = await _yamlSettings.GetSettingAsync<string>("Game", key);
+        var crashgenName = await _settingsService.GetSettingAsync<string>(YamlStore.Game, key);
         return crashgenName ?? "Buffout4";
     }
 
