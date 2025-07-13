@@ -13,12 +13,13 @@ public class GameFileManager : IGameFileManager
     private readonly IFileSystem _fileSystem;
     private readonly ILogger _logger;
     private readonly IFileOperationStrategyFactory _strategyFactory;
+
     // ReSharper disable once NotAccessedField.Local - Reserved for future game detection implementation
     private readonly ISettingsService _settingsService;
 
     public GameFileManager(
-        IFileSystem fileSystem, 
-        ILogger logger, 
+        IFileSystem fileSystem,
+        ILogger logger,
         ISettingsService settingsService,
         IFileOperationStrategyFactory strategyFactory)
     {
@@ -37,7 +38,8 @@ public class GameFileManager : IGameFileManager
     public async Task<GameFileOperationResult> RestoreFilesAsync(string category,
         CancellationToken cancellationToken = default)
     {
-        return await ExecuteOperationAsync(GameFileOperation.Restore, category, cancellationToken).ConfigureAwait(false);
+        return await ExecuteOperationAsync(GameFileOperation.Restore, category, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<GameFileOperationResult> RemoveFilesAsync(string category,
@@ -61,7 +63,8 @@ public class GameFileManager : IGameFileManager
                 return new GameFileOperationResult
                 {
                     Success = false,
-                    Message = $"Unknown category: {category}. Available categories: {string.Join(", ", _strategyFactory.GetAvailableCategories())}"
+                    Message =
+                        $"Unknown category: {category}. Available categories: {string.Join(", ", _strategyFactory.GetAvailableCategories())}"
                 };
             }
 

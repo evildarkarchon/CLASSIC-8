@@ -30,8 +30,10 @@ public abstract class FileOperationStrategyBase : IFileOperationStrategy
     {
         return operation switch
         {
-            GameFileOperation.Backup => await BackupFilesAsync(gameRoot, backupDir, cancellationToken).ConfigureAwait(false),
-            GameFileOperation.Restore => await RestoreFilesAsync(gameRoot, backupDir, cancellationToken).ConfigureAwait(false),
+            GameFileOperation.Backup => await BackupFilesAsync(gameRoot, backupDir, cancellationToken)
+                .ConfigureAwait(false),
+            GameFileOperation.Restore => await RestoreFilesAsync(gameRoot, backupDir, cancellationToken)
+                .ConfigureAwait(false),
             GameFileOperation.Remove => await RemoveFilesAsync(gameRoot, cancellationToken).ConfigureAwait(false),
             _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, "Unknown operation")
         };

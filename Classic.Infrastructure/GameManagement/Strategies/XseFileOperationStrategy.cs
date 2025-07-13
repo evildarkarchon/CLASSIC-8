@@ -10,7 +10,8 @@ public class XseFileOperationStrategy : FileOperationStrategyBase
 {
     public override string Category => "XSE";
 
-    public override string[] FilePatterns => [
+    public override string[] FilePatterns =>
+    [
         "*.dll", "*.exe", "*.log",
         "f4se_*", "skse64_*", "sksevr_*"
     ];

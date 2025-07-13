@@ -10,7 +10,8 @@ public class VulkanFileOperationStrategy : FileOperationStrategyBase
 {
     public override string Category => "VULKAN";
 
-    public override string[] FilePatterns => [
+    public override string[] FilePatterns =>
+    [
         "vulkan-1.dll", "vulkan*.dll"
     ];
 

@@ -10,7 +10,8 @@ public class EnbFileOperationStrategy : FileOperationStrategyBase
 {
     public override string Category => "ENB";
 
-    public override string[] FilePatterns => [
+    public override string[] FilePatterns =>
+    [
         "d3d11.dll", "d3d9.dll",
         "enbseries.ini", "enblocal.ini",
         "enbseries/*", "enbcache/*"
