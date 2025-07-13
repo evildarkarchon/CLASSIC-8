@@ -20,7 +20,8 @@ public abstract class MessageHandlerBase : IMessageHandler
     // Async methods with meaningful default implementations that delegate to sync methods
     public virtual async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
     {
-        await Task.Run(() => SendMessage(message, MessageType.Info, MessageTarget.Both), cancellationToken).ConfigureAwait(false);
+        await Task.Run(() => SendMessage(message, MessageType.Info, MessageTarget.Both), cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public virtual async Task SendProgressAsync(int current, int total, string message,

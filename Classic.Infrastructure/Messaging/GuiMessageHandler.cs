@@ -10,7 +10,7 @@ public class GuiMessageHandler : MessageHandlerBase
     private readonly ConcurrentQueue<GuiMessage> _messageQueue = new();
     private readonly IMessageFormattingService _formattingService;
 
-    public GuiMessageHandler(ILogger logger, IMessageFormattingService formattingService) 
+    public GuiMessageHandler(ILogger logger, IMessageFormattingService formattingService)
         : base(logger)
     {
         _formattingService = formattingService ?? throw new ArgumentNullException(nameof(formattingService));

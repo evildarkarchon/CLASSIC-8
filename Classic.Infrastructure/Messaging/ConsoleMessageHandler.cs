@@ -8,7 +8,7 @@ public class ConsoleMessageHandler : MessageHandlerBase
 {
     private readonly IMessageFormattingService _formattingService;
 
-    public ConsoleMessageHandler(ILogger logger, IMessageFormattingService formattingService) 
+    public ConsoleMessageHandler(ILogger logger, IMessageFormattingService formattingService)
         : base(logger)
     {
         _formattingService = formattingService ?? throw new ArgumentNullException(nameof(formattingService));
