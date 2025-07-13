@@ -80,7 +80,7 @@ public class XsePluginChecker : IXsePluginChecker
             if (string.IsNullOrEmpty(gameVersion) || gameVersion == "NULL_VERSION")
                 return FormatGameVersionNotDetectedMessage();
 
-            var isVrMode = await GetVrModeAsync();
+            var isVrMode = GetVrMode();
             var (correctVersions, wrongVersions) = DetermineRelevantVersions(isVrMode);
 
             var correctVersionExists = correctVersions.Any(version =>
@@ -103,7 +103,7 @@ public class XsePluginChecker : IXsePluginChecker
 
     private async Task<string?> GetPluginsPathAsync()
     {
-        var isVrMode = await GetVrModeAsync();
+        var isVrMode = GetVrMode();
         var vrSuffix = isVrMode ? "VR" : "";
         var key = $"Game{vrSuffix}_Info.Game_Folder_Plugins";
         return await _settingsService.GetSettingAsync<string>(YamlStore.GameLocal, key);
@@ -111,7 +111,7 @@ public class XsePluginChecker : IXsePluginChecker
 
     private async Task<string?> GetGameExePathAsync()
     {
-        var isVrMode = await GetVrModeAsync();
+        var isVrMode = GetVrMode();
         var vrSuffix = isVrMode ? "VR" : "";
         var key = $"Game{vrSuffix}_Info.Game_File_EXE";
         return await _settingsService.GetSettingAsync<string>(YamlStore.GameLocal, key);
@@ -125,10 +125,9 @@ public class XsePluginChecker : IXsePluginChecker
         return "1.10.163.0"; // Placeholder
     }
 
-    private async Task<bool> GetVrModeAsync()
+    private bool GetVrMode()
     {
-        var vrMode = await _settingsService.GetSettingAsync<bool?>(YamlStore.Settings, "VR Mode");
-        return vrMode ?? false;
+        return _settingsService.Settings.VRMode;
     }
 
     private static (List<AddressLibVersionInfo> correct, List<AddressLibVersionInfo> wrong)

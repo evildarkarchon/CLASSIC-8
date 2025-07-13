@@ -1,4 +1,3 @@
-using Classic.Core.Enums;
 using Classic.Core.Interfaces;
 using Serilog;
 
@@ -16,7 +15,7 @@ public class GameConfiguration : IGameConfiguration
     public GameConfiguration(ISettingsService settingsService, ILogger logger)
     {
         _logger = logger;
-        InitializeAsync(settingsService).Wait();
+        Initialize(settingsService);
     }
 
     /// <summary>
@@ -29,15 +28,14 @@ public class GameConfiguration : IGameConfiguration
     /// </summary>
     public string CurrentGame => _currentGame;
 
-    private async Task InitializeAsync(ISettingsService settingsService)
+    private void Initialize(ISettingsService settingsService)
     {
         try
         {
-            // Load VR mode setting
-            _isVrMode = await settingsService.GetSettingAsync<bool?>("VR Mode") ?? false;
-
-            // Load current game setting
-            _currentGame = await settingsService.GetSettingAsync<string>("Managed Game") ?? "Fallout4";
+            // Use strongly-typed settings access for better performance
+            var settings = settingsService.Settings;
+            _isVrMode = settings.VRMode;
+            _currentGame = settings.ManagedGame;
 
             _logger.Information("Game configuration initialized: VR Mode = {IsVrMode}, Current Game = {CurrentGame}",
                 _isVrMode, _currentGame);
