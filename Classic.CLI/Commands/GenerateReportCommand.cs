@@ -56,7 +56,8 @@ public class GenerateReportCommand : Command
             var verbose = context.ParseResult.GetValueForOption(verboseOption);
             var quiet = context.ParseResult.GetValueForOption(quietOption);
 
-            await ExecuteAsync(context, logPath, output, format, verbose, quiet, context.GetCancellationToken());
+            await ExecuteAsync(context, logPath, output, format ?? "markdown", verbose, quiet,
+                context.GetCancellationToken());
         });
     }
 
@@ -71,7 +72,7 @@ public class GenerateReportCommand : Command
     {
         // Configure logging
         var logLevel = verbose ? LogEventLevel.Debug : quiet ? LogEventLevel.Warning : LogEventLevel.Information;
-        
+
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Is(logLevel)
             .WriteTo.Console()
@@ -93,7 +94,7 @@ public class GenerateReportCommand : Command
             var services = new ServiceCollection();
 
             // Add logging services  
-            services.AddLogging(builder => 
+            services.AddLogging(builder =>
             {
                 builder.ClearProviders();
                 builder.AddConsole();
@@ -129,16 +130,16 @@ public class GenerateReportCommand : Command
             // Run analysis
             logger.Information("Running crash analysis...");
             var suspects = await suspectScanner.ScanForSuspectsAsync(crashLog, cancellationToken);
-            
+
             // Create crash log data for mod conflict detection
             var crashLogData = new CrashLogData
             {
                 MainError = crashLog.MainError,
-                SystemSpecs = crashLog.Segments.TryGetValue("SystemSpecs", out var systemSpecs) 
-                    ? string.Join("\n", systemSpecs) 
+                SystemSpecs = crashLog.Segments.TryGetValue("SystemSpecs", out var systemSpecs)
+                    ? string.Join("\n", systemSpecs)
                     : null,
-                CallStack = crashLog.Segments.TryGetValue("CallStack", out var callStack) 
-                    ? string.Join("\n", callStack) 
+                CallStack = crashLog.Segments.TryGetValue("CallStack", out var callStack)
+                    ? string.Join("\n", callStack)
                     : null,
                 Plugins = crashLog.Plugins,
                 Headers = new Dictionary<string, object>
@@ -156,7 +157,7 @@ public class GenerateReportCommand : Command
             // Map to report data
             logger.Information("Generating advanced report...");
             var fileName = Path.GetFileName(logPath);
-            
+
             // Convert DetectedSuspect to Suspect
             var suspectsList = suspects.Select(ds => new Classic.Core.Models.Suspect
             {
@@ -175,9 +176,9 @@ public class GenerateReportCommand : Command
                     _ => Classic.Core.Models.SeverityLevel.Low
                 }
             }).ToList();
-            
+
             var reportData = reportDataMapper.MapCrashLogAnalysisToReportData(
-                crashLog, suspectsList, modConflicts, new List<FileValidationResult>(), 
+                crashLog, suspectsList, modConflicts, new List<FileValidationResult>(),
                 fileName, processingTime);
 
             // Generate report
@@ -213,8 +214,9 @@ public class GenerateReportCommand : Command
     {
         logger.Information("=== REPORT SUMMARY ===");
         logger.Information("File: {FileName}", reportData.FileName);
-        logger.Information("Game: {GameId} v{GameVersion}", reportData.GameInfo.GameId, reportData.GameInfo.GameVersion);
-        logger.Information("Crash Reporter: {CrashGen} v{Version}", 
+        logger.Information("Game: {GameId} v{GameVersion}", reportData.GameInfo.GameId,
+            reportData.GameInfo.GameVersion);
+        logger.Information("Crash Reporter: {CrashGen} v{Version}",
             reportData.GameInfo.CrashGenName, reportData.GameInfo.CrashGenVersion);
         logger.Information("");
         logger.Information("Analysis Results:");
@@ -227,7 +229,7 @@ public class GenerateReportCommand : Command
         if (reportData.CrashSuspects.Any())
         {
             var topSuspect = reportData.CrashSuspects.OrderByDescending(s => s.SeverityScore).First();
-            logger.Information("  Top Suspect: {Suspect} (Severity: {Severity})", 
+            logger.Information("  Top Suspect: {Suspect} (Severity: {Severity})",
                 topSuspect.Name, topSuspect.SeverityScore);
         }
 

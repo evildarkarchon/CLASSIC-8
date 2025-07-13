@@ -23,7 +23,7 @@ public class NotificationService : INotificationService
         _logger = logger;
         _settingsService = settingsService;
         _audioService = audioService;
-        
+
         // Setup cleanup timer to remove old notifications
         _cleanupTimer = new Timer(CleanupNotifications, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
     }
@@ -40,12 +40,12 @@ public class NotificationService : INotificationService
         };
 
         _notifications.Enqueue(notification);
-        
+
         _logger.Information("Toast notification: {Title} - {Message} ({Type})", title, message, type);
-        
+
         // Fire event for UI to handle
         NotificationAdded?.Invoke(this, notification);
-        
+
         // Play audio notification if enabled
         if (_settingsService.Settings.SoundOnCompletion)
         {
@@ -53,18 +53,24 @@ public class NotificationService : INotificationService
         }
     }
 
+    public async Task ShowNotificationAsync(string title, string message,
+        NotificationType type = NotificationType.Information)
+    {
+        await ShowToastAsync(title, message, type);
+    }
+
     public async Task ShowScanCompletedAsync(ScanResult result)
     {
-        var type = result.IsSuccessful ? NotificationType.Success : 
-                   result.HasWarnings ? NotificationType.Warning : 
-                   NotificationType.Error;
+        var type = result.IsSuccessful ? NotificationType.Success :
+            result.HasWarnings ? NotificationType.Warning :
+            NotificationType.Error;
 
-        var title = result.IsSuccessful ? "Scan Completed Successfully" : 
-                   result.HasWarnings ? "Scan Completed with Warnings" : 
-                   "Scan Completed with Errors";
+        var title = result.IsSuccessful ? "Scan Completed Successfully" :
+            result.HasWarnings ? "Scan Completed with Warnings" :
+            "Scan Completed with Errors";
 
         var message = $"Processed {result.TotalLogs} logs in {result.ProcessingTime:mm\\:ss}\n" +
-                     $"Success: {result.SuccessfulScans}, Failed: {result.FailedScans}";
+                      $"Success: {result.SuccessfulScans}, Failed: {result.FailedScans}";
 
         if (result.ModConflicts.Any())
         {
@@ -78,7 +84,7 @@ public class NotificationService : INotificationService
     {
         var title = $"{operation} Failed";
         var message = $"Error: {exception.Message}";
-        
+
         if (exception.InnerException != null)
         {
             message += $"\nDetails: {exception.InnerException.Message}";
@@ -122,7 +128,7 @@ public class NotificationService : INotificationService
         {
             // Empty the queue
         }
-        
+
         _logger.Information("All notifications cleared");
     }
 
@@ -130,9 +136,11 @@ public class NotificationService : INotificationService
     {
         var title = "Update Available!";
         var message = $"A new version of CLASSIC is available.\n\n" +
-                     $"Current version: {currentVersion}\n" +
-                     $"Latest version: {latestVersion}\n\n" +
-                     (!string.IsNullOrEmpty(downloadUrl) ? $"Download: {downloadUrl}" : "Check GitHub or Nexus for the latest version");
+                      $"Current version: {currentVersion}\n" +
+                      $"Latest version: {latestVersion}\n\n" +
+                      (!string.IsNullOrEmpty(downloadUrl)
+                          ? $"Download: {downloadUrl}"
+                          : "Check GitHub or Nexus for the latest version");
 
         await ShowToastAsync(title, message, NotificationType.Information);
     }
@@ -141,8 +149,8 @@ public class NotificationService : INotificationService
     {
         var title = "No Updates Available";
         var message = $"You have the latest version of CLASSIC!\n\n" +
-                     $"Current version: {currentVersion}\n" +
-                     $"Source checked: {updateSource}";
+                      $"Current version: {currentVersion}\n" +
+                      $"Source checked: {updateSource}";
 
         await ShowToastAsync(title, message, NotificationType.Success);
     }
@@ -151,8 +159,8 @@ public class NotificationService : INotificationService
     {
         var title = "Update Check Failed";
         var message = $"Unable to check for updates.\n\n" +
-                     $"Error: {errorMessage}\n\n" +
-                     "Please check your internet connection and try again.";
+                      $"Error: {errorMessage}\n\n" +
+                      "Please check your internet connection and try again.";
 
         await ShowToastAsync(title, message, NotificationType.Warning);
     }
@@ -174,7 +182,7 @@ public class NotificationService : INotificationService
     {
         var cutoff = DateTime.Now - TimeSpan.FromMinutes(5);
         var tempList = new List<NotificationMessage>();
-        
+
         // Keep only recent notifications
         while (_notifications.TryDequeue(out var notification))
         {
@@ -183,7 +191,7 @@ public class NotificationService : INotificationService
                 tempList.Add(notification);
             }
         }
-        
+
         foreach (var notification in tempList)
         {
             _notifications.Enqueue(notification);

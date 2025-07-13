@@ -1,113 +1,108 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# GitHub Copilot Instructions for CLASSIC-8
 
 ## Project Overview
 
-CLASSIC-8 is a C# port of a Python crash log analysis tool for Bethesda games (Fallout 4, Skyrim SE, Skyrim VR, Fallout 4 VR). The application scans and analyzes game crash logs to identify mod conflicts, plugin problems, and other issues.
+CLASSIC-8 is a C# port of a Python crash log analysis tool for Bethesda games (Fallout 4, Skyrim SE/VR). The application follows clean architecture with domain-driven design, analyzing game crash logs to identify mod conflicts and plugin issues.
 
-## Technology Stack
+## Architecture & Project Structure
 
-- **.NET 8.0** with C# 12
-- **Avalonia UI 11.3.2** for cross-platform desktop GUI
-- **ReactiveUI** for MVVM pattern implementation
-- **Serilog** for structured logging
-- **YamlDotNet** for configuration management
-- **Microsoft.Extensions.*** for dependency injection and configuration
+### Clean Architecture Layers
+- **`Classic.Core/`** - Domain models, interfaces, enums, exceptions
+- **`Classic.Infrastructure/`** - YAML config, file I/O, logging, messaging, DI
+- **`Classic.ScanLog/`** - Crash log parsing and analysis orchestration  
+- **`Classic.ScanGame/`** - Game file scanning (XSE, Reshade, ENB management)
+- **`Classic.Avalonia/`** - Cross-platform desktop GUI using Avalonia + ReactiveUI
+- **`Classic.CLI/`** - Command-line interface
+- **`tests/`** - xUnit test projects with FluentAssertions and Moq
+- **`Code to Port/`** - Contains reference code from the original Python implementation for porting
 
-## Build Commands
+### Key Design Patterns
+- **MVVM with ReactiveUI** - All ViewModels inherit from `ReactiveObject`, use `ReactiveCommand` for async operations
+- **Dependency Injection** - Microsoft.Extensions.DI throughout, register services in `ServiceCollectionExtensions.cs`
+- **Producer-Consumer** - Use `System.Threading.Channels` for async file processing pipelines
+- **Message Handling** - Abstract `IMessageHandler` supporting both CLI (`ConsoleMessageHandler`) and GUI (`GuiMessageHandler`)
+- **Settings Management** - YAML-based with `YamlDotNet`, cached via `IYamlSettings` interface
 
-```bash
-# Build the entire solution
+## Essential Development Workflows
+
+### Building & Running
+```powershell
+# Build solution
 dotnet build
 
-# Build specific projects
-dotnet build Classic.Avalonia/Classic.Avalonia.csproj
-dotnet build Classic.Core/Classic.Core.csproj
-dotnet build Classic.Infrastructure/Classic.Infrastructure.csproj
-
-# Run the GUI application
+# Run GUI application  
 dotnet run --project Classic.Avalonia
 
-# Clean build artifacts
-dotnet clean
+# Run tests
+dotnet test
 
-# Restore NuGet packages
-dotnet restore
+# Build specific projects
+dotnet build Classic.Core/
+dotnet build Classic.Infrastructure/
 ```
 
-## Project Architecture
+### Service Registration Pattern
+```csharp
+// In ServiceCollectionExtensions.cs
+public static IServiceCollection AddClassicInfrastructure(this IServiceCollection services)
+{
+    services.AddSingleton<IYamlSettings, YamlSettings>();
+    services.AddScoped<ISettingsService, SettingsService>();
+    services.AddSingleton<Serilog.ILogger>(Log.Logger);
+    return services;
+}
+```
 
-The solution follows clean architecture with three main layers:
+## Project-Specific Conventions
 
-### Classic.Core
-Domain layer containing:
-- **Models**: CrashLog, Plugin, FormID entities
-- **Interfaces**: IScanOrchestrator, IMessageHandler, IYamlSettingsCache
-- **Enums**: GameID, MessageType, MessageTarget
-- **Exceptions**: Custom domain exceptions
+### Logging Standard
+- **Serilog only** - Never use `Microsoft.Extensions.Logging`, always inject `Serilog.ILogger`
+- Structured logging: `_logger.Information("Processing {LogFile} with {PluginCount} plugins", path, count)`
 
-### Classic.Infrastructure  
-Infrastructure layer containing:
-- **YAML Configuration**: Settings management and caching
-- **File System**: Utilities and abstractions for file operations
-- **Logging**: Serilog configuration and structured logging
-- **Message Handling**: Async message processing system
-- **Dependency Injection**: Service registration extensions
+### Async Patterns
+- Always use `ConfigureAwait(false)` in library code
+- Pass `CancellationToken` through async call chains
+- Use `ValueTask<T>` for hot paths, `Task<T>` elsewhere
 
-### Classic.Avalonia
-Presentation layer containing:
-- **MVVM Pattern**: ViewModels using ReactiveUI
-- **Views**: Avalonia XAML user interfaces
-- **Cross-platform**: Desktop GUI for Windows, macOS, Linux
+### UI Integration
+- Toast notifications: `NotificationService` → `ToastContainer` in MainWindow
+- ViewModels get services via constructor injection from `Program.ConfigureServices()`
+- ReactiveUI commands: `ReactiveCommand.CreateFromTask()` with `WhenAnyValue()` for state management
 
-## Development Patterns
+### File System Abstraction
+- Use `System.IO.Abstractions` interfaces (`IFileSystem`) for testability
+- Mock with `TestingHelpers` in tests
 
-### Async/Await Usage
-- Use `async/await` extensively for file I/O and processing
-- Implement producer-consumer patterns with `System.Threading.Channels`
-- Replace Python's asyncio patterns with .NET async equivalents
+## Critical Integration Points
 
-### Dependency Injection
-- Register services in `Classic.Infrastructure` using Microsoft.Extensions.DI
-- Use constructor injection in ViewModels and services
-- Abstract file system operations using `System.IO.Abstractions`
+### Scan Orchestration Flow
+`IScanOrchestrator` → `ComprehensiveScanOrchestrator` coordinates:
+1. File validation & parsing via `ICrashLogParser`
+2. Analysis through `IPluginAnalyzer` and `IFormIdAnalyzer` 
+3. Progress reporting via `IMessageHandler.ReportProgress()`
+4. Result aggregation in `ScanResult` models
 
-### Configuration Management
-- YAML-based configuration using YamlDotNet
-- Implement caching for frequently accessed settings
-- Support runtime configuration updates
+### Settings Architecture
+- `ISettingsService` provides strongly-typed access to `ClassicSettings`
+- YAML files cached by `YamlSettings` with file watching for hot reload
+- UI binds directly to ViewModel properties that auto-persist
 
-### Error Handling
-- Use structured logging with Serilog for all operations
-- Implement custom exceptions in the Core project
-- Provide meaningful error messages for crash log analysis failures
+### Cross-Component Communication
+- GUI notifications: `INotificationService.NotificationAdded` event → `ToastContainer.ShowToastAsync()`
+- Progress updates: `IMessageHandler` → `IProgressService` → ViewModel property updates
+- Game file management: `IGameFileManager` handles backups/restore for XSE, ENB, Reshade, Vulkan
 
-## Testing Strategy
+## Testing Guidelines
 
-Currently no test projects exist. When implementing tests:
-- Create unit tests for Core domain logic
-- Use `System.IO.Abstractions.TestingHelpers` for file system mocking
-- Test YAML configuration parsing and validation
-- Mock external dependencies in Infrastructure layer tests
+- Domain logic in `Classic.Core.Tests/` - pure unit tests
+- Infrastructure in `Classic.Infrastructure.Tests/` - use mocks for file system
+- Use `FluentAssertions` for readable assertions: `result.Should().NotBeNull()`
+- Mock pattern: `Mock<IFileSystem>()` with `TestingHelpers` for file operations
 
-## Migration Notes
+## Key Files for Understanding Context
 
-This is a port from a Python application. Key considerations:
-- Python's asyncio → .NET async/await patterns
-- PySide6 GUI → Avalonia UI with ReactiveUI
-- Python's yaml library → YamlDotNet
-- File operations → System.IO.Abstractions for testability
-
-## Development Status
-
-The project is in early development with placeholder implementations. Focus areas:
-1. Implement Core domain models and interfaces
-2. Build YAML configuration system in Infrastructure
-3. Create message handling and async processing infrastructure
-4. Develop crash log parsing and analysis logic
-5. Implement Avalonia UI with proper MVVM patterns
-
-## Code Location
-
-- The code we are porting is in the "Code to Port" directory.
+- `Classic.Avalonia/ViewModels/MainWindowViewModel.cs` - Primary UI orchestration
+- `Classic.Infrastructure/Extensions/ServiceCollectionExtensions.cs` - DI registration  
+- `Classic.ScanLog/Orchestration/ComprehensiveScanOrchestrator.cs` - Core processing logic
+- `Classic.Core/Interfaces/` - Domain contracts and abstractions
+- `Classic.Infrastructure/Configuration/SettingsService.cs` - Configuration management

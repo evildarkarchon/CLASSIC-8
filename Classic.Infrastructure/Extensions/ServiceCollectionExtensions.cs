@@ -24,23 +24,23 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFileSystem, FileSystem>();
         services.AddSingleton<IYamlSettingsCache, YamlSettingsCache>();
         services.AddSingleton<IGameConfiguration, GameConfiguration>();
-        
+
         // Register new YAML settings system
         services.AddSingleton<IYamlSettings, YamlSettings>();
         services.AddSingleton<ISettingsService, SettingsService>();
-        
+
         // Register game file management
         services.AddScoped<IGameFileManager, GameFileManager>();
-        
+
         // Register progress and notification services
         services.AddSingleton<IProgressService, Services.ProgressService>();
         services.AddSingleton<IAudioService, Services.AudioService>();
         services.AddSingleton<INotificationService, Services.NotificationService>();
-        
+
         // Register HTTP client for update services
         services.AddHttpClient<IGitHubApiService, GitHubApiService>();
         services.AddHttpClient<INexusModsService, NexusModsService>();
-        
+
         // Register update services
         services.AddSingleton<IVersionService, VersionService>();
         services.AddScoped<IUpdateService, UpdateService>();

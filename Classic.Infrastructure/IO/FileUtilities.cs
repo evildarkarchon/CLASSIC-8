@@ -30,11 +30,11 @@ public static class FileUtilities
         return extension == ".txt" || extension == ".log";
     }
 
-    public static async Task<FileInfo[]> GetCrashLogsAsync(string directory,
+    public static Task<FileInfo[]> GetCrashLogsAsync(string directory,
         CancellationToken cancellationToken = default)
     {
         if (!Directory.Exists(directory))
-            return Array.Empty<FileInfo>();
+            return Task.FromResult(Array.Empty<FileInfo>());
 
         var directoryInfo = new DirectoryInfo(directory);
         var files = directoryInfo.GetFiles("*.txt", SearchOption.TopDirectoryOnly)
@@ -43,6 +43,6 @@ public static class FileUtilities
             .OrderByDescending(f => f.LastWriteTime)
             .ToArray();
 
-        return files;
+        return Task.FromResult(files);
     }
 }

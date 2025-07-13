@@ -51,7 +51,7 @@ public class YamlSettings : IYamlSettings
     public T? Get<T>(YamlStore store, string path, T? defaultValue = default)
     {
         var cacheKey = GetCacheKey(store, path);
-        
+
         // Check cache first
         if (_cache.TryGetValue(cacheKey, out var cachedValue))
         {
@@ -70,10 +70,10 @@ public class YamlSettings : IYamlSettings
             {
                 var document = LoadDocument(store);
                 var value = GetValueFromDocument(document, path, defaultValue);
-                
+
                 // Cache the result
                 _cache.TryAdd(cacheKey, value);
-                
+
                 return value;
             }
             catch (Exception ex)
@@ -102,14 +102,14 @@ public class YamlSettings : IYamlSettings
             {
                 var document = LoadDocument(store);
                 SetValueInDocument(document, path, value);
-                
+
                 // Update cache
                 var cacheKey = GetCacheKey(store, path);
                 _cache.AddOrUpdate(cacheKey, value, (_, _) => value);
-                
+
                 // Mark store as dirty
                 _dirtyStores.Add(store);
-                
+
                 _logger.Debug("Set {Path} in {Store} to {Value}", path, store, value);
             }
             catch (Exception ex)
@@ -141,7 +141,7 @@ public class YamlSettings : IYamlSettings
     public async Task SaveAsync()
     {
         var storesToSave = _dirtyStores.ToList();
-        
+
         foreach (var store in storesToSave)
         {
             try
@@ -214,7 +214,7 @@ public class YamlSettings : IYamlSettings
     private YamlDocument LoadDocumentFromDisk(YamlStore store)
     {
         var filePath = GetStorePath(store);
-        
+
         if (!File.Exists(filePath))
         {
             // Create default file if it doesn't exist
@@ -231,10 +231,11 @@ public class YamlSettings : IYamlSettings
             }
 
             var document = stream.Documents.FirstOrDefault() ?? new YamlDocument(new YamlMappingNode());
-            
+
             _documents.AddOrUpdate(store, document, (_, _) => document);
-            _lastModified.AddOrUpdate(store, File.GetLastWriteTime(filePath), (_, _) => File.GetLastWriteTime(filePath));
-            
+            _lastModified.AddOrUpdate(store, File.GetLastWriteTime(filePath),
+                (_, _) => File.GetLastWriteTime(filePath));
+
             return document;
         }
         catch (Exception ex)
@@ -247,7 +248,7 @@ public class YamlSettings : IYamlSettings
     private void CreateDefaultFile(YamlStore store, string filePath)
     {
         _logger.Information("Creating default file for {Store} at {FilePath}", store, filePath);
-        
+
         var directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(directory))
         {
@@ -302,7 +303,8 @@ Game_Info:
 
         foreach (var key in keys)
         {
-            if (current is YamlMappingNode mapping && mapping.Children.TryGetValue(new YamlScalarNode(key), out var child))
+            if (current is YamlMappingNode mapping &&
+                mapping.Children.TryGetValue(new YamlScalarNode(key), out var child))
             {
                 current = child;
             }
@@ -318,16 +320,16 @@ Game_Info:
             {
                 var value = scalar.Value;
                 if (typeof(T) == typeof(string))
-                    return (T)(object)value;
+                    return (T)(object)(value ?? string.Empty);
                 if (typeof(T) == typeof(int))
-                    return (T)(object)int.Parse(value);
+                    return (T)(object)int.Parse(value ?? "0");
                 if (typeof(T) == typeof(bool))
-                    return (T)(object)bool.Parse(value);
+                    return (T)(object)bool.Parse(value ?? "false");
                 if (typeof(T) == typeof(double))
-                    return (T)(object)double.Parse(value);
-                
+                    return (T)(object)double.Parse(value ?? "0.0");
+
                 // Try to deserialize complex types
-                return _deserializer.Deserialize<T>(value);
+                return _deserializer.Deserialize<T>(value ?? string.Empty);
             }
             catch
             {
@@ -358,7 +360,7 @@ Game_Info:
     {
         var keys = path.Split('.');
         YamlMappingNode? current = document.RootNode as YamlMappingNode;
-        
+
         if (current == null)
         {
             // If root node is not a mapping node, we need to replace the document
@@ -372,7 +374,7 @@ Game_Info:
         for (int i = 0; i < keys.Length - 1; i++)
         {
             var key = new YamlScalarNode(keys[i]);
-            
+
             if (current.Children.TryGetValue(key, out var child) && child is YamlMappingNode childMapping)
             {
                 current = childMapping;
@@ -422,7 +424,7 @@ Game_Info:
 
         var filePath = GetStorePath(store);
         var directory = Path.GetDirectoryName(filePath);
-        
+
         if (!string.IsNullOrEmpty(directory))
         {
             Directory.CreateDirectory(directory);
@@ -431,7 +433,7 @@ Game_Info:
         using var writer = new StringWriter();
         var stream = new YamlStream(document);
         stream.Save(writer, false);
-        
+
         await File.WriteAllTextAsync(filePath, writer.ToString(), Encoding.UTF8);
         _lastModified.AddOrUpdate(store, DateTime.Now, (_, _) => DateTime.Now);
     }
@@ -440,7 +442,7 @@ Game_Info:
     {
         return $"{store}:{path}";
     }
-    
+
     private YamlStore GetStoreFromDocument(YamlDocument document)
     {
         // Find which store this document belongs to
@@ -449,6 +451,7 @@ Game_Info:
             if (kvp.Value == document)
                 return kvp.Key;
         }
+
         throw new InvalidOperationException("Document not found in any store");
     }
 }

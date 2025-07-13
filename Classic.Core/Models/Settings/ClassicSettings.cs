@@ -69,4 +69,66 @@ public class ClassicSettings
     /// Path to the game's INI folder.
     /// </summary>
     public string? GameIniPath { get; set; }
+
+    /// <summary>
+    /// Window state persistence settings.
+    /// </summary>
+    public WindowStateSettings WindowState { get; set; } = new();
+
+    /// <summary>
+    /// Theme settings for the application.
+    /// </summary>
+    public ThemeSettings Theme { get; set; } = new();
+}
+
+/// <summary>
+/// Settings for window state persistence.
+/// </summary>
+public class WindowStateSettings
+{
+    /// <summary>
+    /// Window X position.
+    /// </summary>
+    public double? X { get; set; }
+
+    /// <summary>
+    /// Window Y position.
+    /// </summary>
+    public double? Y { get; set; }
+
+    /// <summary>
+    /// Window width.
+    /// </summary>
+    public double? Width { get; set; }
+
+    /// <summary>
+    /// Window height.
+    /// </summary>
+    public double? Height { get; set; }
+
+    /// <summary>
+    /// Window state (Normal, Minimized, Maximized).
+    /// </summary>
+    public string WindowState { get; set; } = "Normal";
+
+    /// <summary>
+    /// Selected tab index.
+    /// </summary>
+    public int SelectedTabIndex { get; set; } = 0;
+}
+
+/// <summary>
+/// Theme settings for the application.
+/// </summary>
+public class ThemeSettings
+{
+    /// <summary>
+    /// Current theme name (Dark, Light, Auto).
+    /// </summary>
+    public string CurrentTheme { get; set; } = "Dark";
+
+    /// <summary>
+    /// Whether to follow system theme automatically.
+    /// </summary>
+    public bool FollowSystemTheme { get; set; } = false;
 }

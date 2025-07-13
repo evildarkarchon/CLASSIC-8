@@ -22,7 +22,7 @@ public class NexusModsService : INexusModsService
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "CLASSIC-8-UpdateChecker");
     }
 
-    public async Task<VersionInfo?> GetLatestVersionAsync(string gameId, string modId, 
+    public async Task<VersionInfo?> GetLatestVersionAsync(string gameId, string modId,
         CancellationToken cancellationToken = default)
     {
         // Constants based on Python implementation
@@ -34,9 +34,9 @@ public class NexusModsService : INexusModsService
         try
         {
             Logger.Debug("Fetching Nexus mod version from {Url}", nexusModUrl);
-            
+
             var response = await _httpClient.GetAsync(nexusModUrl, cancellationToken);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 Logger.Warning("Failed to fetch Nexus mod page: HTTP {StatusCode}", response.StatusCode);
@@ -61,14 +61,15 @@ public class NexusModsService : INexusModsService
             var versionDataTag = htmlDocument.DocumentNode
                 .SelectSingleNode($"//meta[@property='{versionDataProperty}']");
 
-            if (versionDataTag?.GetAttributeValue("content", null) is not { } versionString)
+            if (versionDataTag?.GetAttributeValue("content", string.Empty) is not { } versionString ||
+                string.IsNullOrEmpty(versionString))
             {
                 Logger.Debug("Version data meta tag not found or content is missing");
                 return null;
             }
 
             var parsedVersion = _versionService.ParseVersion(versionString);
-            
+
             if (parsedVersion != null)
             {
                 Logger.Debug("Successfully parsed Nexus version: {Version}", parsedVersion);

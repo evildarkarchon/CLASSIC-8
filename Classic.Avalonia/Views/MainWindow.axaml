@@ -10,11 +10,26 @@
         Title="Crash Log Auto Scanner &amp; Setup Integrity Checker"
         MinWidth="700" MinHeight="725"
         Width="700" Height="725"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        DragDrop.AllowDrop="True">
 
     <Design.DataContext>
         <vm:MainWindowViewModel />
     </Design.DataContext>
+
+    <!-- Keyboard shortcuts -->
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+O" Command="{Binding SelectModsFolderCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+O" Command="{Binding SelectScanFolderCommand}" />
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding ScanCrashLogsCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding ScanGameFilesCommand}" />
+        <KeyBinding Gesture="F1" Command="{Binding ShowHelpCommand}" />
+        <KeyBinding Gesture="Ctrl+U" Command="{Binding CheckForUpdatesCommand}" />
+        <KeyBinding Gesture="Ctrl+," Command="{Binding ShowSettingsCommand}" />
+        <KeyBinding Gesture="Ctrl+1" Command="{Binding NavigateToTabCommand}" CommandParameter="0" />
+        <KeyBinding Gesture="Ctrl+2" Command="{Binding NavigateToTabCommand}" CommandParameter="1" />
+        <KeyBinding Gesture="Ctrl+3" Command="{Binding NavigateToTabCommand}" CommandParameter="2" />
+    </Window.KeyBindings>
 
     <Window.Styles>
         <Style Selector="TabControl">
@@ -136,6 +151,33 @@
             <Setter Property="Padding" Value="6" />
             <Setter Property="Margin" Value="0,2" />
         </Style>
+        
+        <!-- Drag and drop styles -->
+        <Style Selector="Border.drop-zone">
+            <Setter Property="Background" Value="#3C3C3C" />
+            <Setter Property="BorderBrush" Value="#666666" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Margin" Value="10" />
+        </Style>
+        
+        <Style Selector="Border.drop-zone.drag-over">
+            <Setter Property="Background" Value="#007ACC" />
+            <Setter Property="BorderBrush" Value="#1F93FF" />
+        </Style>
+        
+        <Style Selector="TextBlock.drop-message">
+            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        
+        <Style Selector="TextBlock.drop-message.drag-over">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
     </Window.Styles>
 
     <Grid Background="#2D2D30">
@@ -181,18 +223,32 @@
                             <StackPanel Spacing="4">
                                 <TextBlock Text="SCAN OPERATIONS" Classes="section-title" />
                                 
+                                <!-- Drop Zone for Crash Logs -->
+                                <Border Classes="drop-zone" Name="DropZone" MinHeight="80" IsVisible="{Binding !IsScanning}">
+                                    <StackPanel Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Classes="drop-message" 
+                                                   Text="🗂️ Drop crash log files here for quick scanning"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Classes="drop-message" 
+                                                   Text="or use the buttons below"
+                                                   FontSize="11"
+                                                   Opacity="0.8"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                                
                                 <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch">
                                     <Button Classes="primary" Content="SCAN CRASH LOGS" 
                                             Command="{Binding ScanCrashLogsCommand}"
                                             IsEnabled="{Binding !IsScanning}"
-                                            ToolTip.Tip="Scan all detected crash logs for issues."
+                                            ToolTip.Tip="Scan all detected crash logs for issues. (Ctrl+S)"
                                             HorizontalContentAlignment="Center"
                                             VerticalContentAlignment="Center"
                                             Margin="0,0,4,0" MinHeight="36" Grid.Column="0" />
                                     <Button Classes="primary" Content="SCAN GAME FILES" 
                                             Command="{Binding ScanGameFilesCommand}"
                                             IsEnabled="{Binding !IsScanning}"
-                                            ToolTip.Tip="Scan game and mod files for potential problems (FCX Mode dependent)."
+                                            ToolTip.Tip="Scan game and mod files for potential problems. (Ctrl+Shift+S)"
                                             HorizontalContentAlignment="Center"
                                             VerticalContentAlignment="Center"
                                             Margin="4,0,0,0" MinHeight="36" Grid.Column="1" />
@@ -281,18 +337,17 @@
                                 
                                 <WrapPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
                                     <Button Classes="secondary" Content="ABOUT" Command="{Binding ShowAboutCommand}" 
-                                            ToolTip.Tip="Show application information." Margin="2" />
-                                    <Button Classes="secondary" Content="HELP" Command="{Binding ShowHelpCommand}" 
-                                            ToolTip.Tip="Show help information for main options." Margin="2" />
-                                    <Button Classes="secondary" Content="CHANGE INI PATH" Command="{Binding SelectIniFolderCommand}" 
-                                            ToolTip.Tip="Manually set the path to your game's INI files folder." Margin="2" />
-                                    
-                                    <Button Classes="secondary" Content="OPEN SETTINGS" Command="{Binding OpenSettingsCommand}" 
-                                            ToolTip.Tip="Open CLASSIC Settings.yaml file." Margin="2" />
-                                    <Button Classes="secondary" Content="OPEN CRASH LOGS" Command="{Binding OpenCrashLogsFolderCommand}" 
+                                            ToolTip.Tip="Information about this CLASSIC version." Margin="2" />
+                                    <Button Classes="secondary" Content="HELP (F1)" Command="{Binding ShowHelpCommand}" 
+                                            ToolTip.Tip="Open comprehensive help documentation." Margin="2" />
+                                    <Button Classes="secondary" Content="SETTINGS" Command="{Binding ShowSettingsCommand}" 
+                                            ToolTip.Tip="Open application settings. (Ctrl+,)" Margin="2" />
+                                    <Button Classes="secondary" Content="🎨 THEME" Command="{Binding ToggleThemeCommand}" 
+                                            ToolTip.Tip="Toggle between light and dark themes." Margin="2" />
+                                    <Button Classes="secondary" Content="LOGS FOLDER" Command="{Binding OpenCrashLogsFolderCommand}" 
                                             ToolTip.Tip="Open the Crash Logs directory in your file explorer." Margin="2" />
-                                    <Button Classes="secondary" Content="CHECK UPDATES" Command="{Binding CheckUpdatesCommand}" 
-                                            ToolTip.Tip="Manually check for CLASSIC updates." Margin="2" />
+                                    <Button Classes="secondary" Content="CHECK UPDATES" Command="{Binding CheckForUpdatesCommand}" 
+                                            ToolTip.Tip="Manually check for CLASSIC updates. (Ctrl+U)" Margin="2" />
                                 </WrapPanel>
                                 
                                 <Button Classes="danger" Content="EXIT" Command="{Binding ExitCommand}" 

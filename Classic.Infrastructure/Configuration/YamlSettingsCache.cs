@@ -31,7 +31,10 @@ public class YamlSettingsCache(ILogger logger) : IYamlSettingsCache
             var yamlObject = _deserializer.Deserialize<Dictionary<string, object>>(yamlContent);
 
             var value = GetNestedValue(yamlObject, path, defaultValue);
-            _cache.TryAdd(cacheKey, value);
+            if (value != null)
+            {
+                _cache.TryAdd(cacheKey, value);
+            }
 
             return value;
         }
@@ -59,7 +62,10 @@ public class YamlSettingsCache(ILogger logger) : IYamlSettingsCache
             var yamlObject = _deserializer.Deserialize<Dictionary<string, object>>(yamlContent);
 
             var value = GetNestedValue(yamlObject, path, defaultValue);
-            _cache.TryAdd(cacheKey, value);
+            if (value != null)
+            {
+                _cache.TryAdd(cacheKey, value);
+            }
 
             return value;
         }

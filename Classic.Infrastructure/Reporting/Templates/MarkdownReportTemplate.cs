@@ -9,9 +9,9 @@ namespace Classic.Infrastructure.Reporting.Templates;
 public class MarkdownReportTemplate : IReportTemplate
 {
     public string Name => "Markdown";
-    
+
     public string Description => "Markdown-formatted report for crash log analysis";
-    
+
     public string FormatHeader(string fileName, string version)
     {
         return $"# Crash Log Analysis Report\n\n" +
@@ -21,62 +21,64 @@ public class MarkdownReportTemplate : IReportTemplate
                "> ⚠️ **Note:** Please read everything carefully and beware of false positives.\n\n" +
                "---\n";
     }
-    
+
     public string FormatError(string errorType, string errorMessage, object severity)
     {
         var severityBadge = GetSeverityBadge(severity);
         return $"{severityBadge} **{errorType}:** {errorMessage}";
     }
-    
-    public string FormatSuspect(string name, string description, object severity, string evidence = null, string recommendation = null)
+
+    public string FormatSuspect(string name, string description, object severity, string? evidence = null,
+        string? recommendation = null)
     {
         var severityBadge = GetSeverityBadge(severity);
         var result = $"\n### {severityBadge} {name}\n\n";
         result += $"**Description:** {description}\n\n";
-        
+
         if (!string.IsNullOrEmpty(evidence))
             result += $"**Evidence:** {evidence}\n\n";
-            
+
         if (!string.IsNullOrEmpty(recommendation))
             result += $"**Recommendation:** {recommendation}\n\n";
-            
+
         return result;
     }
-    
-    public string FormatPlugin(int loadOrder, string name, string status = null, string flags = null)
+
+    public string FormatPlugin(int loadOrder, string name, string? status = null, string? flags = null)
     {
         var result = $"- `[{loadOrder:X2}]` **{name}**";
-        
+
         if (!string.IsNullOrEmpty(status))
             result += $"\n  - Status: `{status}`";
-            
+
         if (!string.IsNullOrEmpty(flags))
             result += $"\n  - Flags: `{flags}`";
-            
+
         return result + "\n";
     }
-    
-    public string FormatFormId(uint formId, byte pluginIndex, uint localFormId, string pluginName, string formType = null)
+
+    public string FormatFormId(uint formId, byte pluginIndex, uint localFormId, string pluginName,
+        string? formType = null)
     {
         var result = $"- **FormID:** `{formId:X8}` [`{pluginIndex:X2}:{localFormId:X6}`]\n";
         result += $"  - Plugin: `{pluginName}`";
-        
+
         if (!string.IsNullOrEmpty(formType))
             result += $"\n  - Type: `{formType}`";
-            
+
         return result + "\n";
     }
-    
+
     public string FormatSeparator()
     {
         return "\n---\n";
     }
-    
+
     public string FormatSectionHeader(string title)
     {
         return $"\n## {title}\n";
     }
-    
+
     public string FormatFooter(string version, DateTime date)
     {
         return $"\n---\n\n" +
@@ -86,12 +88,12 @@ public class MarkdownReportTemplate : IReportTemplate
                "- [Buffout 4 NG](https://www.nexusmods.com/fallout4/mods/64879)\n" +
                "- [Crash Log Auto Scanner](https://www.nexusmods.com/fallout4/mods/56255)\n";
     }
-    
+
     public string GetSeverityIcon(int severityScore)
     {
         return GetSeverityBadge(severityScore);
     }
-    
+
     private string GetSeverityBadge(object severity)
     {
         // Handle numeric severity (1-6 scale, 6 being highest)
@@ -108,7 +110,7 @@ public class MarkdownReportTemplate : IReportTemplate
                 _ => "![UNKNOWN](https://img.shields.io/badge/UNKNOWN-grey?style=flat-square)"
             };
         }
-        
+
         // Handle SeverityLevel enum
         if (severity is SeverityLevel severityLevel)
         {
@@ -121,7 +123,7 @@ public class MarkdownReportTemplate : IReportTemplate
                 _ => "![UNKNOWN](https://img.shields.io/badge/UNKNOWN-grey?style=flat-square)"
             };
         }
-        
+
         return "![UNKNOWN](https://img.shields.io/badge/UNKNOWN-grey?style=flat-square)";
     }
 }

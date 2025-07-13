@@ -1,6 +1,7 @@
 using System;
 using Avalonia;
 using Avalonia.ReactiveUI;
+using Classic.Avalonia.Extensions;
 using Classic.Avalonia.Services;
 using Classic.Avalonia.ViewModels;
 using Classic.Core.Interfaces;
@@ -48,10 +49,12 @@ internal sealed class Program
     {
         // Add infrastructure services (includes logging, YAML settings, etc.)
         services.AddClassicInfrastructure();
-        services.AddClassicCore();
         
-        // Add ScanLog services (includes real IScanOrchestrator implementation)
+        // Add scan log services (orchestration, parsers, analyzers, etc.)
         services.AddScanLogServices();
+        
+        // Add Avalonia UI services (theme, window state, drag-drop)
+        services.AddAvaloniaUIServices();
         
         // Add ViewModels
         services.AddTransient<MainWindowViewModel>();
