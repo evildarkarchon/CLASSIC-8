@@ -52,25 +52,14 @@ public static class ServiceCollectionExtensions
         // Register message formatting service
         services.AddSingleton<IMessageFormattingService, MessageFormattingService>();
 
-        // Register message handlers
-        services.AddSingleton<ConsoleMessageHandler>();
-        services.AddSingleton<GuiMessageHandler>();
-
-        // Register factory for message handlers
-        services.AddSingleton<Func<MessageTarget, IMessageHandler>>(provider => target =>
+        // Register message handlers using the new cleaner configuration pattern
+        services.AddMessageHandlers(options =>
         {
-            return target switch
-            {
-                MessageTarget.Cli => provider.GetRequiredService<ConsoleMessageHandler>(),
-                MessageTarget.Gui => provider.GetRequiredService<GuiMessageHandler>(),
-                MessageTarget.Both => provider.GetRequiredService<ConsoleMessageHandler>(), // Default fallback
-                _ => throw new ArgumentException($"Unknown message target: {target}")
-            };
+            options.DefaultTarget = MessageTarget.Cli;
+            options.RegisterHandler<ConsoleMessageHandler>(MessageTarget.Cli);
+            options.RegisterHandler<GuiMessageHandler>(MessageTarget.Gui);
+            // Note: MessageTarget.Both will fall back to the default (CLI) handler
         });
-
-        // Register default message handler as CLI
-        services.AddSingleton<IMessageHandler>(provider =>
-            provider.GetRequiredService<ConsoleMessageHandler>());
 
         // Register reporting services
         services.AddScoped<IReportTemplate, MarkdownReportTemplate>();
