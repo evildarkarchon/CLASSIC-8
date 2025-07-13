@@ -7,18 +7,19 @@ using Serilog;
 namespace Classic.Infrastructure.Configuration;
 
 /// <summary>
-/// Provides strongly-typed access to application settings with automatic persistence.
+/// Provides comprehensive settings management with automatic persistence and support for multiple YAML stores.
+/// This is the unified entry point for all settings access in the application.
 /// </summary>
 public class SettingsService : ISettingsService
 {
-    private readonly IYamlSettings _yamlSettings;
+    private readonly IYamlSettingsProvider _yamlProvider;
     private readonly ILogger _logger;
     private ClassicSettings? _cachedSettings;
     private readonly object _lock = new();
 
-    public SettingsService(IYamlSettings yamlSettings, ILogger logger)
+    public SettingsService(IYamlSettingsProvider yamlProvider, ILogger logger)
     {
-        _yamlSettings = yamlSettings;
+        _yamlProvider = yamlProvider;
         _logger = logger;
     }
 
@@ -41,7 +42,7 @@ public class SettingsService : ISettingsService
             if (_cachedSettings != null) SaveSettingsToYaml(_cachedSettings);
         }
 
-        await _yamlSettings.SaveAsync();
+        await _yamlProvider.SaveAsync();
         _logger.Information("Settings saved successfully");
     }
 
@@ -49,7 +50,7 @@ public class SettingsService : ISettingsService
     {
         lock (_lock)
         {
-            _yamlSettings.Reload();
+            _yamlProvider.Reload();
             _cachedSettings = null;
             LoadSettings();
         }
@@ -57,14 +58,20 @@ public class SettingsService : ISettingsService
         _logger.Information("Settings reloaded from disk");
     }
 
+    // Main settings store convenience methods
     public T? GetSetting<T>(string key, T? defaultValue = default)
     {
-        return _yamlSettings.Get<T>(YamlStore.Settings, $"CLASSIC_Settings.{key}", defaultValue);
+        return _yamlProvider.Get<T>(YamlStore.Settings, $"CLASSIC_Settings.{key}", defaultValue);
+    }
+
+    public async Task<T?> GetSettingAsync<T>(string key, T? defaultValue = default)
+    {
+        return await _yamlProvider.GetAsync<T>(YamlStore.Settings, $"CLASSIC_Settings.{key}", defaultValue);
     }
 
     public void SetSetting<T>(string key, T value)
     {
-        _yamlSettings.Set(YamlStore.Settings, $"CLASSIC_Settings.{key}", value);
+        _yamlProvider.Set(YamlStore.Settings, $"CLASSIC_Settings.{key}", value);
 
         // Update cached settings if the property exists
         lock (_lock)
@@ -75,6 +82,52 @@ public class SettingsService : ISettingsService
                 if (property != null && property.CanWrite) property.SetValue(_cachedSettings, value);
             }
         }
+    }
+
+    public async Task SetSettingAsync<T>(string key, T value)
+    {
+        await _yamlProvider.SetAsync(YamlStore.Settings, $"CLASSIC_Settings.{key}", value);
+
+        // Update cached settings if the property exists
+        lock (_lock)
+        {
+            if (_cachedSettings != null)
+            {
+                var property = typeof(ClassicSettings).GetProperty(key.Replace(" ", ""));
+                if (property != null && property.CanWrite) property.SetValue(_cachedSettings, value);
+            }
+        }
+    }
+
+    // Direct YAML store access methods
+    public T? GetSetting<T>(YamlStore store, string path, T? defaultValue = default)
+    {
+        return _yamlProvider.Get<T>(store, path, defaultValue);
+    }
+
+    public async Task<T?> GetSettingAsync<T>(YamlStore store, string path, T? defaultValue = default)
+    {
+        return await _yamlProvider.GetAsync<T>(store, path, defaultValue);
+    }
+
+    public void SetSetting<T>(YamlStore store, string path, T value)
+    {
+        _yamlProvider.Set<T>(store, path, value);
+    }
+
+    public async Task SetSettingAsync<T>(YamlStore store, string path, T value)
+    {
+        await _yamlProvider.SetAsync<T>(store, path, value);
+    }
+
+    public bool SettingExists(YamlStore store, string path)
+    {
+        return _yamlProvider.Exists(store, path);
+    }
+
+    public string GetStorePath(YamlStore store)
+    {
+        return _yamlProvider.GetStorePath(store);
     }
 
     private void LoadSettings()
@@ -105,10 +158,10 @@ public class SettingsService : ISettingsService
 
     private object? GetSettingForProperty(PropertyInfo property, string yamlKey, object? defaultValue)
     {
-        var method = typeof(IYamlSettings).GetMethod(nameof(IYamlSettings.Get))!;
+        var method = typeof(IYamlSettingsProvider).GetMethod(nameof(IYamlSettingsProvider.Get))!;
         var genericMethod = method.MakeGenericMethod(property.PropertyType);
 
-        return genericMethod.Invoke(_yamlSettings, [YamlStore.Settings, $"CLASSIC_Settings.{yamlKey}", defaultValue]);
+        return genericMethod.Invoke(_yamlProvider, [YamlStore.Settings, $"CLASSIC_Settings.{yamlKey}", defaultValue]);
     }
 
     private void SaveSettingsToYaml(ClassicSettings settings)
@@ -122,9 +175,9 @@ public class SettingsService : ISettingsService
 
             if (value != null)
             {
-                var method = typeof(IYamlSettings).GetMethod(nameof(IYamlSettings.Set))!;
+                var method = typeof(IYamlSettingsProvider).GetMethod(nameof(IYamlSettingsProvider.Set))!;
                 var genericMethod = method.MakeGenericMethod(property.PropertyType);
-                genericMethod.Invoke(_yamlSettings, [YamlStore.Settings, $"CLASSIC_Settings.{yamlKey}", value]);
+                _yamlProvider.Set(YamlStore.Settings, $"CLASSIC_Settings.{yamlKey}", value);
             }
         }
     }

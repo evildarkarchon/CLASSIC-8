@@ -6,7 +6,16 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace Classic.Infrastructure.Configuration;
 
+/// <summary>
+/// Legacy YAML settings cache implementation.
+/// </summary>
+/// <remarks>
+/// This class is deprecated. Use ISettingsService instead for all settings access.
+/// </remarks>
+[Obsolete("Use ISettingsService instead. This class will be removed in a future version.")]
+#pragma warning disable CS0618 // Type or member is obsolete
 public class YamlSettingsCache(ILogger logger) : IYamlSettingsCache
+#pragma warning restore CS0618 // Type or member is obsolete
 {
     private readonly ConcurrentDictionary<string, object> _cache = new();
 

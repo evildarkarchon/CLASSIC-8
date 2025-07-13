@@ -22,12 +22,18 @@ public static class ServiceCollectionExtensions
 
         // Register core services
         services.AddSingleton<IFileSystem, FileSystem>();
-        services.AddSingleton<IYamlSettingsCache, YamlSettingsCache>();
         services.AddSingleton<IGameConfiguration, GameConfiguration>();
 
-        // Register new YAML settings system
-        services.AddSingleton<IYamlSettings, YamlSettings>();
+        // Register consolidated settings system - ISettingsService is the single public interface
+        services.AddSingleton<YamlSettings>();
+        services.AddSingleton<IYamlSettingsProvider>(provider => provider.GetRequiredService<YamlSettings>());
         services.AddSingleton<ISettingsService, SettingsService>();
+
+        // Keep legacy cache for backward compatibility during transition
+        // Only register if explicitly needed for existing legacy code
+#pragma warning disable CS0618 // Type or member is obsolete
+        services.AddSingleton<IYamlSettingsCache, YamlSettingsCache>();
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Register game file management
         services.AddScoped<IGameFileManager, GameFileManager>();

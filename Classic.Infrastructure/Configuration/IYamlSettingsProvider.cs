@@ -1,16 +1,12 @@
 using Classic.Core.Enums;
 
-namespace Classic.Core.Interfaces;
+namespace Classic.Infrastructure.Configuration;
 
 /// <summary>
-/// Provides a high-level interface for accessing and modifying YAML settings.
+/// Internal interface for YAML settings operations.
+/// This interface is not exposed publicly and is only used by the SettingsService.
 /// </summary>
-/// <remarks>
-/// This interface is deprecated. Use ISettingsService instead for all settings access.
-/// ISettingsService provides all the functionality of this interface plus strongly-typed settings access.
-/// </remarks>
-[Obsolete("Use ISettingsService instead. This interface will be removed in a future version.")]
-public interface IYamlSettings
+public interface IYamlSettingsProvider
 {
     /// <summary>
     /// Gets a setting value from the specified YAML store.

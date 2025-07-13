@@ -1,3 +1,4 @@
+using Classic.Core.Enums;
 using Classic.Core.Interfaces;
 using Serilog;
 
@@ -12,10 +13,10 @@ public class GameConfiguration : IGameConfiguration
     private bool _isVrMode;
     private string _currentGame = string.Empty;
 
-    public GameConfiguration(IYamlSettingsCache yamlSettings, ILogger logger)
+    public GameConfiguration(ISettingsService settingsService, ILogger logger)
     {
         _logger = logger;
-        InitializeAsync(yamlSettings).Wait();
+        InitializeAsync(settingsService).Wait();
     }
 
     /// <summary>
@@ -28,15 +29,15 @@ public class GameConfiguration : IGameConfiguration
     /// </summary>
     public string CurrentGame => _currentGame;
 
-    private async Task InitializeAsync(IYamlSettingsCache yamlSettings)
+    private async Task InitializeAsync(ISettingsService settingsService)
     {
         try
         {
             // Load VR mode setting
-            _isVrMode = await yamlSettings.GetSettingAsync<bool?>("Classic", "VR Mode") ?? false;
+            _isVrMode = await settingsService.GetSettingAsync<bool?>("VR Mode") ?? false;
 
             // Load current game setting
-            _currentGame = await yamlSettings.GetSettingAsync<string>("Classic", "Managed Game") ?? "Fallout4";
+            _currentGame = await settingsService.GetSettingAsync<string>("Managed Game") ?? "Fallout4";
 
             _logger.Information("Game configuration initialized: VR Mode = {IsVrMode}, Current Game = {CurrentGame}",
                 _isVrMode, _currentGame);

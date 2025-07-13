@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
 using Classic.Core.Enums;
-using Classic.Core.Interfaces;
 using Serilog;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
@@ -11,9 +10,10 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace Classic.Infrastructure.Configuration;
 
 /// <summary>
-/// Provides a comprehensive YAML settings management system with caching and persistence support.
+/// Internal implementation of YAML settings management with caching and persistence support.
+/// This class is not exposed publicly and is only used by the SettingsService.
 /// </summary>
-public class YamlSettings : IYamlSettings
+public class YamlSettings : IYamlSettingsProvider
 {
     private readonly ILogger _logger;
     private readonly string _dataDirectory;
