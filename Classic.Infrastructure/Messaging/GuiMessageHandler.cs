@@ -68,6 +68,20 @@ public class GuiMessageHandler : MessageHandlerBase
     {
         while (_messageQueue.TryDequeue(out _)) { }
     }
+
+    // Async method implementations
+    public override Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
+    {
+        SendMessage(message, MessageType.Info, MessageTarget.Gui);
+        return Task.CompletedTask;
+    }
+
+    public override Task SendProgressAsync(int current, int total, string message,
+        CancellationToken cancellationToken = default)
+    {
+        ReportProgress(message, current, total);
+        return Task.CompletedTask;
+    }
 }
 
 public class GuiMessage

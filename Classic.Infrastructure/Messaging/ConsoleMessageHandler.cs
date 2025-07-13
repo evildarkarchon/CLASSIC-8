@@ -40,4 +40,18 @@ public class ConsoleMessageHandler : MessageHandlerBase
     {
         return new ProgressContext(this, operation, total);
     }
+
+    // Async method implementations
+    public override Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
+    {
+        SendMessage(message, MessageType.Info, MessageTarget.Cli);
+        return Task.CompletedTask;
+    }
+
+    public override Task SendProgressAsync(int current, int total, string message,
+        CancellationToken cancellationToken = default)
+    {
+        ReportProgress(message, current, total);
+        return Task.CompletedTask;
+    }
 }

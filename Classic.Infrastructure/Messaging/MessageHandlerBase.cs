@@ -17,16 +17,9 @@ public abstract class MessageHandlerBase : IMessageHandler
     public abstract void ReportProgress(string operation, int current, int total);
     public abstract IDisposable BeginProgressContext(string operation, int total);
 
-    // Async methods with meaningful default implementations that delegate to sync methods
-    public virtual async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
-    {
-        await Task.Run(() => SendMessage(message, MessageType.Info, MessageTarget.Both), cancellationToken)
-            .ConfigureAwait(false);
-    }
+    // Async methods - each implementation should provide appropriate async behavior
+    public abstract Task SendMessageAsync(string message, CancellationToken cancellationToken = default);
 
-    public virtual async Task SendProgressAsync(int current, int total, string message,
-        CancellationToken cancellationToken = default)
-    {
-        await Task.Run(() => ReportProgress(message, current, total), cancellationToken).ConfigureAwait(false);
-    }
+    public abstract Task SendProgressAsync(int current, int total, string message,
+        CancellationToken cancellationToken = default);
 }
