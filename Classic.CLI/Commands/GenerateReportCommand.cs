@@ -159,7 +159,7 @@ public class GenerateReportCommand : Command
             var fileName = Path.GetFileName(logPath);
 
             // Convert DetectedSuspect to Suspect
-            var suspectsList = suspects.Select(ds => new Classic.Core.Models.Suspect
+            var suspectsList = suspects.Select(ds => new Core.Models.Suspect
             {
                 Name = ds.Name,
                 Description = ds.Description,
@@ -167,13 +167,13 @@ public class GenerateReportCommand : Command
                 Evidence = string.Join(", ", ds.MatchedPatterns),
                 Recommendation = string.Join("; ", ds.Solutions),
                 Confidence = ds.Confidence,
-                Type = Classic.Core.Models.SuspectType.Unknown,
+                Type = Core.Models.SuspectType.Unknown,
                 Severity = ds.Severity switch
                 {
-                    >= 5 => Classic.Core.Models.SeverityLevel.Critical,
-                    >= 4 => Classic.Core.Models.SeverityLevel.High,
-                    >= 3 => Classic.Core.Models.SeverityLevel.Medium,
-                    _ => Classic.Core.Models.SeverityLevel.Low
+                    >= 5 => Core.Models.SeverityLevel.Critical,
+                    >= 4 => Core.Models.SeverityLevel.High,
+                    >= 3 => Core.Models.SeverityLevel.Medium,
+                    _ => Core.Models.SeverityLevel.Low
                 }
             }).ToList();
 
@@ -236,28 +236,23 @@ public class GenerateReportCommand : Command
         // Overall assessment
         var totalIssues = reportData.CriticalIssues.Count + reportData.Errors.Count + reportData.Warnings.Count;
         if (totalIssues == 0)
-        {
             logger.Information("✅ No major issues detected!");
-        }
         else if (reportData.CriticalIssues.Any())
-        {
             logger.Warning("🚨 Critical issues detected - immediate action required");
-        }
         else if (reportData.Errors.Any())
-        {
             logger.Warning("⚠️ Errors found - should be addressed for stability");
-        }
         else
-        {
             logger.Information("ℹ️ Minor warnings found - consider addressing");
-        }
     }
 
-    private string GetReportExtension(string format) => format.ToLowerInvariant() switch
+    private string GetReportExtension(string format)
     {
-        "html" => ".html",
-        "text" => ".txt",
-        "markdown" or "md" => ".md",
-        _ => ".md"
-    };
+        return format.ToLowerInvariant() switch
+        {
+            "html" => ".html",
+            "text" => ".txt",
+            "markdown" or "md" => ".md",
+            _ => ".md"
+        };
+    }
 }

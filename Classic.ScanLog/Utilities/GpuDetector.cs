@@ -11,7 +11,9 @@ namespace Classic.ScanLog.Utilities;
 public class GpuDetector : IGpuDetector
 {
     private readonly ILogger<GpuDetector> _logger;
-    private static readonly Regex GpuRegex = new(@"GPU #(\d+):\s*(.+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    private static readonly Regex
+        GpuRegex = new(@"GPU #(\d+):\s*(.+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public GpuDetector(ILogger<GpuDetector> logger)
     {
@@ -43,7 +45,7 @@ public class GpuDetector : IGpuDetector
         try
         {
             var lines = systemSpecs.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            
+
             foreach (var line in lines)
             {
                 var match = GpuRegex.Match(line.Trim());
@@ -73,13 +75,11 @@ public class GpuDetector : IGpuDetector
                 _ => GpuManufacturer.Unknown
             };
 
-            _logger.LogInformation("Detected GPU: {Primary} (Manufacturer: {Manufacturer})", 
+            _logger.LogInformation("Detected GPU: {Primary} (Manufacturer: {Manufacturer})",
                 gpuInfo.PrimaryGpu, gpuInfo.Manufacturer);
 
             if (!string.IsNullOrEmpty(gpuInfo.SecondaryGpu))
-            {
                 _logger.LogInformation("Secondary GPU: {Secondary}", gpuInfo.SecondaryGpu);
-            }
         }
         catch (Exception ex)
         {
@@ -102,35 +102,29 @@ public class GpuDetector : IGpuDetector
         var description = gpuDescription.ToLowerInvariant();
 
         // NVIDIA detection
-        if (description.Contains("nvidia") || 
-            description.Contains("geforce") || 
-            description.Contains("rtx") || 
-            description.Contains("gtx") || 
+        if (description.Contains("nvidia") ||
+            description.Contains("geforce") ||
+            description.Contains("rtx") ||
+            description.Contains("gtx") ||
             description.Contains("quadro") ||
             description.Contains("tesla"))
-        {
             return GpuManufacturer.Nvidia;
-        }
 
         // AMD detection
-        if (description.Contains("amd") || 
-            description.Contains("radeon") || 
-            description.Contains("rx ") || 
+        if (description.Contains("amd") ||
+            description.Contains("radeon") ||
+            description.Contains("rx ") ||
             description.Contains("vega") ||
             description.Contains("navi") ||
             description.Contains("rdna"))
-        {
             return GpuManufacturer.Amd;
-        }
 
         // Intel detection
-        if (description.Contains("intel") || 
-            description.Contains("iris") || 
+        if (description.Contains("intel") ||
+            description.Contains("iris") ||
             description.Contains("uhd") ||
             description.Contains("hd graphics"))
-        {
             return GpuManufacturer.Intel;
-        }
 
         return GpuManufacturer.Unknown;
     }
@@ -171,14 +165,10 @@ public class GpuDetector : IGpuDetector
 
         // Check for rival GPU specific mods
         if (gpuInfo.Manufacturer == GpuManufacturer.Nvidia && modNameLower.Contains("amd"))
-        {
             return "⚠️ This AMD-specific mod may not work properly with your NVIDIA GPU";
-        }
 
         if (gpuInfo.Manufacturer == GpuManufacturer.Amd && modNameLower.Contains("nvidia"))
-        {
             return "⚠️ This NVIDIA-specific mod may not work properly with your AMD GPU";
-        }
 
         return null;
     }

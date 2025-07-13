@@ -16,7 +16,7 @@ namespace Classic.Avalonia;
 internal sealed class Program
 {
     public static IServiceProvider? ServiceProvider { get; private set; }
-    
+
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
@@ -27,10 +27,10 @@ internal sealed class Program
         var services = new ServiceCollection();
         ConfigureServices(services);
         ServiceProvider = services.BuildServiceProvider();
-        
+
         // Run platform compatibility check
         PlatformCompatibilityChecker.CheckCompatibility();
-        
+
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }
@@ -44,21 +44,21 @@ internal sealed class Program
             .LogToTrace()
             .UseReactiveUI();
     }
-    
+
     private static void ConfigureServices(IServiceCollection services)
     {
         // Add infrastructure services (includes logging, YAML settings, etc.)
         services.AddClassicInfrastructure();
-        
+
         // Add scan log services (orchestration, parsers, analyzers, etc.)
         services.AddScanLogServices();
-        
+
         // Add Avalonia UI services (theme, window state, drag-drop)
         services.AddAvaloniaUIServices();
-        
+
         // Add ViewModels
         services.AddTransient<MainWindowViewModel>();
-        
+
         // Keep MockScanOrchestrator available for testing if needed
         services.AddTransient<MockScanOrchestrator>();
     }

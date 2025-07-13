@@ -44,15 +44,12 @@ public class CliMessageHandler : IMessageHandler
         if (!_showProgress)
             return;
 
-        var percentage = total > 0 ? (current * 100.0 / total) : 0;
+        var percentage = total > 0 ? current * 100.0 / total : 0;
         var progressBar = CreateProgressBar(percentage);
         var progressText = $"\r{operation}: {progressBar} {percentage:F0}% ({current}/{total})";
 
         // Clear previous line if it was longer
-        if (progressText.Length < _lastProgressLength)
-        {
-            Console.Write("\r" + new string(' ', _lastProgressLength));
-        }
+        if (progressText.Length < _lastProgressLength) Console.Write("\r" + new string(' ', _lastProgressLength));
 
         Console.Write(progressText);
         _lastProgressLength = progressText.Length;

@@ -12,81 +12,81 @@
 
     <Border BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="6">
         <Grid RowDefinitions="Auto,*,Auto,Auto">
-            
+
             <!-- Header -->
             <Border Grid.Row="0" Background="#007ACC" Padding="16,12">
-                <TextBlock Text="Papyrus Log Monitor" 
-                          FontSize="16" FontWeight="Bold" 
-                          Foreground="White" 
-                          HorizontalAlignment="Center"/>
+                <TextBlock Text="Papyrus Log Monitor"
+                           FontSize="16" FontWeight="Bold"
+                           Foreground="White"
+                           HorizontalAlignment="Center" />
             </Border>
 
             <!-- Main Content -->
             <ScrollViewer Grid.Row="1" Padding="20">
                 <StackPanel Spacing="16">
-                    
+
                     <!-- Timestamp -->
                     <TextBlock Text="{Binding LastUpdated, StringFormat='Last Updated: {0}'}"
-                              FontSize="12" Foreground="#CCCCCC"
-                              HorizontalAlignment="Center"/>
+                               FontSize="12" Foreground="#CCCCCC"
+                               HorizontalAlignment="Center" />
 
                     <!-- Statistics Grid -->
                     <Border Background="#252526" CornerRadius="4" Padding="16">
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" 
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
                               ColumnDefinitions="2*,*,*">
-                            
+
                             <!-- Headers -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Metric" 
-                                      FontWeight="Bold" Foreground="#CCCCCC" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Value" 
-                                      FontWeight="Bold" Foreground="#CCCCCC" 
-                                      HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Status" 
-                                      FontWeight="Bold" Foreground="#CCCCCC" 
-                                      HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Metric"
+                                       FontWeight="Bold" Foreground="#CCCCCC" Margin="0,0,0,8" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Value"
+                                       FontWeight="Bold" Foreground="#CCCCCC"
+                                       HorizontalAlignment="Center" Margin="0,0,0,8" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Status"
+                                       FontWeight="Bold" Foreground="#CCCCCC"
+                                       HorizontalAlignment="Center" Margin="0,0,0,8" />
 
                             <!-- Dumps -->
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Dumps" 
-                                      Foreground="#CCCCCC" Margin="0,4"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DumpsText}" 
-                                      Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4"/>
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="—" 
-                                      Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Dumps"
+                                       Foreground="#CCCCCC" Margin="0,4" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DumpsText}"
+                                       Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4" />
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="—"
+                                       Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4" />
 
                             <!-- Stacks -->
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Stacks" 
-                                      Foreground="#CCCCCC" Margin="0,4"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding StacksText}" 
-                                      Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4"/>
-                            <TextBlock Grid.Row="2" Grid.Column="2" Text="—" 
-                                      Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Stacks"
+                                       Foreground="#CCCCCC" Margin="0,4" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding StacksText}"
+                                       Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4" />
+                            <TextBlock Grid.Row="2" Grid.Column="2" Text="—"
+                                       Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4" />
 
                             <!-- Ratio -->
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Dumps/Stacks Ratio" 
-                                      Foreground="#CCCCCC" Margin="0,4"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding RatioText}" 
-                                      Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4"/>
-                            <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding RatioStatus}" 
-                                      Foreground="{Binding RatioStatusColor}" 
-                                      HorizontalAlignment="Center" Margin="0,4"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Dumps/Stacks Ratio"
+                                       Foreground="#CCCCCC" Margin="0,4" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding RatioText}"
+                                       Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4" />
+                            <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding RatioStatus}"
+                                       Foreground="{Binding RatioStatusColor}"
+                                       HorizontalAlignment="Center" Margin="0,4" />
 
                             <!-- Warnings -->
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Warnings" 
-                                      Foreground="#CCCCCC" Margin="0,4"/>
-                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding WarningsText}" 
-                                      Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4"/>
-                            <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding WarningsStatus}" 
-                                      Foreground="{Binding WarningsStatusColor}" 
-                                      HorizontalAlignment="Center" Margin="0,4"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Warnings"
+                                       Foreground="#CCCCCC" Margin="0,4" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding WarningsText}"
+                                       Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4" />
+                            <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding WarningsStatus}"
+                                       Foreground="{Binding WarningsStatusColor}"
+                                       HorizontalAlignment="Center" Margin="0,4" />
 
                             <!-- Errors -->
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Errors" 
-                                      Foreground="#CCCCCC" Margin="0,4"/>
-                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ErrorsText}" 
-                                      Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4"/>
-                            <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding ErrorsStatus}" 
-                                      Foreground="{Binding ErrorsStatusColor}" 
-                                      HorizontalAlignment="Center" Margin="0,4"/>
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Errors"
+                                       Foreground="#CCCCCC" Margin="0,4" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ErrorsText}"
+                                       Foreground="#CCCCCC" HorizontalAlignment="Center" Margin="0,4" />
+                            <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding ErrorsStatus}"
+                                       Foreground="{Binding ErrorsStatusColor}"
+                                       HorizontalAlignment="Center" Margin="0,4" />
                         </Grid>
                     </Border>
 
@@ -95,29 +95,29 @@
 
             <!-- Status Message -->
             <Border Grid.Row="2" Background="#252526" Padding="16,12" Margin="16,0">
-                <TextBlock Text="{Binding StatusMessage}" 
-                          TextWrapping="Wrap" 
-                          Foreground="#CCCCCC" 
-                          FontSize="13"
-                          HorizontalAlignment="Center"/>
+                <TextBlock Text="{Binding StatusMessage}"
+                           TextWrapping="Wrap"
+                           Foreground="#CCCCCC"
+                           FontSize="13"
+                           HorizontalAlignment="Center" />
             </Border>
 
             <!-- Buttons -->
             <Border Grid.Row="3" Background="#1E1E1E" Padding="16">
-                <Button Content="Stop Monitoring" 
+                <Button Content="Stop Monitoring"
                         Command="{Binding StopMonitoringCommand}"
                         HorizontalAlignment="Center"
                         Padding="20,8"
-                        Background="#D73A49" 
+                        Background="#D73A49"
                         Foreground="White"
                         BorderThickness="0"
                         CornerRadius="4">
                     <Button.Styles>
                         <Style Selector="Button:pointerover">
-                            <Setter Property="Background" Value="#CB2431"/>
+                            <Setter Property="Background" Value="#CB2431" />
                         </Style>
                         <Style Selector="Button:pressed">
-                            <Setter Property="Background" Value="#B52D20"/>
+                            <Setter Property="Background" Value="#B52D20" />
                         </Style>
                     </Button.Styles>
                 </Button>

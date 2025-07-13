@@ -14,32 +14,32 @@ public class BatchCommand : Command
     {
         var inputFileOption = new Option<FileInfo>(
             ["--input", "-i"],
-            description: "Path to text file containing list of crash log paths")
+            "Path to text file containing list of crash log paths")
         {
             IsRequired = true
         };
 
         var outputDirOption = new Option<DirectoryInfo>(
             ["--output", "-o"],
-            description: "Output directory for reports")
+            "Output directory for reports")
         {
             IsRequired = true
         };
 
         var parallelOption = new Option<int>(
             ["--parallel", "-p"],
-            getDefaultValue: () => Environment.ProcessorCount,
-            description: "Number of parallel workers");
+            () => Environment.ProcessorCount,
+            "Number of parallel workers");
 
         var stopOnErrorOption = new Option<bool>(
             ["--stop-on-error", "-e"],
-            getDefaultValue: () => false,
-            description: "Stop processing if a log fails");
+            () => false,
+            "Stop processing if a log fails");
 
         var summaryOption = new Option<bool>(
             ["--summary", "-s"],
-            getDefaultValue: () => true,
-            description: "Generate summary report");
+            () => true,
+            "Generate summary report");
 
         AddOption(inputFileOption);
         AddOption(outputDirOption);
@@ -72,7 +72,7 @@ public class BatchCommand : Command
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-            .WriteTo.File(Path.Combine(outputDir.FullName, "batch-processing-.log"), 
+            .WriteTo.File(Path.Combine(outputDir.FullName, "batch-processing-.log"),
                 rollingInterval: RollingInterval.Day)
             .CreateLogger();
 
@@ -136,17 +136,14 @@ public class BatchCommand : Command
                 {
                     var result = await ProcessSingleLogAsync(
                         logPath, outputDir.FullName, orchestrator, cancellationToken);
-                    
+
                     lock (results)
                     {
                         results.Add(result);
                         messageHandler.ReportProgress("Processing logs", results.Count, logPaths.Length);
                     }
 
-                    if (!result.Success && stopOnError)
-                    {
-                        throw new Exception($"Failed to process: {logPath}");
-                    }
+                    if (!result.Success && stopOnError) throw new Exception($"Failed to process: {logPath}");
                 }
                 finally
                 {
@@ -159,10 +156,7 @@ public class BatchCommand : Command
             var elapsed = DateTime.Now - startTime;
 
             // Generate summary report
-            if (summary)
-            {
-                await GenerateSummaryReportAsync(outputDir.FullName, results, elapsed);
-            }
+            if (summary) await GenerateSummaryReportAsync(outputDir.FullName, results, elapsed);
 
             // Display results
             Console.WriteLine();
@@ -205,13 +199,13 @@ public class BatchCommand : Command
         {
             // Use the orchestrator to scan single log
             var scanResult = await orchestrator.ScanSingleLogAsync(logPath, cancellationToken);
-            
+
             // Generate simple report
-            var reportPath = Path.Combine(outputDir, 
+            var reportPath = Path.Combine(outputDir,
                 Path.GetFileNameWithoutExtension(logPath) + "-BATCH.md");
-            
+
             await GenerateLogReportAsync(reportPath, scanResult);
-            
+
             result.Success = scanResult.IsSuccessful;
             result.ReportPath = reportPath;
             result.Error = scanResult.ErrorMessage;
@@ -235,7 +229,7 @@ public class BatchCommand : Command
         report.AppendLine($"**Generated:** {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
         report.AppendLine($"**Status:** {(scanResult.IsSuccessful ? "Success" : "Failed")}");
         report.AppendLine();
-        
+
         if (scanResult.IsSuccessful)
         {
             report.AppendLine("## Summary");
@@ -245,7 +239,7 @@ public class BatchCommand : Command
             report.AppendLine($"- Plugins Found: {scanResult.PluginCount}");
             report.AppendLine($"- FormIDs Found: {scanResult.FormIdCount}");
             report.AppendLine($"- Suspects Found: {scanResult.SuspectCount}");
-            
+
             if (!string.IsNullOrEmpty(scanResult.MainError))
             {
                 report.AppendLine();
@@ -254,15 +248,12 @@ public class BatchCommand : Command
                 report.AppendLine(scanResult.MainError);
                 report.AppendLine($"```");
             }
-            
+
             if (scanResult.Suspects.Count > 0)
             {
                 report.AppendLine();
                 report.AppendLine("## Suspects");
-                foreach (var suspect in scanResult.Suspects)
-                {
-                    report.AppendLine($"- {suspect}");
-                }
+                foreach (var suspect in scanResult.Suspects) report.AppendLine($"- {suspect}");
             }
         }
         else
@@ -270,7 +261,7 @@ public class BatchCommand : Command
             report.AppendLine("## Error");
             report.AppendLine($"Failed to process: {scanResult.ErrorMessage}");
         }
-        
+
         await File.WriteAllTextAsync(reportPath, report.ToString());
     }
 
@@ -291,16 +282,15 @@ public class BatchCommand : Command
         report.AppendLine($"- Total logs processed: {results.Count}");
         report.AppendLine($"- Successful: {results.Count(r => r.Success)}");
         report.AppendLine($"- Failed: {results.Count(r => !r.Success)}");
-        report.AppendLine($"- Average processing time: {results.Average(r => (r.EndTime - r.StartTime).TotalSeconds):F2} seconds");
+        report.AppendLine(
+            $"- Average processing time: {results.Average(r => (r.EndTime - r.StartTime).TotalSeconds):F2} seconds");
         report.AppendLine();
 
         if (results.Any(r => r.Success))
         {
             report.AppendLine("## Successfully Processed");
             foreach (var result in results.Where(r => r.Success))
-            {
                 report.AppendLine($"- `{Path.GetFileName(result.LogPath)}`");
-            }
             report.AppendLine();
         }
 
@@ -308,24 +298,22 @@ public class BatchCommand : Command
         {
             report.AppendLine("## Failed Processing");
             foreach (var result in results.Where(r => !r.Success))
-            {
                 report.AppendLine($"- `{Path.GetFileName(result.LogPath)}`: {result.Error}");
-            }
             report.AppendLine();
         }
 
         report.AppendLine("## Processing Details");
         report.AppendLine("| Log File | Status | Processing Time | Report |");
         report.AppendLine("|----------|--------|-----------------|--------|");
-        
+
         foreach (var result in results.OrderBy(r => r.StartTime))
         {
             var status = result.Success ? "✓ Success" : "✗ Failed";
             var time = (result.EndTime - result.StartTime).TotalSeconds;
-            var reportLink = result.Success && !string.IsNullOrEmpty(result.ReportPath) 
-                ? $"[View]({Path.GetFileName(result.ReportPath)})" 
+            var reportLink = result.Success && !string.IsNullOrEmpty(result.ReportPath)
+                ? $"[View]({Path.GetFileName(result.ReportPath)})"
                 : "N/A";
-            
+
             report.AppendLine($"| {Path.GetFileName(result.LogPath)} | {status} | {time:F2}s | {reportLink} |");
         }
 

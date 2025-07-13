@@ -16,36 +16,36 @@
             <Setter Property="MaxWidth" Value="400" />
             <Setter Property="MinWidth" Value="300" />
         </Style>
-        
+
         <Style Selector="Border.toast.success">
             <Setter Property="BorderBrush" Value="#28A745" />
         </Style>
-        
+
         <Style Selector="Border.toast.warning">
             <Setter Property="BorderBrush" Value="#FFC107" />
         </Style>
-        
+
         <Style Selector="Border.toast.error">
             <Setter Property="BorderBrush" Value="#DC3545" />
         </Style>
-        
+
         <Style Selector="Border.toast.information">
             <Setter Property="BorderBrush" Value="#007ACC" />
         </Style>
-        
+
         <Style Selector="TextBlock.toast-title">
             <Setter Property="Foreground" Value="White" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Margin" Value="0,0,0,4" />
         </Style>
-        
+
         <Style Selector="TextBlock.toast-message">
             <Setter Property="Foreground" Value="#CCCCCC" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
-        
+
         <Style Selector="Button.toast-close">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
@@ -58,7 +58,7 @@
             <Setter Property="VerticalAlignment" Value="Top" />
             <Setter Property="HorizontalAlignment" Value="Right" />
         </Style>
-        
+
         <Style Selector="Button.toast-close:pointerover">
             <Setter Property="Background" Value="#4D4D4D" />
             <Setter Property="Foreground" Value="White" />
@@ -77,20 +77,20 @@
             </Grid.ColumnDefinitions>
 
             <!-- Title -->
-            <TextBlock Grid.Row="0" Grid.Column="0" 
-                       Name="TitleTextBlock" 
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Name="TitleTextBlock"
                        Classes="toast-title" />
 
             <!-- Close Button -->
-            <Button Grid.Row="0" Grid.Column="1" 
-                    Name="CloseButton" 
-                    Classes="toast-close" 
+            <Button Grid.Row="0" Grid.Column="1"
+                    Name="CloseButton"
+                    Classes="toast-close"
                     Content="×"
                     Click="OnCloseClick" />
 
             <!-- Message -->
             <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                       Name="MessageTextBlock" 
+                       Name="MessageTextBlock"
                        Classes="toast-message" />
         </Grid>
     </Border>

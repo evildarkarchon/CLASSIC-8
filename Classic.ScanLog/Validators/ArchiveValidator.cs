@@ -16,8 +16,8 @@ public class ArchiveValidator
     // BA2 file header constants
     private const int BA2_HEADER_SIZE = 12;
     private static readonly byte[] BA2_SIGNATURE = Encoding.ASCII.GetBytes("BTDX"); // BA2 signature
-    private static readonly byte[] DX10_FORMAT = Encoding.ASCII.GetBytes("DX10");   // Texture format
-    private static readonly byte[] GNRL_FORMAT = Encoding.ASCII.GetBytes("GNRL");   // General format
+    private static readonly byte[] DX10_FORMAT = Encoding.ASCII.GetBytes("DX10"); // Texture format
+    private static readonly byte[] GNRL_FORMAT = Encoding.ASCII.GetBytes("GNRL"); // General format
 
     public ArchiveValidator(IFileSystem fileSystem, ILogger<ArchiveValidator> logger)
     {
@@ -28,7 +28,8 @@ public class ArchiveValidator
     /// <summary>
     /// Validates a BA2 archive file
     /// </summary>
-    public async Task<ArchiveValidationResult> ValidateArchiveAsync(string filePath, string relativePath, CancellationToken cancellationToken = default)
+    public async Task<ArchiveValidationResult> ValidateArchiveAsync(string filePath, string relativePath,
+        CancellationToken cancellationToken = default)
     {
         var result = new ArchiveValidationResult
         {
@@ -41,7 +42,7 @@ public class ArchiveValidator
         try
         {
             var extension = Path.GetExtension(filePath).ToLowerInvariant();
-            
+
             if (extension == ".ba2")
             {
                 await ValidateBa2FileAsync(result, cancellationToken);
@@ -95,7 +96,8 @@ public class ArchiveValidator
             if (!headerData.Take(4).SequenceEqual(BA2_SIGNATURE))
             {
                 result.Status = ValidationStatus.Error;
-                result.Issue = $"Invalid BA2 file: Invalid signature. Expected BTDX, got {Encoding.ASCII.GetString(headerData, 0, 4)}";
+                result.Issue =
+                    $"Invalid BA2 file: Invalid signature. Expected BTDX, got {Encoding.ASCII.GetString(headerData, 0, 4)}";
                 result.Description = "BA2 files must start with BTDX signature";
                 return;
             }
@@ -109,7 +111,7 @@ public class ArchiveValidator
                 result.ArchiveFormat = "BTDX-DX10";
                 result.Description = "Valid texture BA2 archive (DX10 format)";
                 result.Properties["ArchiveType"] = "Texture";
-                
+
                 // For texture archives, we could analyze texture contents if needed
                 await AnalyzeTextureBa2Async(result, stream, cancellationToken);
             }
@@ -118,7 +120,7 @@ public class ArchiveValidator
                 result.ArchiveFormat = "BTDX-GNRL";
                 result.Description = "Valid general BA2 archive (GNRL format)";
                 result.Properties["ArchiveType"] = "General";
-                
+
                 // For general archives, we could analyze file contents if needed
                 await AnalyzeGeneralBa2Async(result, stream, cancellationToken);
             }
@@ -135,7 +137,6 @@ public class ArchiveValidator
             var fileInfo = _fileSystem.FileInfo.New(result.FilePath);
             result.TotalSize = fileInfo.Length;
             result.Properties["FileSize"] = result.TotalSize;
-
         }
         catch (Exception ex)
         {
@@ -149,7 +150,8 @@ public class ArchiveValidator
     /// <summary>
     /// Analyzes texture BA2 archive contents (DX10 format)
     /// </summary>
-    private async Task AnalyzeTextureBa2Async(ArchiveValidationResult result, Stream stream, CancellationToken cancellationToken)
+    private async Task AnalyzeTextureBa2Async(ArchiveValidationResult result, Stream stream,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -158,8 +160,9 @@ public class ArchiveValidator
             var estimatedFileCount = result.TotalSize / (1024 * 100); // Rough estimate based on average texture size
             result.FileCount = Math.Max(1, estimatedFileCount);
             result.Properties["EstimatedFileCount"] = result.FileCount;
-            
-            _logger.LogDebug("Analyzed texture BA2: {FilePath}, estimated {FileCount} files", result.FilePath, result.FileCount);
+
+            _logger.LogDebug("Analyzed texture BA2: {FilePath}, estimated {FileCount} files", result.FilePath,
+                result.FileCount);
         }
         catch (Exception ex)
         {
@@ -172,7 +175,8 @@ public class ArchiveValidator
     /// <summary>
     /// Analyzes general BA2 archive contents (GNRL format)
     /// </summary>
-    private async Task AnalyzeGeneralBa2Async(ArchiveValidationResult result, Stream stream, CancellationToken cancellationToken)
+    private async Task AnalyzeGeneralBa2Async(ArchiveValidationResult result, Stream stream,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -181,8 +185,9 @@ public class ArchiveValidator
             var estimatedFileCount = result.TotalSize / (1024 * 50); // Rough estimate based on average file size
             result.FileCount = Math.Max(1, estimatedFileCount);
             result.Properties["EstimatedFileCount"] = result.FileCount;
-            
-            _logger.LogDebug("Analyzed general BA2: {FilePath}, estimated {FileCount} files", result.FilePath, result.FileCount);
+
+            _logger.LogDebug("Analyzed general BA2: {FilePath}, estimated {FileCount} files", result.FilePath,
+                result.FileCount);
         }
         catch (Exception ex)
         {
@@ -196,7 +201,7 @@ public class ArchiveValidator
     /// Validates multiple archive files in parallel
     /// </summary>
     public async Task<List<ArchiveValidationResult>> ValidateArchivesAsync(
-        IEnumerable<(string filePath, string relativePath)> archives, 
+        IEnumerable<(string filePath, string relativePath)> archives,
         CancellationToken cancellationToken = default)
     {
         var tasks = archives.Select(async archive =>

@@ -43,7 +43,8 @@ public class ModDatabaseLoader
             await using var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null)
             {
-                _logger.LogWarning("Could not find embedded mod database resource: {ResourceName}. Available resources: {Available}", 
+                _logger.LogWarning(
+                    "Could not find embedded mod database resource: {ResourceName}. Available resources: {Available}",
                     resourceName, string.Join(", ", resourceNames));
                 return CreateEmptyDatabase();
             }
@@ -52,8 +53,9 @@ public class ModDatabaseLoader
             var yamlContent = await reader.ReadToEndAsync();
 
             var database = _yamlDeserializer.Deserialize<ModConflictDatabase>(yamlContent);
-            
-            _logger.LogInformation("Loaded mod database: {CoreCount} core mods, {FreqCount} frequent crash mods, {ConfCount} conflict pairs, {SoluCount} solvable mods", 
+
+            _logger.LogInformation(
+                "Loaded mod database: {CoreCount} core mods, {FreqCount} frequent crash mods, {ConfCount} conflict pairs, {SoluCount} solvable mods",
                 database.ModsCore?.Count ?? 0,
                 database.ModsFreq?.Count ?? 0,
                 database.ModsConf?.Count ?? 0,
@@ -88,7 +90,8 @@ public class ModDatabaseLoader
             var yamlContent = await File.ReadAllTextAsync(filePath);
             var database = _yamlDeserializer.Deserialize<ModConflictDatabase>(yamlContent);
 
-            _logger.LogInformation("Loaded mod database from {FilePath}: {CoreCount} core mods, {FreqCount} frequent crash mods, {ConfCount} conflict pairs, {SoluCount} solvable mods", 
+            _logger.LogInformation(
+                "Loaded mod database from {FilePath}: {CoreCount} core mods, {FreqCount} frequent crash mods, {ConfCount} conflict pairs, {SoluCount} solvable mods",
                 filePath,
                 database.ModsCore?.Count ?? 0,
                 database.ModsFreq?.Count ?? 0,

@@ -83,7 +83,7 @@ public class ProgressService : IProgressService
             {
                 _currentState.Percentage = Math.Min(100, (int)((double)currentItem / _currentState.TotalItems * 100));
                 _currentState.IsIndeterminate = false;
-                
+
                 // Calculate estimated time remaining
                 var elapsed = DateTime.Now - _currentState.StartTime;
                 if (currentItem > 0 && elapsed.TotalSeconds > 1)

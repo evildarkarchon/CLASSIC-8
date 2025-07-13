@@ -33,11 +33,8 @@ public class RecordScanner : IRecordScanner
     public IEnumerable<Suspect> Scan(CrashLog crashLog)
     {
         var namedRecords = ScanNamedRecords(crashLog);
-        
-        if (!namedRecords.Any())
-        {
-            yield break;
-        }
+
+        if (!namedRecords.Any()) yield break;
 
         // Create a single suspect for all found records
         yield return new Suspect
@@ -60,21 +57,16 @@ public class RecordScanner : IRecordScanner
     public Dictionary<string, int> ScanNamedRecords(CrashLog crashLog)
     {
         var recordMatches = new List<string>();
-        
+
         // Get the call stack segment
         if (crashLog.Segments.TryGetValue("PROBABLE CALL STACK", out var callStack) ||
             crashLog.Segments.TryGetValue("STACK", out callStack))
-        {
             FindMatchingRecords(callStack, recordMatches);
-        }
-        
+
         // Count occurrences and return sorted results
         var recordCounts = new Dictionary<string, int>();
-        foreach (var record in recordMatches)
-        {
-            recordCounts[record] = recordCounts.GetValueOrDefault(record, 0) + 1;
-        }
-        
+        foreach (var record in recordMatches) recordCounts[record] = recordCounts.GetValueOrDefault(record, 0) + 1;
+
         return recordCounts.OrderBy(kvp => kvp.Key).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }
 
@@ -101,30 +93,23 @@ public class RecordScanner : IRecordScanner
         {
             if (string.IsNullOrWhiteSpace(line))
                 continue;
-                
+
             var lowerLine = line.ToLowerInvariant();
-            
+
             // Check if line contains any target record and doesn't contain any ignored terms
             var hasTargetRecord = _lowerRecords.Any(record => lowerLine.Contains(record));
             var hasIgnoredRecord = _lowerIgnore.Any(ignored => lowerLine.Contains(ignored));
-            
+
             if (hasTargetRecord && !hasIgnoredRecord)
             {
                 // Extract the relevant part of the line based on format
                 string extractedRecord;
                 if (line.Contains(RspMarker) && line.Length > RspOffset)
-                {
                     extractedRecord = line[RspOffset..].Trim();
-                }
                 else
-                {
                     extractedRecord = line.Trim();
-                }
-                
-                if (!string.IsNullOrWhiteSpace(extractedRecord))
-                {
-                    recordMatches.Add(extractedRecord);
-                }
+
+                if (!string.IsNullOrWhiteSpace(extractedRecord)) recordMatches.Add(extractedRecord);
             }
         }
     }
@@ -137,23 +122,18 @@ public class RecordScanner : IRecordScanner
     /// <returns>Formatted report string</returns>
     public string GenerateRecordReport(Dictionary<string, int> recordCounts, string crashGenName = "Buffout 4")
     {
-        if (!recordCounts.Any())
-        {
-            return "* COULDN'T FIND ANY NAMED RECORDS *";
-        }
-        
+        if (!recordCounts.Any()) return "* COULDN'T FIND ANY NAMED RECORDS *";
+
         var report = new System.Text.StringBuilder();
-        
-        foreach (var (record, count) in recordCounts)
-        {
-            report.AppendLine($"- {record} | {count}");
-        }
-        
+
+        foreach (var (record, count) in recordCounts) report.AppendLine($"- {record} | {count}");
+
         report.AppendLine();
         report.AppendLine("[Last number counts how many times each Named Record shows up in the crash log.]");
-        report.AppendLine($"These records were caught by {crashGenName} and some of them might be related to this crash.");
+        report.AppendLine(
+            $"These records were caught by {crashGenName} and some of them might be related to this crash.");
         report.AppendLine("Named records should give extra info on involved game objects, record types or mod files.");
-        
+
         return report.ToString();
     }
 }

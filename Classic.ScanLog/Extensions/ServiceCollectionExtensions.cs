@@ -67,7 +67,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<PerformanceMonitor>();
         services.AddSingleton<ResourceManager>();
         services.AddSingleton<AdaptiveProcessingEngine>();
-        
+
         // Register orchestrator
         services.AddScoped<IScanOrchestrator, ComprehensiveScanOrchestrator>();
 

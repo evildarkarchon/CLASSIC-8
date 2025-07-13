@@ -48,14 +48,12 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
             var papyrusLogPath = GetPapyrusLogPath();
 
             if (string.IsNullOrEmpty(papyrusLogPath) || !File.Exists(papyrusLogPath))
-            {
                 return new PapyrusStats
                 {
                     Timestamp = DateTime.Now,
                     LogFileExists = false,
                     ErrorMessage = "Papyrus log file not found. Enable Papyrus logging in the game settings."
                 };
-            }
 
             var stats = await ParsePapyrusLogAsync(papyrusLogPath, cancellationToken).ConfigureAwait(false);
             _logger.Debug(
@@ -94,17 +92,13 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
 
     public async Task StopMonitoringAsync()
     {
-        if (!IsMonitoring)
-        {
-            return;
-        }
+        if (!IsMonitoring) return;
 
         _logger.Information("Stopping Papyrus log monitoring");
 
         _monitoringCancellation?.Cancel();
 
         if (_monitoringTask != null)
-        {
             try
             {
                 await _monitoringTask.ConfigureAwait(false);
@@ -113,7 +107,6 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
             {
                 // Expected when cancellation is requested
             }
-        }
 
         _monitoringCancellation?.Dispose();
         _monitoringCancellation = null;
@@ -127,7 +120,6 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
         try
         {
             while (!cancellationToken.IsCancellationRequested)
-            {
                 try
                 {
                     var currentStats = await GetCurrentStatsAsync(cancellationToken).ConfigureAwait(false);
@@ -155,7 +147,6 @@ public class PapyrusMonitoringService : IPapyrusMonitoringService, IDisposable
                     // Wait a bit before retrying
                     await Task.Delay(5000, cancellationToken).ConfigureAwait(false);
                 }
-            }
         }
         catch (OperationCanceledException)
         {

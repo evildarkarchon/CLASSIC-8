@@ -33,7 +33,8 @@ public class EnhancedSuspectScanner
         if (_patternDatabase == null)
         {
             _patternDatabase = await _patternLoader.LoadSuspectPatternsAsync();
-            _logger.LogDebug("Initialized suspect scanner with {ErrorPatterns} error patterns and {StackPatterns} stack patterns",
+            _logger.LogDebug(
+                "Initialized suspect scanner with {ErrorPatterns} error patterns and {StackPatterns} stack patterns",
                 _patternDatabase.CrashlogErrorCheck.Count,
                 _patternDatabase.CrashlogStackCheck.Count);
         }
@@ -66,10 +67,7 @@ public class EnhancedSuspectScanner
 
                 // Check for DLL crashes using enhanced logic
                 var dllSuspect = CheckDllCrash(crashLog.MainError);
-                if (dllSuspect != null)
-                {
-                    allSuspects.Add(dllSuspect);
-                }
+                if (dllSuspect != null) allSuspects.Add(dllSuspect);
             }
 
             // Remove duplicates based on name and sort by severity
@@ -185,7 +183,7 @@ public class EnhancedSuspectScanner
             var matchedPatterns = new List<string>();
 
             // Process each signal in the list
-            bool shouldSkipError = false;
+            var shouldSkipError = false;
             foreach (var signal in signalList)
             {
                 if (string.IsNullOrEmpty(signal))
@@ -246,6 +244,7 @@ public class EnhancedSuspectScanner
                 matchStatus.StackFound = true;
                 matchedPatterns.Add(signal);
             }
+
             return false;
         }
 
@@ -266,6 +265,7 @@ public class EnhancedSuspectScanner
                     matchStatus.ErrorReqFound = true;
                     matchedPatterns.Add($"{MainErrorRequired}|{signalString}");
                 }
+
                 break;
 
             case MainErrorOptional:
@@ -274,6 +274,7 @@ public class EnhancedSuspectScanner
                     matchStatus.ErrorOptFound = true;
                     matchedPatterns.Add($"{MainErrorOptional}|{signalString}");
                 }
+
                 break;
 
             case CallStackNegative:
@@ -283,6 +284,7 @@ public class EnhancedSuspectScanner
                     _logger.LogDebug("NOT condition met for {Signal}, skipping suspect", signalString);
                     return true;
                 }
+
                 break;
 
             default:
@@ -302,6 +304,7 @@ public class EnhancedSuspectScanner
                     matchStatus.StackFound = true;
                     matchedPatterns.Add(signalString);
                 }
+
                 break;
         }
 
@@ -313,10 +316,7 @@ public class EnhancedSuspectScanner
     /// </summary>
     private bool IsStackSuspectMatch(AdvancedMatchStatus matchStatus)
     {
-        if (matchStatus.HasRequiredItem)
-        {
-            return matchStatus.ErrorReqFound;
-        }
+        if (matchStatus.HasRequiredItem) return matchStatus.ErrorReqFound;
         return matchStatus.ErrorOptFound || matchStatus.StackFound;
     }
 
@@ -329,15 +329,9 @@ public class EnhancedSuspectScanner
         var content = new System.Text.StringBuilder();
 
         foreach (var segmentName in callStackSegments)
-        {
             if (crashLog.Segments.TryGetValue(segmentName, out var lines))
-            {
                 foreach (var line in lines)
-                {
                     content.AppendLine(line);
-                }
-            }
-        }
 
         return content.ToString();
     }
@@ -357,6 +351,7 @@ public class EnhancedSuspectScanner
             count++;
             index += pattern.Length;
         }
+
         return count;
     }
 
@@ -365,7 +360,7 @@ public class EnhancedSuspectScanner
     /// </summary>
     private double CalculateStackConfidence(AdvancedMatchStatus matchStatus, int matchedCount, int totalCount)
     {
-        double confidence = 0.4; // Base confidence for stack matches
+        var confidence = 0.4; // Base confidence for stack matches
 
         if (matchStatus.ErrorReqFound || matchStatus.ErrorOptFound)
             confidence += 0.4; // Higher confidence for main error matches
@@ -392,9 +387,7 @@ public class EnhancedSuspectScanner
 
         // Generate solutions based on suspect type
         if (suspectName.ToLower().Contains("crash"))
-        {
             solutions.Add($"Investigate {suspectName.Replace(" Crash", "")} related issues");
-        }
 
         // Add severity-based solutions
         switch (severity)

@@ -29,12 +29,9 @@ public class IniConfigurationManager
         {
             var content = await ReadFileWithEncodingAsync(filePath);
             var config = ParseIniConfiguration(content);
-            
+
             var value = config.GetSection($"{section}:{key}").Value;
-            if (value == null)
-            {
-                return default;
-            }
+            if (value == null) return default;
 
             return (T?)Convert.ChangeType(value, typeof(T));
         }
@@ -54,7 +51,7 @@ public class IniConfigurationManager
         {
             var content = await ReadFileWithEncodingAsync(filePath);
             var lines = content.Split('\n').ToList();
-            
+
             var sectionIndex = FindSectionIndex(lines, section);
             var keyIndex = FindKeyIndex(lines, section, key, sectionIndex);
 
@@ -83,7 +80,8 @@ public class IniConfigurationManager
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to set setting {Section}:{Key} = {Value} in {FilePath}", section, key, value, filePath);
+            _logger.Error(ex, "Failed to set setting {Section}:{Key} = {Value} in {FilePath}", section, key, value,
+                filePath);
             throw;
         }
     }
@@ -112,7 +110,7 @@ public class IniConfigurationManager
     private async Task<string> ReadFileWithEncodingAsync(string filePath)
     {
         var fileBytes = await _fileSystem.File.ReadAllBytesAsync(filePath);
-        
+
         // Detect encoding
         var detector = new CharsetDetector();
         detector.Feed(fileBytes, 0, fileBytes.Length);
@@ -120,7 +118,6 @@ public class IniConfigurationManager
 
         var encoding = Encoding.UTF8; // Default fallback
         if (detector.Charset != null)
-        {
             try
             {
                 encoding = Encoding.GetEncoding(detector.Charset);
@@ -129,7 +126,6 @@ public class IniConfigurationManager
             {
                 _logger.Warning(ex, "Failed to get encoding {Charset}, using UTF-8", detector.Charset);
             }
-        }
 
         return encoding.GetString(fileBytes);
     }
@@ -149,7 +145,6 @@ public class IniConfigurationManager
 
             var encoding = Encoding.UTF8; // Default fallback
             if (detector.Charset != null)
-            {
                 try
                 {
                     encoding = Encoding.GetEncoding(detector.Charset);
@@ -158,7 +153,6 @@ public class IniConfigurationManager
                 {
                     _logger.Warning(ex, "Failed to get encoding {Charset}, using UTF-8", detector.Charset);
                 }
-            }
 
             var contentBytes = encoding.GetBytes(content);
             await _fileSystem.File.WriteAllBytesAsync(filePath, contentBytes);
@@ -182,11 +176,9 @@ public class IniConfigurationManager
         foreach (var line in lines)
         {
             var trimmedLine = line.Trim();
-            
-            if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith(';') || trimmedLine.StartsWith('#'))
-            {
-                continue;
-            }
+
+            if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith(';') ||
+                trimmedLine.StartsWith('#')) continue;
 
             if (trimmedLine.StartsWith('[') && trimmedLine.EndsWith(']'))
             {
@@ -216,11 +208,9 @@ public class IniConfigurationManager
         for (var i = 0; i < lines.Count; i++)
         {
             var trimmedLine = lines[i].Trim();
-            if (trimmedLine.Equals($"[{section}]", StringComparison.OrdinalIgnoreCase))
-            {
-                return i;
-            }
+            if (trimmedLine.Equals($"[{section}]", StringComparison.OrdinalIgnoreCase)) return i;
         }
+
         return -1;
     }
 
@@ -229,30 +219,21 @@ public class IniConfigurationManager
     /// </summary>
     private static int FindKeyIndex(List<string> lines, string section, string key, int sectionIndex)
     {
-        if (sectionIndex < 0)
-        {
-            return -1;
-        }
+        if (sectionIndex < 0) return -1;
 
         for (var i = sectionIndex + 1; i < lines.Count; i++)
         {
             var trimmedLine = lines[i].Trim();
-            
+
             // Stop if we hit another section
-            if (trimmedLine.StartsWith('[') && trimmedLine.EndsWith(']'))
-            {
-                break;
-            }
+            if (trimmedLine.StartsWith('[') && trimmedLine.EndsWith(']')) break;
 
             // Check if this line contains our key
             var equalIndex = trimmedLine.IndexOf('=');
             if (equalIndex > 0)
             {
                 var lineKey = trimmedLine[..equalIndex].Trim();
-                if (lineKey.Equals(key, StringComparison.OrdinalIgnoreCase))
-                {
-                    return i;
-                }
+                if (lineKey.Equals(key, StringComparison.OrdinalIgnoreCase)) return i;
             }
         }
 
@@ -267,12 +248,9 @@ public class IniConfigurationManager
         for (var i = sectionIndex + 1; i < lines.Count; i++)
         {
             var trimmedLine = lines[i].Trim();
-            
+
             // Stop if we hit another section
-            if (trimmedLine.StartsWith('[') && trimmedLine.EndsWith(']'))
-            {
-                return i;
-            }
+            if (trimmedLine.StartsWith('[') && trimmedLine.EndsWith(']')) return i;
         }
 
         return lines.Count;

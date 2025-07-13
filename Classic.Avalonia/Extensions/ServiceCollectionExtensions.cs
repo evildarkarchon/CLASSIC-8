@@ -18,13 +18,13 @@ public static class ServiceCollectionExtensions
     {
         // Register theme service
         services.AddSingleton<IThemeService, ThemeService>();
-        
+
         // Register window state service
         services.AddSingleton<IWindowStateService, WindowStateService>();
-        
+
         // Register drag and drop service
         services.AddSingleton<IDragDropService, DragDropService>();
-        
+
         return services;
     }
 }

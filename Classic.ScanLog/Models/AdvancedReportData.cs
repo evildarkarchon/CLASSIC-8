@@ -12,27 +12,27 @@ public class AdvancedReportData
     public string ClassicVersion { get; set; } = "1.0.0";
     public DateTime GeneratedDate { get; set; } = DateTime.Now;
     public TimeSpan ProcessingTime { get; set; }
-    
+
     // Core crash information
     public CrashLog CrashLog { get; set; } = new();
     public List<Suspect> CrashSuspects { get; set; } = new();
     public List<ModConflictResult> ModConflicts { get; set; } = new();
     public List<FileValidationResult> FileValidationResults { get; set; } = new();
-    
+
     // Analysis results
     public List<PluginInfo> ProblematicPlugins { get; set; } = new();
     public List<FormIdSuspect> SuspectFormIds { get; set; } = new();
     public List<NamedRecord> NamedRecords { get; set; } = new();
-    
+
     // System information
     public SystemInfo SystemInfo { get; set; } = new();
     public GameInfo GameInfo { get; set; } = new();
     public SettingsValidation SettingsValidation { get; set; } = new();
-    
+
     // Performance metrics
     public PerformanceMetrics Performance { get; set; } = new();
     public List<string> GameHints { get; set; } = new();
-    
+
     // Categorized issues
     public List<ReportIssue> CriticalIssues { get; set; } = new();
     public List<ReportIssue> Errors { get; set; } = new();
@@ -139,4 +139,3 @@ public enum ReportIssueType
     SystemCompatibility,
     GameConfiguration
 }
-

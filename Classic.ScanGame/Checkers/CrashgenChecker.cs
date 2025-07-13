@@ -104,45 +104,32 @@ public class CrashgenChecker : ICrashgenChecker
 
     private Task<string?> FindConfigFileAsync()
     {
-        if (string.IsNullOrEmpty(_pluginsPath))
-        {
-            return Task.FromResult<string?>(null);
-        }
+        if (string.IsNullOrEmpty(_pluginsPath)) return Task.FromResult<string?>(null);
 
         var crashgenTomlOg = _fileSystem.Path.Combine(_pluginsPath, "Buffout4", "config.toml");
         var crashgenTomlVr = _fileSystem.Path.Combine(_pluginsPath, "Buffout4.toml");
 
         // Check for missing config files
         if (!_fileSystem.File.Exists(crashgenTomlOg) || !_fileSystem.File.Exists(crashgenTomlVr))
-        {
             _messageList.AddRange(new[]
             {
                 $"# ❌ CAUTION : {_crashgenName.ToUpper()} TOML SETTINGS FILE NOT FOUND! #\n",
                 $"Please recheck your {_crashgenName} installation and delete any obsolete files.\n-----\n"
             });
-        }
 
         // Check for duplicate config files
         if (_fileSystem.File.Exists(crashgenTomlOg) && _fileSystem.File.Exists(crashgenTomlVr))
-        {
             _messageList.AddRange(new[]
             {
                 $"# ❌ CAUTION : BOTH VERSIONS OF {_crashgenName.ToUpper()} TOML SETTINGS FILES WERE FOUND! #\n",
                 $"When editing {_crashgenName} toml settings, make sure you are editing the correct file.\n",
                 $"Please recheck your {_crashgenName} installation and delete any obsolete files.\n-----\n"
             });
-        }
 
         // Determine which config file to use
-        if (_fileSystem.File.Exists(crashgenTomlOg))
-        {
-            return Task.FromResult<string?>(crashgenTomlOg);
-        }
+        if (_fileSystem.File.Exists(crashgenTomlOg)) return Task.FromResult<string?>(crashgenTomlOg);
 
-        if (_fileSystem.File.Exists(crashgenTomlVr))
-        {
-            return Task.FromResult<string?>(crashgenTomlVr);
-        }
+        if (_fileSystem.File.Exists(crashgenTomlVr)) return Task.FromResult<string?>(crashgenTomlVr);
 
         return Task.FromResult<string?>(null);
     }
@@ -151,10 +138,7 @@ public class CrashgenChecker : ICrashgenChecker
     {
         var xseFiles = new HashSet<string>();
 
-        if (string.IsNullOrEmpty(_pluginsPath) || !_fileSystem.Directory.Exists(_pluginsPath))
-        {
-            return xseFiles;
-        }
+        if (string.IsNullOrEmpty(_pluginsPath) || !_fileSystem.Directory.Exists(_pluginsPath)) return xseFiles;
 
         try
         {
@@ -162,10 +146,7 @@ public class CrashgenChecker : ICrashgenChecker
             foreach (var file in files)
             {
                 var fileName = _fileSystem.Path.GetFileName(file);
-                if (!string.IsNullOrEmpty(fileName))
-                {
-                    xseFiles.Add(fileName.ToLowerInvariant());
-                }
+                if (!string.IsNullOrEmpty(fileName)) xseFiles.Add(fileName.ToLowerInvariant());
             }
         }
         catch (Exception ex)
@@ -184,10 +165,7 @@ public class CrashgenChecker : ICrashgenChecker
 
     private async Task ProcessSettingsAsync()
     {
-        if (string.IsNullOrEmpty(_configFile))
-        {
-            return;
-        }
+        if (string.IsNullOrEmpty(_configFile)) return;
 
         var hasBakaScrapHeap = _installedPlugins.Contains("bakascrapheap.dll");
         var settings = GetSettingsToCheck();
@@ -220,23 +198,21 @@ public class CrashgenChecker : ICrashgenChecker
 
                 // Apply the change
                 await tomlConfig.SetSettingAsync(_configFile, setting.Section, setting.Key, setting.DesiredValue);
-                _logger.Information("Changed {SettingName} from {CurrentValue} to {DesiredValue}", 
+                _logger.Information("Changed {SettingName} from {CurrentValue} to {DesiredValue}",
                     setting.Name, currentValue, setting.DesiredValue);
             }
             else
             {
                 // Setting is already correctly configured
-                _messageList.Add($"✔️ {setting.Name} parameter is correctly configured in your {_crashgenName} settings!\n-----\n");
+                _messageList.Add(
+                    $"✔️ {setting.Name} parameter is correctly configured in your {_crashgenName} settings!\n-----\n");
             }
         }
     }
 
     private List<CrashgenSetting> GetSettingsToCheck()
     {
-        if (_gameConfiguration.CurrentGame != "Fallout4")
-        {
-            return new List<CrashgenSetting>();
-        }
+        if (_gameConfiguration.CurrentGame != "Fallout4") return new List<CrashgenSetting>();
 
         var hasXcell = HasPlugin("x-cell-fo4.dll", "x-cell-og.dll", "x-cell-ng2.dll");
         var hasAchievements = HasPlugin("achievements.dll", "achievementsmodsenablerloader.dll");
@@ -257,8 +233,9 @@ public class CrashgenChecker : ICrashgenChecker
                 "The X-Cell Mod is installed", "to prevent conflicts with X-Cell"),
             new("Patches", "SmallBlockAllocator", "Small Block Allocator", hasXcell, false,
                 "The X-Cell Mod is installed", "to prevent conflicts with X-Cell"),
-            new("Patches", "ArchiveLimit", "Archive Limit", 
-                !string.IsNullOrEmpty(_configFile) && _configFile.ToLowerInvariant().Contains("buffout4/config.toml"), false,
+            new("Patches", "ArchiveLimit", "Archive Limit",
+                !string.IsNullOrEmpty(_configFile) && _configFile.ToLowerInvariant().Contains("buffout4/config.toml"),
+                false,
                 "Archive Limit is enabled", "to prevent crashes"),
             new("Patches", "MaxStdIO", "MaxStdIO", false, 2048,
                 "MaxStdIO is set to a low value", "to improve performance"),

@@ -70,40 +70,26 @@ public class XsePluginChecker : IXsePluginChecker
         try
         {
             var pluginsPath = await GetPluginsPathAsync();
-            if (pluginsPath == null)
-            {
-                return FormatPluginsPathNotFoundMessage();
-            }
+            if (pluginsPath == null) return FormatPluginsPathNotFoundMessage();
 
             var gameExePath = await GetGameExePathAsync();
-            if (gameExePath == null)
-            {
-                return FormatGameVersionNotDetectedMessage();
-            }
+            if (gameExePath == null) return FormatGameVersionNotDetectedMessage();
 
             var gameVersion = await GetGameVersionAsync(gameExePath);
             if (string.IsNullOrEmpty(gameVersion) || gameVersion == "NULL_VERSION")
-            {
                 return FormatGameVersionNotDetectedMessage();
-            }
 
             var isVrMode = await GetVrModeAsync();
             var (correctVersions, wrongVersions) = DetermineRelevantVersions(isVrMode);
 
-            var correctVersionExists = correctVersions.Any(version => 
+            var correctVersionExists = correctVersions.Any(version =>
                 _fileSystem.File.Exists(_fileSystem.Path.Combine(pluginsPath, version.Filename)));
-            var wrongVersionExists = wrongVersions.Any(version => 
+            var wrongVersionExists = wrongVersions.Any(version =>
                 _fileSystem.File.Exists(_fileSystem.Path.Combine(pluginsPath, version.Filename)));
 
-            if (correctVersionExists)
-            {
-                return FormatCorrectAddressLibMessage();
-            }
+            if (correctVersionExists) return FormatCorrectAddressLibMessage();
 
-            if (wrongVersionExists)
-            {
-                return FormatWrongAddressLibMessage(correctVersions[0]);
-            }
+            if (wrongVersionExists) return FormatWrongAddressLibMessage(correctVersions[0]);
 
             return FormatAddressLibNotFoundMessage(correctVersions[0]);
         }
@@ -144,18 +130,16 @@ public class XsePluginChecker : IXsePluginChecker
         return vrMode ?? false;
     }
 
-    private static (List<AddressLibVersionInfo> correct, List<AddressLibVersionInfo> wrong) 
+    private static (List<AddressLibVersionInfo> correct, List<AddressLibVersionInfo> wrong)
         DetermineRelevantVersions(bool isVrMode)
     {
         if (isVrMode)
-        {
             return (
-                [AllAddressLibInfo["VR"]], 
+                [AllAddressLibInfo["VR"]],
                 [AllAddressLibInfo["OG"], AllAddressLibInfo["NG"]]);
-        }
 
         return (
-            [AllAddressLibInfo["OG"], AllAddressLibInfo["NG"]], 
+            [AllAddressLibInfo["OG"], AllAddressLibInfo["NG"]],
             [AllAddressLibInfo["VR"]]);
     }
 

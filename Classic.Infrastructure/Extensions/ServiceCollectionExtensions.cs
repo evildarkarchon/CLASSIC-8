@@ -33,9 +33,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGameFileManager, GameFileManager>();
 
         // Register progress and notification services
-        services.AddSingleton<IProgressService, Services.ProgressService>();
-        services.AddSingleton<IAudioService, Services.AudioService>();
-        services.AddSingleton<INotificationService, Services.NotificationService>();
+        services.AddSingleton<IProgressService, ProgressService>();
+        services.AddSingleton<IAudioService, AudioService>();
+        services.AddSingleton<INotificationService, NotificationService>();
 
         // Register HTTP client for update services
         services.AddHttpClient<IGitHubApiService, GitHubApiService>();

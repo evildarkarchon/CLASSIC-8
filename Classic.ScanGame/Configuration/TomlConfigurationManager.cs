@@ -31,16 +31,10 @@ public class TomlConfigurationManager
             using var reader = new StringReader(content);
             var document = TOML.Parse(reader);
 
-            if (!document.HasKey(section))
-            {
-                return null;
-            }
+            if (!document.HasKey(section)) return null;
 
             var sectionTable = document[section];
-            if (sectionTable == null || !sectionTable.HasKey(key))
-            {
-                return null;
-            }
+            if (sectionTable == null || !sectionTable.HasKey(key)) return null;
 
             var value = sectionTable[key];
             return ConvertTomlValue(value);
@@ -64,16 +58,10 @@ public class TomlConfigurationManager
             var document = TOML.Parse(reader);
 
             // Ensure section exists
-            if (!document.HasKey(section))
-            {
-                document[section] = new TomlTable();
-            }
+            if (!document.HasKey(section)) document[section] = new TomlTable();
 
             var sectionTable = document[section];
-            if (sectionTable == null)
-            {
-                throw new InvalidOperationException($"Section '{section}' is not a table");
-            }
+            if (sectionTable == null) throw new InvalidOperationException($"Section '{section}' is not a table");
 
             // Set the value
             sectionTable[key] = ConvertToTomlValue(value);
@@ -86,7 +74,8 @@ public class TomlConfigurationManager
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to set setting {Section}.{Key} = {Value} in {FilePath}", section, key, value, filePath);
+            _logger.Error(ex, "Failed to set setting {Section}.{Key} = {Value} in {FilePath}", section, key, value,
+                filePath);
             throw;
         }
     }
@@ -102,10 +91,7 @@ public class TomlConfigurationManager
             using var reader = new StringReader(content);
             var document = TOML.Parse(reader);
 
-            if (!document.HasKey(section))
-            {
-                return false;
-            }
+            if (!document.HasKey(section)) return false;
 
             var sectionTable = document[section];
             return sectionTable?.HasKey(key) == true;
@@ -123,7 +109,7 @@ public class TomlConfigurationManager
     private async Task<string> ReadFileWithEncodingAsync(string filePath)
     {
         var fileBytes = await _fileSystem.File.ReadAllBytesAsync(filePath);
-        
+
         // Detect encoding
         var detector = new CharsetDetector();
         detector.Feed(fileBytes, 0, fileBytes.Length);
@@ -131,7 +117,6 @@ public class TomlConfigurationManager
 
         var encoding = Encoding.UTF8; // Default fallback
         if (detector.Charset != null)
-        {
             try
             {
                 encoding = Encoding.GetEncoding(detector.Charset);
@@ -140,7 +125,6 @@ public class TomlConfigurationManager
             {
                 _logger.Warning(ex, "Failed to get encoding {Charset}, using UTF-8", detector.Charset);
             }
-        }
 
         return encoding.GetString(fileBytes);
     }
@@ -160,7 +144,6 @@ public class TomlConfigurationManager
 
             var encoding = Encoding.UTF8; // Default fallback
             if (detector.Charset != null)
-            {
                 try
                 {
                     encoding = Encoding.GetEncoding(detector.Charset);
@@ -169,7 +152,6 @@ public class TomlConfigurationManager
                 {
                     _logger.Warning(ex, "Failed to get encoding {Charset}, using UTF-8", detector.Charset);
                 }
-            }
 
             var contentBytes = encoding.GetBytes(content);
             await _fileSystem.File.WriteAllBytesAsync(filePath, contentBytes);
@@ -196,26 +178,23 @@ public class TomlConfigurationManager
             if (value is TomlDateTimeLocal dtLocal) return dtLocal.Value;
             if (value is TomlDateTimeOffset dtOffset) return dtOffset.Value;
         }
+
         if (value.IsArray)
         {
             var array = value.AsArray;
             var result = new List<object?>();
-            for (int i = 0; i < array.RawArray.Count; i++)
-            {
-                result.Add(ConvertTomlValue(array[i]));
-            }
+            for (var i = 0; i < array.RawArray.Count; i++) result.Add(ConvertTomlValue(array[i]));
             return result.ToArray();
         }
+
         if (value.IsTable)
         {
             var table = value.AsTable;
             var result = new Dictionary<string, object?>();
-            foreach (var kvp in table.RawTable)
-            {
-                result[kvp.Key] = ConvertTomlValue(kvp.Value);
-            }
+            foreach (var kvp in table.RawTable) result[kvp.Key] = ConvertTomlValue(kvp.Value);
             return result;
         }
+
         return value?.ToString();
     }
 

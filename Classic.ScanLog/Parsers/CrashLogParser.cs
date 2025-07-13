@@ -94,27 +94,26 @@ public class CrashLogParser : ICrashLogParser
             // Define segment boundaries similar to Python implementation
             var segmentBoundaries = new List<(string start, string end)>
             {
-                ("\t[Compatibility]", "SYSTEM SPECS:"),        // Compatibility/Crashgen info
-                ("SYSTEM SPECS:", "PROBABLE CALL STACK:"),     // System specifications
-                ("PROBABLE CALL STACK:", "MODULES:"),          // Call stack information
-                ("MODULES:", "F4SE PLUGINS:"),                 // All modules
-                ("F4SE PLUGINS:", "PLUGINS:"),                 // XSE/F4SE plugins
-                ("PLUGINS:", "EOF")                            // Game plugins
+                ("\t[Compatibility]", "SYSTEM SPECS:"), // Compatibility/Crashgen info
+                ("SYSTEM SPECS:", "PROBABLE CALL STACK:"), // System specifications
+                ("PROBABLE CALL STACK:", "MODULES:"), // Call stack information
+                ("MODULES:", "F4SE PLUGINS:"), // All modules
+                ("F4SE PLUGINS:", "PLUGINS:"), // XSE/F4SE plugins
+                ("PLUGINS:", "EOF") // Game plugins
             };
 
-            var segmentNames = new[] 
-            { 
-                "Compatibility", "SystemSpecs", "CallStack", 
-                "Modules", "F4SEPlugins", "Plugins" 
+            var segmentNames = new[]
+            {
+                "Compatibility", "SystemSpecs", "CallStack",
+                "Modules", "F4SEPlugins", "Plugins"
             };
 
             var extractedSegments = ExtractSegments(content.ToList(), segmentBoundaries, "EOF");
-            
+
             // Convert to dictionary with proper names
             var segments = new Dictionary<string, List<string>>();
-            
+
             for (var i = 0; i < segmentNames.Length; i++)
-            {
                 if (i < extractedSegments.Count)
                 {
                     // Strip whitespace from each line in the segment
@@ -122,7 +121,7 @@ public class CrashLogParser : ICrashLogParser
                         .Select(line => line.Trim())
                         .Where(line => !string.IsNullOrEmpty(line))
                         .ToList();
-                    
+
                     segments[segmentNames[i]] = processedSegment;
                 }
                 else
@@ -130,7 +129,6 @@ public class CrashLogParser : ICrashLogParser
                     // Add empty list for missing segments
                     segments[segmentNames[i]] = new List<string>();
                 }
-            }
 
             // Also extract header information (everything before first segment)
             var headerLines = new List<string>();
@@ -140,6 +138,7 @@ public class CrashLogParser : ICrashLogParser
                     break;
                 headerLines.Add(line.Trim());
             }
+
             segments["Header"] = headerLines;
 
             return segments;
@@ -151,8 +150,8 @@ public class CrashLogParser : ICrashLogParser
     /// Port of Python extract_segments function
     /// </summary>
     private static List<List<string>> ExtractSegments(
-        List<string> crashData, 
-        List<(string start, string end)> segmentBoundaries, 
+        List<string> crashData,
+        List<(string start, string end)> segmentBoundaries,
         string eofMarker)
     {
         var segments = new List<List<string>>();
@@ -191,11 +190,9 @@ public class CrashLogParser : ICrashLogParser
                 // Toggle collection state and update boundary
                 collecting = !collecting;
                 if (segmentIndex < segmentBoundaries.Count)
-                {
-                    currentBoundary = collecting ? 
-                        segmentBoundaries[segmentIndex].end : 
-                        segmentBoundaries[segmentIndex].start;
-                }
+                    currentBoundary = collecting
+                        ? segmentBoundaries[segmentIndex].end
+                        : segmentBoundaries[segmentIndex].start;
 
                 // Handle special EOF case
                 if (collecting && currentBoundary == eofMarker)
@@ -207,10 +204,8 @@ public class CrashLogParser : ICrashLogParser
                 }
 
                 if (!collecting)
-                {
                     // Don't increment index in case current line is also next start boundary
                     currentIndex--;
-                }
             }
 
             // Check if we've reached the end while still collecting
@@ -235,7 +230,7 @@ public class CrashLogParser : ICrashLogParser
         await Task.Run(() =>
         {
             var headerInfo = ParseCrashHeader(content.ToList(), "Buffout", "Fallout4");
-            
+
             crashLog.GameVersion = headerInfo.gameVersion;
             crashLog.CrashGenVersion = headerInfo.crashGenVersion;
             crashLog.MainError = headerInfo.mainError;
@@ -251,8 +246,8 @@ public class CrashLogParser : ICrashLogParser
     /// <param name="gameRootName">Root name of the game to identify game version</param>
     /// <returns>Tuple containing game version, crash generator version, and main error</returns>
     private static (string gameVersion, string crashGenVersion, string mainError) ParseCrashHeader(
-        List<string> crashData, 
-        string crashGenName, 
+        List<string> crashData,
+        string crashGenName,
         string gameRootName)
     {
         var gameVersion = "UNKNOWN";
@@ -262,30 +257,20 @@ public class CrashLogParser : ICrashLogParser
         foreach (var line in crashData)
         {
             // Check for game version (line starting with game root name)
-            if (!string.IsNullOrEmpty(gameRootName) && line.StartsWith(gameRootName))
-            {
-                gameVersion = line.Trim();
-            }
-            
+            if (!string.IsNullOrEmpty(gameRootName) && line.StartsWith(gameRootName)) gameVersion = line.Trim();
+
             // Check for crash generator version
-            if (line.StartsWith(crashGenName))
-            {
-                crashGenVersion = line.Trim();
-            }
-            
+            if (line.StartsWith(crashGenName)) crashGenVersion = line.Trim();
+
             // Check for main error (unhandled exception)
             if (line.StartsWith("Unhandled exception"))
             {
                 // Replace | with newline for better formatting (first occurrence only)
                 var pipeIndex = line.IndexOf('|');
                 if (pipeIndex >= 0)
-                {
                     mainError = line.Substring(0, pipeIndex) + "\n" + line.Substring(pipeIndex + 1);
-                }
                 else
-                {
                     mainError = line;
-                }
             }
         }
 
@@ -423,7 +408,7 @@ public class CrashLogParser : ICrashLogParser
 
                     plugins.Add(plugin);
 
-                    _logger.LogTrace("Parsed plugin: [{LoadOrder}] {PluginName}", 
+                    _logger.LogTrace("Parsed plugin: [{LoadOrder}] {PluginName}",
                         loadOrderHex, pluginName);
                 }
             }
@@ -547,15 +532,11 @@ public static class CrashLogParserExtensions
         {
             var trimmedText = text.Trim();
             var match = pattern.Match(trimmedText);
-            
+
             if (match.Success)
-            {
                 result.Add(match.Groups[1].Value);
-            }
             else
-            {
                 result.Add(trimmedText);
-            }
         }
 
         return result;

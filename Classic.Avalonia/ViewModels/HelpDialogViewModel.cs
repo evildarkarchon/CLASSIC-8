@@ -8,44 +8,38 @@ public class HelpDialogViewModel : ViewModelBase
 {
     private HelpTopic? _selectedTopic;
     private string _helpContent = string.Empty;
-    
+
     public HelpDialogViewModel()
     {
         CloseCommand = ReactiveCommand.Create<Unit, Unit>(_ => Unit.Default);
-        
+
         // Initialize help topics
         InitializeHelpTopics();
-        
+
         // Select the first topic by default
-        if (Topics.Count > 0)
-        {
-            SelectedTopic = Topics[0];
-        }
+        if (Topics.Count > 0) SelectedTopic = Topics[0];
     }
-    
+
     public ObservableCollection<HelpTopic> Topics { get; } = new();
-    
+
     public HelpTopic? SelectedTopic
     {
         get => _selectedTopic;
         set
         {
             this.RaiseAndSetIfChanged(ref _selectedTopic, value);
-            if (value != null)
-            {
-                HelpContent = value.Content;
-            }
+            if (value != null) HelpContent = value.Content;
         }
     }
-    
+
     public string HelpContent
     {
         get => _helpContent;
         set => this.RaiseAndSetIfChanged(ref _helpContent, value);
     }
-    
+
     public ReactiveCommand<Unit, Unit> CloseCommand { get; }
-    
+
     private void InitializeHelpTopics()
     {
         Topics.Add(new HelpTopic("Getting Started",
@@ -164,7 +158,7 @@ public class HelpTopic
         Title = title;
         Content = content;
     }
-    
+
     public string Title { get; }
     public string Content { get; }
 }

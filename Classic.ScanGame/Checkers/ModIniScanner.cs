@@ -19,7 +19,8 @@ public class ModIniScanner : IModIniScanner
     // Constants for config settings
     private const string ConsoleCommandSetting = "sStartingConsoleCommand";
     private const string ConsoleCommandSection = "General";
-    private const string ConsoleCommandNotice = 
+
+    private const string ConsoleCommandNotice =
         "In rare cases, this setting can slow down the initial game startup time for some players.\n" +
         "You can test your initial startup time difference by removing this setting from the INI file.\n-----\n";
 
@@ -53,7 +54,8 @@ public class ModIniScanner : IModIniScanner
         try
         {
             var messageList = new List<string>();
-            var configFiles = await ConfigFileCache.CreateAsync(_fileSystem, _yamlSettings, _gameConfiguration, _logger);
+            var configFiles =
+                await ConfigFileCache.CreateAsync(_fileSystem, _yamlSettings, _gameConfiguration, _logger);
 
             // Check for console command settings that might slow down startup
             await CheckStartingConsoleCommandAsync(configFiles, messageList);
@@ -91,17 +93,13 @@ public class ModIniScanner : IModIniScanner
         var gameLower = _gameConfiguration.CurrentGame.ToLowerInvariant();
 
         foreach (var (fileName, filePath) in configFiles.GetFiles())
-        {
-            if (fileName.StartsWith(gameLower, StringComparison.OrdinalIgnoreCase) && 
+            if (fileName.StartsWith(gameLower, StringComparison.OrdinalIgnoreCase) &&
                 await configFiles.HasSettingAsync(fileName, ConsoleCommandSection, ConsoleCommandSetting))
-            {
                 messageList.AddRange(new[]
                 {
                     $"[!] NOTICE: {filePath} contains the *{ConsoleCommandSetting}* setting.\n",
                     ConsoleCommandNotice
                 });
-            }
-        }
     }
 
     /// <summary>
@@ -169,16 +167,14 @@ public class ModIniScanner : IModIniScanner
         // Fix ESPExplorer hotkey
         var hotkey = await configFiles.GetSettingAsync<string>("espexplorer.ini", "General", "HotKey");
         if (hotkey?.Contains("; F10") == true)
-        {
-            await ApplyIniFixAsync(configFiles, "espexplorer.ini", "General", "HotKey", "0x79", "INI HOTKEY", messageList);
-        }
+            await ApplyIniFixAsync(configFiles, "espexplorer.ini", "General", "HotKey", "0x79", "INI HOTKEY",
+                messageList);
 
         // Fix EPO particle count
         var particleCount = await configFiles.GetSettingAsync<int?>("epo.ini", "Particles", "iMaxDesired");
         if (particleCount > 5000)
-        {
-            await ApplyIniFixAsync(configFiles, "epo.ini", "Particles", "iMaxDesired", 5000, "INI PARTICLE COUNT", messageList);
-        }
+            await ApplyIniFixAsync(configFiles, "epo.ini", "Particles", "iMaxDesired", 5000, "INI PARTICLE COUNT",
+                messageList);
 
         // Fix F4EE settings if present
         if (configFiles.HasFile("f4ee.ini"))
@@ -186,26 +182,24 @@ public class ModIniScanner : IModIniScanner
             // Fix head parts unlock setting
             var headParts = await configFiles.GetSettingAsync<int?>("f4ee.ini", "CharGen", "bUnlockHeadParts");
             if (headParts == 0)
-            {
-                await ApplyIniFixAsync(configFiles, "f4ee.ini", "CharGen", "bUnlockHeadParts", 1, "INI HEAD PARTS UNLOCK", messageList);
-            }
+                await ApplyIniFixAsync(configFiles, "f4ee.ini", "CharGen", "bUnlockHeadParts", 1,
+                    "INI HEAD PARTS UNLOCK", messageList);
 
             // Fix face tints unlock setting
             var faceTints = await configFiles.GetSettingAsync<int?>("f4ee.ini", "CharGen", "bUnlockTints");
             if (faceTints == 0)
-            {
-                await ApplyIniFixAsync(configFiles, "f4ee.ini", "CharGen", "bUnlockTints", 1, "INI FACE TINTS UNLOCK", messageList);
-            }
+                await ApplyIniFixAsync(configFiles, "f4ee.ini", "CharGen", "bUnlockTints", 1, "INI FACE TINTS UNLOCK",
+                    messageList);
         }
 
         // Fix highfpsphysicsfix.ini loading screen FPS if present
         if (configFiles.HasFile("highfpsphysicsfix.ini"))
         {
-            var loadingScreenFps = await configFiles.GetSettingAsync<double?>("highfpsphysicsfix.ini", "Limiter", "LoadingScreenFPS");
+            var loadingScreenFps =
+                await configFiles.GetSettingAsync<double?>("highfpsphysicsfix.ini", "Limiter", "LoadingScreenFPS");
             if (loadingScreenFps < 600.0)
-            {
-                await ApplyIniFixAsync(configFiles, "highfpsphysicsfix.ini", "Limiter", "LoadingScreenFPS", 600.0, "INI LOADING SCREEN FPS", messageList);
-            }
+                await ApplyIniFixAsync(configFiles, "highfpsphysicsfix.ini", "Limiter", "LoadingScreenFPS", 600.0,
+                    "INI LOADING SCREEN FPS", messageList);
         }
     }
 
@@ -220,19 +214,13 @@ public class ModIniScanner : IModIniScanner
             var allDuplicates = new List<string>();
 
             // Collect paths from duplicate files
-            foreach (var paths in duplicateFiles.Values)
-            {
-                allDuplicates.AddRange(paths);
-            }
+            foreach (var paths in duplicateFiles.Values) allDuplicates.AddRange(paths);
 
             // Also add original files that have duplicates
             foreach (var fileName in duplicateFiles.Keys)
             {
                 var originalPath = configFiles.GetFilePath(fileName);
-                if (!string.IsNullOrEmpty(originalPath))
-                {
-                    allDuplicates.Add(originalPath);
-                }
+                if (!string.IsNullOrEmpty(originalPath)) allDuplicates.Add(originalPath);
             }
 
             // Sort by filename for consistent output
@@ -264,12 +252,8 @@ public static class StringExtensions
 
         var words = input.Split(' ');
         for (var i = 0; i < words.Length; i++)
-        {
             if (words[i].Length > 0)
-            {
                 words[i] = char.ToUpper(words[i][0]) + words[i][1..].ToLower();
-            }
-        }
 
         return string.Join(" ", words);
     }

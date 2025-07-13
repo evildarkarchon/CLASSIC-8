@@ -11,7 +11,7 @@
     <ItemGroup>
         <Folder Include="Models\"/>
         <AvaloniaResource Include="Assets\**"/>
-        <EmbeddedResource Include="Resources\Audio\**" />
+        <EmbeddedResource Include="Resources\Audio\**"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -30,8 +30,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Classic.Core\Classic.Core.csproj" />
-        <ProjectReference Include="..\Classic.Infrastructure\Classic.Infrastructure.csproj" />
-        <ProjectReference Include="..\Classic.ScanLog\Classic.ScanLog.csproj" />
+        <ProjectReference Include="..\Classic.Core\Classic.Core.csproj"/>
+        <ProjectReference Include="..\Classic.Infrastructure\Classic.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Classic.ScanLog\Classic.ScanLog.csproj"/>
     </ItemGroup>
 </Project>

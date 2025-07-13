@@ -14,41 +14,41 @@
 
     <Window.Styles>
         <Style Selector="ListBox">
-            <Setter Property="Background" Value="#252526"/>
-            <Setter Property="BorderBrush" Value="#3F3F46"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#252526" />
+            <Setter Property="BorderBrush" Value="#3F3F46" />
+            <Setter Property="BorderThickness" Value="1" />
         </Style>
-        
+
         <Style Selector="ListBoxItem">
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Foreground" Value="#CCCCCC" />
         </Style>
-        
+
         <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#2A2D2E"/>
+            <Setter Property="Background" Value="#2A2D2E" />
         </Style>
-        
+
         <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-            <Setter Property="Background" Value="#094771"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#094771" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
         </Style>
-        
+
         <Style Selector="TextBlock.topic-title">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
-        
+
         <Style Selector="TextBlock.help-content">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#CCCCCC"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="LineHeight" Value="20"/>
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="20" />
         </Style>
-        
+
         <Style Selector="ScrollViewer">
-            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="Background" Value="#1E1E1E" />
         </Style>
-        
+
         <Style Selector="Button.primary">
             <Setter Property="Background" Value="#007ACC" />
             <Setter Property="Foreground" Value="White" />
@@ -59,12 +59,12 @@
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="MinHeight" Value="36" />
         </Style>
-        
+
         <Style Selector="Button.primary:pointerover">
             <Setter Property="Background" Value="#1E8AD6" />
             <Setter Property="BorderBrush" Value="#1E8AD6" />
         </Style>
-        
+
         <Style Selector="Button.primary:pressed">
             <Setter Property="Background" Value="#005A9E" />
             <Setter Property="BorderBrush" Value="#005A9E" />
@@ -73,54 +73,54 @@
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        
+
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            
+
             <!-- Topics List -->
             <Border Grid.Column="0" Margin="0,0,10,0">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" 
-                               Text="Help Topics" 
-                               FontSize="16" 
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="Help Topics"
+                               FontSize="16"
                                FontWeight="Bold"
                                Foreground="#FFFFFF"
-                               Margin="0,0,0,10"/>
-                    
+                               Margin="0,0,0,10" />
+
                     <ListBox ItemsSource="{Binding Topics}"
                              SelectedItem="{Binding SelectedTopic}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Classes="topic-title" Text="{Binding Title}"/>
+                                <TextBlock Classes="topic-title" Text="{Binding Title}" />
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </DockPanel>
             </Border>
-            
+
             <!-- Help Content -->
             <Border Grid.Column="1">
-                <ScrollViewer Padding="15" 
+                <ScrollViewer Padding="15"
                               VerticalScrollBarVisibility="Auto">
-                    <TextBlock Classes="help-content" 
-                               Text="{Binding HelpContent}"/>
+                    <TextBlock Classes="help-content"
+                               Text="{Binding HelpContent}" />
                 </ScrollViewer>
             </Border>
         </Grid>
-        
+
         <!-- Footer -->
-        <Button Grid.Row="1" 
+        <Button Grid.Row="1"
                 Classes="primary"
                 Content="Close"
                 Command="{Binding CloseCommand}"
                 HorizontalAlignment="Center"
                 Width="100"
-                Margin="0,15,0,0"/>
+                Margin="0,15,0,0" />
     </Grid>
 </Window>

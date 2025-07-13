@@ -35,7 +35,7 @@ public class ModConflictDetector
     public async Task InitializeAsync()
     {
         _database = await _databaseLoader.LoadModDatabaseAsync();
-        _logger.LogInformation("ModConflictDetector initialized with {TotalMods} mod entries", 
+        _logger.LogInformation("ModConflictDetector initialized with {TotalMods} mod entries",
             GetTotalModCount());
     }
 
@@ -46,15 +46,13 @@ public class ModConflictDetector
     /// <returns>List of detected mod conflicts</returns>
     public async Task<List<ModConflictResult>> DetectModConflictsAsync(CrashLogData crashLogData)
     {
-        if (_database == null)
-        {
-            await InitializeAsync();
-        }
+        if (_database == null) await InitializeAsync();
 
         var conflicts = new List<ModConflictResult>();
-        var gpuInfo = (_gpuDetector as GpuDetector)?.GetGpuInfo(crashLogData.SystemSpecs ?? string.Empty) ?? new GpuInfo();
+        var gpuInfo = (_gpuDetector as GpuDetector)?.GetGpuInfo(crashLogData.SystemSpecs ?? string.Empty) ??
+                      new GpuInfo();
 
-        _logger.LogDebug("Starting mod conflict detection for {PluginCount} plugins", 
+        _logger.LogDebug("Starting mod conflict detection for {PluginCount} plugins",
             crashLogData.Plugins?.Count ?? 0);
 
         try
@@ -79,7 +77,7 @@ public class ModConflictDetector
             var loadOrderConflicts = DetectLoadOrderIssues(crashLogData.Plugins);
             conflicts.AddRange(loadOrderConflicts);
 
-            _logger.LogInformation("Mod conflict detection completed. Found {ConflictCount} issues", 
+            _logger.LogInformation("Mod conflict detection completed. Found {ConflictCount} issues",
                 conflicts.Count);
         }
         catch (Exception ex)
@@ -101,29 +99,27 @@ public class ModConflictDetector
             return conflicts;
 
         foreach (var plugin in plugins)
+        foreach (var (modPattern, entryValue) in _database.ModsFreq)
         {
-            foreach (var (modPattern, entryValue) in _database.ModsFreq)
-            {
-                var (warning, gpuConstraint) = ParseModEntry(entryValue);
-                
-                if (IsModNameMatch(plugin.FileName, modPattern) || 
-                    IsModNameMatch(plugin.DisplayName, modPattern))
-                {
-                    conflicts.Add(new ModConflictResult
-                    {
-                        ModName = modPattern,
-                        PluginId = plugin.FileName,
-                        Warning = warning,
-                        Solution = ExtractSolutionFromDescription(warning),
-                        Severity = ConflictSeverity.Critical,
-                        Type = ConflictType.FrequentCrash,
-                        GpuSpecific = gpuConstraint
-                    });
+            var (warning, gpuConstraint) = ParseModEntry(entryValue);
 
-                    _logger.LogWarning("Found frequent crash mod: {ModName} [{PluginId}] (GPU: {Constraint})", 
-                        modPattern, plugin.FileName, gpuConstraint ?? "Any");
-                    break; // Only report once per plugin
-                }
+            if (IsModNameMatch(plugin.FileName, modPattern) ||
+                IsModNameMatch(plugin.DisplayName, modPattern))
+            {
+                conflicts.Add(new ModConflictResult
+                {
+                    ModName = modPattern,
+                    PluginId = plugin.FileName,
+                    Warning = warning,
+                    Solution = ExtractSolutionFromDescription(warning),
+                    Severity = ConflictSeverity.Critical,
+                    Type = ConflictType.FrequentCrash,
+                    GpuSpecific = gpuConstraint
+                });
+
+                _logger.LogWarning("Found frequent crash mod: {ModName} [{PluginId}] (GPU: {Constraint})",
+                    modPattern, plugin.FileName, gpuConstraint ?? "Any");
+                break; // Only report once per plugin
             }
         }
 
@@ -145,7 +141,7 @@ public class ModConflictDetector
         foreach (var (conflictPair, entryValue) in _database.ModsConf)
         {
             var (warning, gpuConstraint) = ParseModEntry(entryValue);
-            
+
             // Parse mod pairs using " | " separator
             var modParts = conflictPair.Split(" | ", StringSplitOptions.RemoveEmptyEntries);
             if (modParts.Length != 2) continue;
@@ -170,7 +166,7 @@ public class ModConflictDetector
                     GpuSpecific = gpuConstraint
                 });
 
-                _logger.LogWarning("Found mod pair conflict: {Mod1} conflicts with {Mod2} (GPU: {Constraint})", 
+                _logger.LogWarning("Found mod pair conflict: {Mod1} conflicts with {Mod2} (GPU: {Constraint})",
                     mod1, mod2, gpuConstraint ?? "Any");
             }
         }
@@ -194,11 +190,11 @@ public class ModConflictDetector
         {
             // Parse the entry value (can be string or object with GPU constraints)
             var (description, gpuConstraint) = ParseModEntry(entryValue);
-            
+
             // Skip if GPU constraint doesn't match current system
             if (!ShouldProcessModForGpu(gpuConstraint, gpuInfo))
             {
-                _logger.LogDebug("Skipping {ModEntry} due to GPU constraint: {Constraint}", 
+                _logger.LogDebug("Skipping {ModEntry} due to GPU constraint: {Constraint}",
                     modEntry, gpuConstraint);
                 continue;
             }
@@ -214,7 +210,7 @@ public class ModConflictDetector
             {
                 // Determine severity based on GPU constraint
                 var severity = !string.IsNullOrEmpty(gpuConstraint)
-                    ? ConflictSeverity.Critical  // GPU-specific mods are critical
+                    ? ConflictSeverity.Critical // GPU-specific mods are critical
                     : ConflictSeverity.Warning;
 
                 var warningMessage = !string.IsNullOrEmpty(gpuConstraint)
@@ -232,7 +228,7 @@ public class ModConflictDetector
                     GpuSpecific = gpuConstraint
                 });
 
-                _logger.LogInformation("Important mod not detected: {ModName} [{ModId}] (GPU: {Constraint})", 
+                _logger.LogInformation("Important mod not detected: {ModName} [{ModId}] (GPU: {Constraint})",
                     displayName, modId, gpuConstraint ?? "Any");
             }
             else
@@ -255,29 +251,27 @@ public class ModConflictDetector
             return conflicts;
 
         foreach (var plugin in plugins)
+        foreach (var (modPattern, entryValue) in _database.ModsSolu)
         {
-            foreach (var (modPattern, entryValue) in _database.ModsSolu)
-            {
-                var (solution, gpuConstraint) = ParseModEntry(entryValue);
-                
-                if (IsModNameMatch(plugin.FileName, modPattern) || 
-                    IsModNameMatch(plugin.DisplayName, modPattern))
-                {
-                    conflicts.Add(new ModConflictResult
-                    {
-                        ModName = modPattern,
-                        PluginId = plugin.FileName,
-                        Warning = solution,
-                        Solution = ExtractSolutionFromDescription(solution),
-                        Severity = ConflictSeverity.Info,
-                        Type = ConflictType.HasSolution,
-                        GpuSpecific = gpuConstraint
-                    });
+            var (solution, gpuConstraint) = ParseModEntry(entryValue);
 
-                    _logger.LogInformation("Found mod with available solution: {ModName} [{PluginId}] (GPU: {Constraint})", 
-                        modPattern, plugin.FileName, gpuConstraint ?? "Any");
-                    break;
-                }
+            if (IsModNameMatch(plugin.FileName, modPattern) ||
+                IsModNameMatch(plugin.DisplayName, modPattern))
+            {
+                conflicts.Add(new ModConflictResult
+                {
+                    ModName = modPattern,
+                    PluginId = plugin.FileName,
+                    Warning = solution,
+                    Solution = ExtractSolutionFromDescription(solution),
+                    Severity = ConflictSeverity.Info,
+                    Type = ConflictType.HasSolution,
+                    GpuSpecific = gpuConstraint
+                });
+
+                _logger.LogInformation("Found mod with available solution: {ModName} [{PluginId}] (GPU: {Constraint})",
+                    modPattern, plugin.FileName, gpuConstraint ?? "Any");
+                break;
             }
         }
 
@@ -300,13 +294,13 @@ public class ModConflictDetector
             {
                 ModName = "Plugin Limit",
                 PluginId = "[FF] marker detected",
-                Warning = _database?.LoadOrderWarnings?.GetValueOrDefault("plugin_limit") ?? 
-                         "Plugin limit exceeded (255+ plugins detected)",
+                Warning = _database?.LoadOrderWarnings?.GetValueOrDefault("plugin_limit") ??
+                          "Plugin limit exceeded (255+ plugins detected)",
                 Severity = ConflictSeverity.Critical,
                 Type = ConflictType.LoadOrderIssue
             });
 
-            _logger.LogWarning("Plugin limit exceeded: {PluginCount}+ plugins detected", 
+            _logger.LogWarning("Plugin limit exceeded: {PluginCount}+ plugins detected",
                 plugins.Count);
         }
 
@@ -332,15 +326,12 @@ public class ModConflictDetector
         try
         {
             // If it's a string, return it directly
-            if (entryValue is string stringValue)
-            {
-                return (stringValue, null);
-            }
+            if (entryValue is string stringValue) return (stringValue, null);
 
             // If it's a dictionary/object, try to parse it as ModEntry
             if (entryValue is Dictionary<object, object> dictValue)
             {
-                var description = dictValue.ContainsKey("description") 
+                var description = dictValue.ContainsKey("description")
                     ? dictValue["description"]?.ToString() ?? string.Empty
                     : string.Empty;
                 var gpuConstraint = dictValue.ContainsKey("gpu_constraint")
@@ -371,7 +362,7 @@ public class ModConflictDetector
 
         var constraint = gpuConstraint.ToLowerInvariant().Trim();
         var manufacturer = gpuInfo.Manufacturer;
-        
+
         // Check for inverted constraint (starts with !)
         if (constraint.StartsWith("!"))
         {
@@ -408,6 +399,7 @@ public class ModConflictDetector
             var endIndex = linkPart.IndexOf('\n');
             return endIndex > 0 ? linkPart.Substring(0, endIndex).Trim() : linkPart.Trim();
         }
+
         return string.Empty;
     }
 

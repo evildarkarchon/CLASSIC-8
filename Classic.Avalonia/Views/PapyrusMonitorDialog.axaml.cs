@@ -25,10 +25,7 @@ public partial class PapyrusMonitorDialog : UserControl
     protected override void OnUnloaded(RoutedEventArgs e)
     {
         // Clean up if needed
-        if (DataContext is PapyrusMonitorDialogViewModel viewModel)
-        {
-            viewModel.Dispose();
-        }
+        if (DataContext is PapyrusMonitorDialogViewModel viewModel) viewModel.Dispose();
 
         base.OnUnloaded(e);
     }

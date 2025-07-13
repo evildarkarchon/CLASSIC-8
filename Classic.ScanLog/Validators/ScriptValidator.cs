@@ -27,11 +27,11 @@ public class ScriptValidator
         { "f4se.pex", "F4SE Script Extender" },
         { "f4se_loader.pex", "F4SE Loader" },
         { "workshopframework.pex", "Workshop Framework" },
-        
+
         // SKSE scripts  
         { "skse.pex", "SKSE Script Extender" },
         { "skse_loader.pex", "SKSE Loader" },
-        
+
         // Common framework scripts
         { "mcm.pex", "Mod Configuration Menu" },
         { "skyui.pex", "SkyUI Framework" }
@@ -52,7 +52,8 @@ public class ScriptValidator
     /// <summary>
     /// Validates a script file for conflicts and integrity
     /// </summary>
-    public async Task<ScriptValidationResult> ValidateScriptAsync(string filePath, string relativePath, CancellationToken cancellationToken = default)
+    public async Task<ScriptValidationResult> ValidateScriptAsync(string filePath, string relativePath,
+        CancellationToken cancellationToken = default)
     {
         var result = new ScriptValidationResult
         {
@@ -66,18 +67,14 @@ public class ScriptValidator
         {
             var extension = Path.GetExtension(filePath).ToLowerInvariant();
             var fileName = Path.GetFileName(filePath);
-            
+
             result.ScriptType = extension.ToUpperInvariant();
 
             // Check for XSE script conflicts
             if (ScriptExtensions.Contains(extension))
-            {
                 await ValidateScriptFileAsync(result, fileName, cancellationToken);
-            }
             else
-            {
                 result.Description = $"Script file: {extension.ToUpperInvariant()}";
-            }
         }
         catch (Exception ex)
         {
@@ -93,7 +90,8 @@ public class ScriptValidator
     /// <summary>
     /// Validates script file for XSE conflicts and integrity
     /// </summary>
-    private async Task ValidateScriptFileAsync(ScriptValidationResult result, string fileName, CancellationToken cancellationToken)
+    private async Task ValidateScriptFileAsync(ScriptValidationResult result, string fileName,
+        CancellationToken cancellationToken)
     {
         // Check if this is a known XSE script
         if (KnownXseScripts.TryGetValue(fileName, out var scriptName))
@@ -108,7 +106,8 @@ public class ScriptValidator
 
             result.Status = ValidationStatus.Warning;
             result.Issue = $"XSE script conflict: {fileName}";
-            result.Description = $"This mod contains a copy of {scriptName} which may conflict with the script extender";
+            result.Description =
+                $"This mod contains a copy of {scriptName} which may conflict with the script extender";
             result.Recommendation = "Remove this script file from the mod or ensure it's the correct version";
             result.IsXseScript = true;
             result.ConflictingMod = scriptName;
@@ -134,7 +133,7 @@ public class ScriptValidator
         try
         {
             var fileInfo = _fileSystem.FileInfo.New(result.FilePath);
-            
+
             if (fileInfo.Length == 0)
             {
                 result.Status = ValidationStatus.Warning;
@@ -149,19 +148,13 @@ public class ScriptValidator
             result.Properties["FileHash"] = result.ActualHash;
 
             var extension = Path.GetExtension(result.FilePath).ToLowerInvariant();
-            
+
             if (extension == ".pex")
-            {
                 await ValidatePexFileAsync(result, cancellationToken);
-            }
             else if (extension == ".psc")
-            {
                 await ValidatePscFileAsync(result, cancellationToken);
-            }
             else
-            {
                 result.Description = $"Script file: {fileInfo.Length:N0} bytes";
-            }
         }
         catch (Exception ex)
         {
@@ -187,7 +180,7 @@ public class ScriptValidator
             {
                 // Check for basic PEX file structure (simplified validation)
                 var header = BitConverter.ToUInt32(headerData, 0);
-                
+
                 // PEX files typically start with specific magic numbers
                 result.Description = $"Compiled Papyrus script ({result.Properties["FileSize"]:N0} bytes)";
                 result.Properties["PexHeader"] = Convert.ToHexString(headerData);
@@ -215,7 +208,7 @@ public class ScriptValidator
         try
         {
             var content = await _fileSystem.File.ReadAllTextAsync(result.FilePath, cancellationToken);
-            
+
             // Basic PSC file validation
             if (string.IsNullOrWhiteSpace(content))
             {
@@ -227,8 +220,9 @@ public class ScriptValidator
             // Count lines for basic metrics
             var lineCount = content.Split('\n').Length;
             result.Properties["LineCount"] = lineCount;
-            
-            result.Description = $"Papyrus source code ({lineCount:N0} lines, {result.Properties["FileSize"]:N0} bytes)";
+
+            result.Description =
+                $"Papyrus source code ({lineCount:N0} lines, {result.Properties["FileSize"]:N0} bytes)";
 
             // Check for basic script structure
             if (!content.Contains("ScriptName", StringComparison.OrdinalIgnoreCase))
@@ -271,7 +265,7 @@ public class ScriptValidator
     /// </summary>
     private static bool IsExemptPath(string relativePath)
     {
-        return ExemptPaths.Any(exemptPath => 
+        return ExemptPaths.Any(exemptPath =>
             relativePath.Contains(exemptPath, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -279,7 +273,7 @@ public class ScriptValidator
     /// Validates multiple script files in parallel
     /// </summary>
     public async Task<List<ScriptValidationResult>> ValidateScriptsAsync(
-        IEnumerable<(string filePath, string relativePath)> scripts, 
+        IEnumerable<(string filePath, string relativePath)> scripts,
         CancellationToken cancellationToken = default)
     {
         var tasks = scripts.Select(async script =>

@@ -18,55 +18,55 @@ public class ScanLogsCommand : Command
     {
         var fcxModeOption = new Option<bool>(
             ["--fcx-mode", "-f"],
-            getDefaultValue: () => false,
-            description: "Enable FCX mode");
+            () => false,
+            "Enable FCX mode");
 
         var showFidValuesOption = new Option<bool>(
             ["--show-fid-values", "-fid"],
-            getDefaultValue: () => false,
-            description: "Show FormID values in reports");
+            () => false,
+            "Show FormID values in reports");
 
         var statLoggingOption = new Option<bool>(
             ["--stat-logging", "-s"],
-            getDefaultValue: () => false,
-            description: "Enable statistical logging");
+            () => false,
+            "Enable statistical logging");
 
         var moveUnsolvedOption = new Option<bool>(
             ["--move-unsolved", "-m"],
-            getDefaultValue: () => false,
-            description: "Move unsolved logs to backup location");
+            () => false,
+            "Move unsolved logs to backup location");
 
         var iniPathOption = new Option<DirectoryInfo?>(
             ["--ini-path", "-i"],
-            description: "Path to the INI file directory");
+            "Path to the INI file directory");
 
         var scanPathOption = new Option<DirectoryInfo?>(
             ["--scan-path", "-p"],
-            description: "Custom path to scan for crash logs");
+            "Custom path to scan for crash logs");
 
         var modsPathOption = new Option<DirectoryInfo?>(
             ["--mods-folder-path", "-mod"],
-            description: "Path to the mods folder");
+            "Path to the mods folder");
 
         var simplifyLogsOption = new Option<bool>(
             ["--simplify-logs", "-sim"],
-            getDefaultValue: () => false,
-            description: "Simplify logs (WARNING: May remove important information)");
+            () => false,
+            "Simplify logs (WARNING: May remove important information)");
 
         var disableProgressOption = new Option<bool>(
             ["--disable-progress", "-np"],
-            getDefaultValue: () => false,
-            description: "Disable progress bars in CLI mode");
+            () => false,
+            "Disable progress bars in CLI mode");
 
         var verboseOption = new Option<bool>(
             ["--verbose", "-v"],
-            getDefaultValue: () => false,
-            description: "Enable verbose logging");
+            () => false,
+            "Enable verbose logging");
 
         var quietOption = new Option<bool>(
             ["--quiet", "-q"],
-            getDefaultValue: () => false,
-            description: "Quiet mode - minimal output");
+            () => false,
+            "Quiet mode - minimal output");
 
         AddOption(fcxModeOption);
         AddOption(showFidValuesOption);
@@ -127,7 +127,7 @@ public class ScanLogsCommand : Command
         var services = new ServiceCollection();
 
         // Add logging services  
-        services.AddLogging(builder => 
+        services.AddLogging(builder =>
         {
             builder.ClearProviders();
             builder.AddConsole();
@@ -216,15 +216,12 @@ public class ScanLogsCommand : Command
             }
 
             if (validation.HasWarnings)
-            {
                 foreach (var warning in validation.Warnings)
-                {
                     logger.Warning("Configuration warning: {Warning}", warning);
-                }
-            }
 
             // Execute scan
-            messageHandler.SendMessage($"Starting scan of {logFiles.Length} crash logs...", MessageType.Info, MessageTarget.Cli);
+            messageHandler.SendMessage($"Starting scan of {logFiles.Length} crash logs...", MessageType.Info,
+                MessageTarget.Cli);
 
             var result = await orchestrator.ExecuteScanAsync(scanRequest, cancellationToken);
 
@@ -246,14 +243,8 @@ public class ScanLogsCommand : Command
                 {
                     Console.WriteLine();
                     Console.WriteLine("Errors encountered:");
-                    foreach (var error in result.Errors.Take(5))
-                    {
-                        Console.WriteLine($"  - {error}");
-                    }
-                    if (result.Errors.Count > 5)
-                    {
-                        Console.WriteLine($"  ... and {result.Errors.Count - 5} more");
-                    }
+                    foreach (var error in result.Errors.Take(5)) Console.WriteLine($"  - {error}");
+                    if (result.Errors.Count > 5) Console.WriteLine($"  ... and {result.Errors.Count - 5} more");
                 }
 
                 if (result.Summary.RecommendedActions.Count > 0)
@@ -261,9 +252,7 @@ public class ScanLogsCommand : Command
                     Console.WriteLine();
                     Console.WriteLine("Recommendations:");
                     foreach (var recommendation in result.Summary.RecommendedActions)
-                    {
                         Console.WriteLine($"  - {recommendation}");
-                    }
                 }
             }
 
@@ -295,10 +284,8 @@ public class ScanLogsCommand : Command
         };
 
         foreach (var path in possiblePaths)
-        {
             if (Directory.Exists(path))
                 return path;
-        }
 
         // Default to current directory
         return Directory.GetCurrentDirectory();

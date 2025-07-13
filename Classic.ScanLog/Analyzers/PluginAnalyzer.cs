@@ -333,41 +333,37 @@ public class PluginAnalyzer : IPluginAnalyzer
     /// </summary>
     /// <param name="mainFolderPath">Path to the main CLASSIC folder</param>
     /// <returns>Dictionary of plugin names with origin markers and whether plugins were loaded</returns>
-    public async Task<(Dictionary<string, string> plugins, bool pluginsLoaded)> ScanLoadOrderTxtAsync(string mainFolderPath)
+    public async Task<(Dictionary<string, string> plugins, bool pluginsLoaded)> ScanLoadOrderTxtAsync(
+        string mainFolderPath)
     {
         var loadOrderPath = Path.Combine(mainFolderPath, "loadorder.txt");
         var loadOrderPlugins = new Dictionary<string, string>();
-        
+
         _logger.LogDebug("Checking for loadorder.txt at: {Path}", loadOrderPath);
-        
+
         try
         {
-            if (!File.Exists(loadOrderPath))
-            {
-                return (loadOrderPlugins, false);
-            }
-            
+            if (!File.Exists(loadOrderPath)) return (loadOrderPlugins, false);
+
             _logger.LogInformation("Found loadorder.txt file, will override crash log plugin detection");
-            
+
             var lines = await File.ReadAllLinesAsync(loadOrderPath);
-            
+
             // Skip header line (first line) if present
             var pluginLines = lines.Length > 1 ? lines.Skip(1) : lines;
-            
+
             foreach (var line in pluginLines)
             {
                 var pluginEntry = line.Trim();
                 if (!string.IsNullOrEmpty(pluginEntry) && !loadOrderPlugins.ContainsKey(pluginEntry))
-                {
                     loadOrderPlugins[pluginEntry] = "LO"; // Origin marker for loadorder.txt
-                }
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error reading loadorder.txt: {Message}", ex.Message);
         }
-        
+
         return (loadOrderPlugins, loadOrderPlugins.Count > 0);
     }
 
@@ -381,31 +377,23 @@ public class PluginAnalyzer : IPluginAnalyzer
     {
         var pluginMatches = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var pluginNames = new HashSet<string>(plugins.Select(p => p.FileName), StringComparer.OrdinalIgnoreCase);
-        
+
         // Get call stack segments
         var callStackSegments = new[] { "PROBABLE CALL STACK", "STACK", "MODULES" };
-        
+
         foreach (var segmentName in callStackSegments)
-        {
             if (crashLog.Segments.TryGetValue(segmentName, out var lines))
-            {
                 foreach (var line in lines)
                 {
                     if (string.IsNullOrWhiteSpace(line))
                         continue;
-                        
+
                     // Check if line contains any known plugin name
                     foreach (var pluginName in pluginNames)
-                    {
                         if (line.Contains(pluginName, StringComparison.OrdinalIgnoreCase))
-                        {
                             pluginMatches[pluginName] = pluginMatches.GetValueOrDefault(pluginName, 0) + 1;
-                        }
-                    }
                 }
-            }
-        }
-        
+
         return pluginMatches;
     }
 
@@ -416,23 +404,17 @@ public class PluginAnalyzer : IPluginAnalyzer
     /// <returns>Filtered dictionary with ignored plugins removed</returns>
     public Dictionary<string, string> FilterIgnoredPlugins(Dictionary<string, string> plugins)
     {
-        if (!_configuration.IgnorePluginsList?.Any() == true)
-        {
-            return plugins;
-        }
-        
+        if (!_configuration.IgnorePluginsList?.Any() == true) return plugins;
+
         var filteredPlugins = new Dictionary<string, string>(plugins, StringComparer.OrdinalIgnoreCase);
         var ignoreList = new HashSet<string>(_configuration.IgnorePluginsList, StringComparer.OrdinalIgnoreCase);
-        
+
         var keysToRemove = filteredPlugins.Keys
             .Where(key => ignoreList.Contains(key))
             .ToList();
-            
-        foreach (var key in keysToRemove)
-        {
-            filteredPlugins.Remove(key);
-        }
-        
+
+        foreach (var key in keysToRemove) filteredPlugins.Remove(key);
+
         return filteredPlugins;
     }
 
@@ -449,21 +431,21 @@ public class PluginAnalyzer : IPluginAnalyzer
             CurrentPluginCount = plugins.Count,
             MaxPluginCount = 254
         };
-        
+
         // Check for FF prefix (plugin limit reached indicator)
         var hasFFPrefix = plugins.Any(p => p.LoadOrder == 255); // FF in hex = 255 in decimal
-        
+
         if (hasFFPrefix)
         {
             status.ReachedLimit = true;
-            
+
             // Check if limit checking is disabled (this would be detected from settings)
             // For now, assume it's enabled unless explicitly disabled
             status.LimitCheckDisabled = false;
         }
-        
+
         status.PluginsLoaded = plugins.Any();
-        
+
         return status;
     }
 
@@ -475,29 +457,25 @@ public class PluginAnalyzer : IPluginAnalyzer
     /// <returns>Formatted report string</returns>
     public string GeneratePluginSuspectsReport(Dictionary<string, int> pluginMatches, string crashGenName = "Buffout 4")
     {
-        if (!pluginMatches.Any())
-        {
-            return "* COULDN'T FIND ANY PLUGIN SUSPECTS *";
-        }
-        
+        if (!pluginMatches.Any()) return "* COULDN'T FIND ANY PLUGIN SUSPECTS *";
+
         var report = new System.Text.StringBuilder();
         report.AppendLine("The following PLUGINS were found in the CRASH STACK:");
-        
+
         // Sort by count (descending) then by name for consistent output
         var sortedMatches = pluginMatches
             .OrderByDescending(kvp => kvp.Value)
             .ThenBy(kvp => kvp.Key);
-            
-        foreach (var (plugin, count) in sortedMatches)
-        {
-            report.AppendLine($"- {plugin} | {count}");
-        }
-        
+
+        foreach (var (plugin, count) in sortedMatches) report.AppendLine($"- {plugin} | {count}");
+
         report.AppendLine();
         report.AppendLine("[Last number counts how many times each Plugin Suspect shows up in the crash log.]");
-        report.AppendLine($"These Plugins were caught by {crashGenName} and some of them might be responsible for this crash.");
-        report.AppendLine("You can try disabling these plugins and check if the game still crashes, though this method can be unreliable.");
-        
+        report.AppendLine(
+            $"These Plugins were caught by {crashGenName} and some of them might be responsible for this crash.");
+        report.AppendLine(
+            "You can try disabling these plugins and check if the game still crashes, though this method can be unreliable.");
+
         return report.ToString();
     }
 }

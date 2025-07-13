@@ -14,12 +14,12 @@ public record VersionInfo(int Major, int Minor, int Patch, string? PreRelease = 
 
         // Remove leading 'v' if present
         var cleanVersion = versionString.TrimStart('v', 'V');
-        
+
         // Split by '-' to separate version from prerelease
         var parts = cleanVersion.Split('-', 2);
         var versionPart = parts[0];
         var preRelease = parts.Length > 1 ? parts[1] : null;
-        
+
         // Parse version numbers
         var versionNumbers = versionPart.Split('.');
         if (versionNumbers.Length < 2)
@@ -27,7 +27,7 @@ public record VersionInfo(int Major, int Minor, int Patch, string? PreRelease = 
 
         if (!int.TryParse(versionNumbers[0], out var major))
             throw new ArgumentException($"Invalid major version: {versionNumbers[0]}", nameof(versionString));
-        
+
         if (!int.TryParse(versionNumbers[1], out var minor))
             throw new ArgumentException($"Invalid minor version: {versionNumbers[1]}", nameof(versionString));
 
@@ -45,7 +45,7 @@ public record VersionInfo(int Major, int Minor, int Patch, string? PreRelease = 
         {
             if (string.IsNullOrWhiteSpace(versionString))
                 return false;
-                
+
             version = Parse(versionString);
             return true;
         }
@@ -63,10 +63,25 @@ public record VersionInfo(int Major, int Minor, int Patch, string? PreRelease = 
         return string.IsNullOrEmpty(PreRelease) ? version : $"{version}-{PreRelease}";
     }
 
-    public static bool operator >(VersionInfo left, VersionInfo right) => left.CompareTo(right) > 0;
-    public static bool operator <(VersionInfo left, VersionInfo right) => left.CompareTo(right) < 0;
-    public static bool operator >=(VersionInfo left, VersionInfo right) => left.CompareTo(right) >= 0;
-    public static bool operator <=(VersionInfo left, VersionInfo right) => left.CompareTo(right) <= 0;
+    public static bool operator >(VersionInfo left, VersionInfo right)
+    {
+        return left.CompareTo(right) > 0;
+    }
+
+    public static bool operator <(VersionInfo left, VersionInfo right)
+    {
+        return left.CompareTo(right) < 0;
+    }
+
+    public static bool operator >=(VersionInfo left, VersionInfo right)
+    {
+        return left.CompareTo(right) >= 0;
+    }
+
+    public static bool operator <=(VersionInfo left, VersionInfo right)
+    {
+        return left.CompareTo(right) <= 0;
+    }
 
     public int CompareTo(VersionInfo? other)
     {
@@ -84,7 +99,7 @@ public record VersionInfo(int Major, int Minor, int Patch, string? PreRelease = 
         // Stable versions are greater than prereleases
         if (!IsPreRelease && other.IsPreRelease) return 1;
         if (IsPreRelease && !other.IsPreRelease) return -1;
-        
+
         // Both are prereleases or both are stable
         return string.Compare(PreRelease, other.PreRelease, StringComparison.OrdinalIgnoreCase);
     }
@@ -95,26 +110,19 @@ public record VersionInfo(int Major, int Minor, int Patch, string? PreRelease = 
 /// </summary>
 public record GitHubRelease
 {
-    [JsonPropertyName("id")]
-    public long Id { get; init; }
+    [JsonPropertyName("id")] public long Id { get; init; }
 
-    [JsonPropertyName("tag_name")]
-    public string TagName { get; init; } = string.Empty;
+    [JsonPropertyName("tag_name")] public string TagName { get; init; } = string.Empty;
 
-    [JsonPropertyName("name")]
-    public string Name { get; init; } = string.Empty;
+    [JsonPropertyName("name")] public string Name { get; init; } = string.Empty;
 
-    [JsonPropertyName("prerelease")]
-    public bool IsPreRelease { get; init; }
+    [JsonPropertyName("prerelease")] public bool IsPreRelease { get; init; }
 
-    [JsonPropertyName("published_at")]
-    public DateTime PublishedAt { get; init; }
+    [JsonPropertyName("published_at")] public DateTime PublishedAt { get; init; }
 
-    [JsonPropertyName("html_url")]
-    public string HtmlUrl { get; init; } = string.Empty;
+    [JsonPropertyName("html_url")] public string HtmlUrl { get; init; } = string.Empty;
 
-    [JsonPropertyName("body")]
-    public string Body { get; init; } = string.Empty;
+    [JsonPropertyName("body")] public string Body { get; init; } = string.Empty;
 
     public VersionInfo? Version => VersionInfo.TryParse(Name, out var version) ? version : null;
 }
@@ -133,7 +141,7 @@ public record UpdateCheckResult
     public string UpdateSource { get; init; } = string.Empty;
     public DateTime CheckedAt { get; init; } = DateTime.UtcNow;
 
-    public static UpdateCheckResult Success(VersionInfo? currentVersion, VersionInfo? latestVersion, 
+    public static UpdateCheckResult Success(VersionInfo? currentVersion, VersionInfo? latestVersion,
         GitHubRelease? latestRelease, string updateSource, bool isUpdateAvailable)
     {
         return new UpdateCheckResult

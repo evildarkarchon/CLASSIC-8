@@ -77,16 +77,10 @@ public class DragDropService : IDragDropService
     {
         try
         {
-            if (!e.Data.Contains(DataFormats.Files))
-            {
-                return false;
-            }
+            if (!e.Data.Contains(DataFormats.Files)) return false;
 
             var files = e.Data.GetFiles();
-            if (files == null || !files.Any())
-            {
-                return false;
-            }
+            if (files == null || !files.Any()) return false;
 
             // Check if any of the files could be crash logs
             return files.Any(IsValidCrashLogFile);
@@ -104,24 +98,15 @@ public class DragDropService : IDragDropService
 
         try
         {
-            if (!e.Data.Contains(DataFormats.Files))
-            {
-                return validFiles;
-            }
+            if (!e.Data.Contains(DataFormats.Files)) return validFiles;
 
             var files = e.Data.GetFiles();
-            if (files == null)
-            {
-                return validFiles;
-            }
+            if (files == null) return validFiles;
 
             foreach (var file in files)
             {
                 var filePath = file.TryGetLocalPath();
-                if (string.IsNullOrEmpty(filePath))
-                {
-                    continue;
-                }
+                if (string.IsNullOrEmpty(filePath)) continue;
 
                 // Handle directories by scanning for crash logs
                 if (Directory.Exists(filePath))
@@ -173,10 +158,7 @@ public class DragDropService : IDragDropService
 
         // Check file extension
         var hasValidExtension = ValidExtensions.Any(ext => fileName.EndsWith(ext));
-        if (!hasValidExtension)
-        {
-            return false;
-        }
+        if (!hasValidExtension) return false;
 
         // Check if filename contains crash-related patterns
         var hasValidPattern = ValidPatterns.Any(pattern => fileName.Contains(pattern));
@@ -200,10 +182,7 @@ public class DragDropService : IDragDropService
                 var hasValidExtension = ValidExtensions.Any(ext => fileName.EndsWith(ext));
                 var hasValidPattern = ValidPatterns.Any(pattern => fileName.Contains(pattern));
 
-                if (hasValidExtension && hasValidPattern)
-                {
-                    crashLogs.Add(file);
-                }
+                if (hasValidExtension && hasValidPattern) crashLogs.Add(file);
             }
 
             _logger.Debug("Found {Count} crash log files in directory: {Directory}", crashLogs.Count, directoryPath);

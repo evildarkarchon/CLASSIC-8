@@ -49,7 +49,8 @@ public class ConfigFileCache
         ILogger logger)
     {
         var vrSuffix = gameConfiguration.IsVrMode ? "VR" : "";
-        var gameRootPath = await yamlSettings.GetSettingAsync<string>("Game_Local", $"Game{vrSuffix}_Info.Root_Folder_Game");
+        var gameRootPath =
+            await yamlSettings.GetSettingAsync<string>("Game_Local", $"Game{vrSuffix}_Info.Root_Folder_Game");
 
         var cache = new ConfigFileCache(fileSystem, yamlSettings, gameConfiguration, logger, gameRootPath);
         await cache.ScanConfigurationFilesAsync();
@@ -88,21 +89,16 @@ public class ConfigFileCache
         var files = _fileSystem.Directory.EnumerateFiles(directoryPath);
 
         // Process files in current directory
-        foreach (var file in files)
-        {
-            await ProcessConfigurationFileAsync(file, fileHashes);
-        }
+        foreach (var file in files) await ProcessConfigurationFileAsync(file, fileHashes);
 
         // Process subdirectories
         foreach (var directory in directories)
         {
             var directoryName = _fileSystem.Path.GetFileName(directory);
-            
+
             // Skip if directory doesn't match whitelist
-            if (!_duplicateWhitelist.Any(whitelist => directoryName.Contains(whitelist, StringComparison.OrdinalIgnoreCase)))
-            {
-                continue;
-            }
+            if (!_duplicateWhitelist.Any(whitelist =>
+                    directoryName.Contains(whitelist, StringComparison.OrdinalIgnoreCase))) continue;
 
             await ScanDirectoryAsync(directory, fileHashes);
         }
@@ -117,13 +113,10 @@ public class ConfigFileCache
         var fileNameLower = fileName.ToLowerInvariant();
 
         // Skip non-config files and files not matching specific criteria
-        if (!IsConfigurationFile(fileNameLower))
-        {
-            return;
-        }
+        if (!IsConfigurationFile(fileNameLower)) return;
 
         var fileHash = await CalculateFileHashAsync(filePath);
-        
+
         if (_configFiles.ContainsKey(fileNameLower))
         {
             var existingFilePath = _configFiles[fileNameLower];
@@ -132,20 +125,26 @@ public class ConfigFileCache
             if (fileHash == existingHash)
             {
                 // Exact duplicate
-                _duplicateFiles.AddOrUpdate(fileNameLower, 
+                _duplicateFiles.AddOrUpdate(fileNameLower,
                     new List<string> { existingFilePath, filePath },
-                    (key, existing) => { existing.Add(filePath); return existing; });
+                    (key, existing) =>
+                    {
+                        existing.Add(filePath);
+                        return existing;
+                    });
             }
             else
             {
                 // Check for similarity
                 var isSimilar = await AreSimilarFilesAsync(existingFilePath, filePath);
                 if (isSimilar)
-                {
                     _duplicateFiles.AddOrUpdate(fileNameLower,
                         new List<string> { existingFilePath, filePath },
-                        (key, existing) => { existing.Add(filePath); return existing; });
-                }
+                        (key, existing) =>
+                        {
+                            existing.Add(filePath);
+                            return existing;
+                        });
             }
         }
         else
@@ -161,8 +160,8 @@ public class ConfigFileCache
     /// </summary>
     private static bool IsConfigurationFile(string fileNameLower)
     {
-        return fileNameLower.EndsWith(".ini") || 
-               fileNameLower.EndsWith(".conf") || 
+        return fileNameLower.EndsWith(".ini") ||
+               fileNameLower.EndsWith(".conf") ||
                fileNameLower == "dxvk.conf";
     }
 
@@ -196,18 +195,14 @@ public class ConfigFileCache
             var file2Info = _fileSystem.FileInfo.New(file2);
 
             // Check size and modification time
-            if (file1Info.Length == file2Info.Length && 
+            if (file1Info.Length == file2Info.Length &&
                 file1Info.LastWriteTime == file2Info.LastWriteTime)
-            {
                 return true;
-            }
 
             // For INI files, do a more detailed comparison
-            if (file1.EndsWith(".ini", StringComparison.OrdinalIgnoreCase) && 
+            if (file1.EndsWith(".ini", StringComparison.OrdinalIgnoreCase) &&
                 file2.EndsWith(".ini", StringComparison.OrdinalIgnoreCase))
-            {
                 return await CompareIniFilesAsync(file1, file2);
-            }
 
             return false;
         }
@@ -228,27 +223,17 @@ public class ConfigFileCache
             var config1 = await LoadConfigurationAsync(file1);
             var config2 = await LoadConfigurationAsync(file2);
 
-            if (config1 == null || config2 == null)
-            {
-                return false;
-            }
+            if (config1 == null || config2 == null) return false;
 
             // Compare configuration sections and values
             var sections1 = config1.GetChildren().ToList();
             var sections2 = config2.GetChildren().ToList();
 
-            if (sections1.Count != sections2.Count)
-            {
-                return false;
-            }
+            if (sections1.Count != sections2.Count) return false;
 
             for (var i = 0; i < sections1.Count; i++)
-            {
                 if (!ConfigurationSectionsEqual(sections1[i], sections2[i]))
-                {
                     return false;
-                }
-            }
 
             return true;
         }
@@ -264,26 +249,16 @@ public class ConfigFileCache
     /// </summary>
     private static bool ConfigurationSectionsEqual(IConfigurationSection section1, IConfigurationSection section2)
     {
-        if (section1.Key != section2.Key)
-        {
-            return false;
-        }
+        if (section1.Key != section2.Key) return false;
 
         var children1 = section1.GetChildren().ToList();
         var children2 = section2.GetChildren().ToList();
 
-        if (children1.Count != children2.Count)
-        {
-            return false;
-        }
+        if (children1.Count != children2.Count) return false;
 
         for (var i = 0; i < children1.Count; i++)
-        {
             if (children1[i].Key != children2[i].Key || children1[i].Value != children2[i].Value)
-            {
                 return false;
-            }
-        }
 
         return true;
     }
@@ -296,15 +271,12 @@ public class ConfigFileCache
         try
         {
             var fileNameLower = _fileSystem.Path.GetFileName(filePath).ToLowerInvariant();
-            
-            if (_configCache.TryGetValue(fileNameLower, out var cachedConfig))
-            {
-                return cachedConfig;
-            }
+
+            if (_configCache.TryGetValue(fileNameLower, out var cachedConfig)) return cachedConfig;
 
             var fileContent = await ReadFileWithEncodingAsync(filePath);
             var configBuilder = new ConfigurationBuilder();
-            
+
             // Add appropriate configuration provider based on file extension
             if (filePath.EndsWith(".ini", StringComparison.OrdinalIgnoreCase))
             {
@@ -335,11 +307,9 @@ public class ConfigFileCache
         foreach (var line in lines)
         {
             var trimmedLine = line.Trim();
-            
-            if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith(';') || trimmedLine.StartsWith('#'))
-            {
-                continue;
-            }
+
+            if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith(';') ||
+                trimmedLine.StartsWith('#')) continue;
 
             if (trimmedLine.StartsWith('[') && trimmedLine.EndsWith(']'))
             {
@@ -367,7 +337,7 @@ public class ConfigFileCache
     private async Task<string> ReadFileWithEncodingAsync(string filePath)
     {
         var fileBytes = await _fileSystem.File.ReadAllBytesAsync(filePath);
-        
+
         // Detect encoding
         var detector = new CharsetDetector();
         detector.Feed(fileBytes, 0, fileBytes.Length);
@@ -375,7 +345,6 @@ public class ConfigFileCache
 
         var encoding = Encoding.UTF8; // Default fallback
         if (detector.Charset != null)
-        {
             try
             {
                 encoding = Encoding.GetEncoding(detector.Charset);
@@ -384,7 +353,6 @@ public class ConfigFileCache
             {
                 _logger.Warning(ex, "Failed to get encoding {Charset}, using UTF-8", detector.Charset);
             }
-        }
 
         return encoding.GetString(fileBytes);
     }
@@ -437,16 +405,10 @@ public class ConfigFileCache
     public async Task<T?> GetSettingAsync<T>(string fileName, string section, string key)
     {
         var config = await LoadConfigurationAsync(GetFilePath(fileName.ToLowerInvariant()) ?? "");
-        if (config == null)
-        {
-            return default;
-        }
+        if (config == null) return default;
 
         var value = config.GetSection($"{section}:{key}").Value;
-        if (value == null)
-        {
-            return default;
-        }
+        if (value == null) return default;
 
         try
         {
@@ -465,22 +427,20 @@ public class ConfigFileCache
     public async Task SetSettingAsync(string fileName, string section, string key, object value)
     {
         var filePath = GetFilePath(fileName.ToLowerInvariant());
-        if (string.IsNullOrEmpty(filePath))
-        {
-            return;
-        }
+        if (string.IsNullOrEmpty(filePath)) return;
 
         try
         {
             var configManager = new IniConfigurationManager(_fileSystem, _logger);
             await configManager.SetSettingAsync(filePath, section, key, value);
-            
+
             // Invalidate cache
             _configCache.TryRemove(fileName.ToLowerInvariant(), out _);
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to set setting {Section}:{Key} = {Value} in {FilePath}", section, key, value, filePath);
+            _logger.Error(ex, "Failed to set setting {Section}:{Key} = {Value} in {FilePath}", section, key, value,
+                filePath);
         }
     }
 }

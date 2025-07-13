@@ -98,7 +98,6 @@ public class MarkdownReportTemplate : IReportTemplate
     {
         // Handle numeric severity (1-6 scale, 6 being highest)
         if (severity is int numericSeverity)
-        {
             return numericSeverity switch
             {
                 6 => "![CRITICAL](https://img.shields.io/badge/CRITICAL-red?style=flat-square)",
@@ -109,11 +108,9 @@ public class MarkdownReportTemplate : IReportTemplate
                 1 => "![INFO](https://img.shields.io/badge/INFO-lightgrey?style=flat-square)",
                 _ => "![UNKNOWN](https://img.shields.io/badge/UNKNOWN-grey?style=flat-square)"
             };
-        }
 
         // Handle SeverityLevel enum
         if (severity is SeverityLevel severityLevel)
-        {
             return severityLevel switch
             {
                 SeverityLevel.Critical => "![CRITICAL](https://img.shields.io/badge/CRITICAL-red?style=flat-square)",
@@ -122,7 +119,6 @@ public class MarkdownReportTemplate : IReportTemplate
                 SeverityLevel.Low => "![LOW](https://img.shields.io/badge/LOW-green?style=flat-square)",
                 _ => "![UNKNOWN](https://img.shields.io/badge/UNKNOWN-grey?style=flat-square)"
             };
-        }
 
         return "![UNKNOWN](https://img.shields.io/badge/UNKNOWN-grey?style=flat-square)";
     }

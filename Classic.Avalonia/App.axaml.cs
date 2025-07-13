@@ -11,7 +11,7 @@ namespace Classic.Avalonia;
 public class App : Application
 {
     public IServiceProvider? Services => Program.ServiceProvider;
-    
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -22,7 +22,7 @@ public class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && Program.ServiceProvider != null)
         {
             var mainViewModel = Program.ServiceProvider.GetRequiredService<MainWindowViewModel>();
-            
+
             desktop.MainWindow = new MainWindow
             {
                 DataContext = mainViewModel

@@ -32,11 +32,11 @@ public class CrashLogReformatter
         _logger.LogDebug("Initiated crash log file reformat");
 
         var removeList = removePatterns.ToList();
-        var tasks = crashLogPaths.Select(path => 
+        var tasks = crashLogPaths.Select(path =>
             ReformatSingleLogAsync(path, removeList, simplifyLogs, cancellationToken));
 
         await Task.WhenAll(tasks);
-        
+
         _logger.LogDebug("Completed crash log file reformat");
     }
 
@@ -60,14 +60,14 @@ public class CrashLogReformatter
             // Read all lines from the file
             var originalLines = await File.ReadAllLinesAsync(filePath, Encoding.UTF8, cancellationToken)
                 .ConfigureAwait(false);
-            
+
             // Process lines from bottom to top to handle PLUGINS section correctly
             var processedLines = ProcessLinesInReverse(originalLines, removePatterns, simplifyLogs);
-            
+
             // Write reformatted content back to file
             await File.WriteAllLinesAsync(filePath, processedLines, Encoding.UTF8, cancellationToken)
                 .ConfigureAwait(false);
-            
+
             _logger.LogDebug("Successfully reformatted crash log: {FilePath}", filePath);
         }
         catch (Exception ex)
@@ -95,15 +95,10 @@ public class CrashLogReformatter
 
             // Track if we're in the PLUGINS section (from bottom up)
             if (inPluginsSection && line.StartsWith("PLUGINS:"))
-            {
                 inPluginsSection = false; // Exited the PLUGINS section (from bottom)
-            }
 
             // Skip lines if simplify logs is enabled and line contains remove patterns
-            if (simplifyLogs && removePatterns.Any(pattern => line.Contains(pattern)))
-            {
-                continue; // Skip this line
-            }
+            if (simplifyLogs && removePatterns.Any(pattern => line.Contains(pattern))) continue; // Skip this line
 
             // Reformat lines within the PLUGINS section
             if (inPluginsSection && line.Contains('['))
@@ -136,11 +131,9 @@ public class CrashLogReformatter
             // Find the bracket section in the line
             var openBracketIndex = line.IndexOf('[');
             var closeBracketIndex = line.IndexOf(']', openBracketIndex + 1);
-            
-            if (openBracketIndex == -1 || closeBracketIndex == -1)
-            {
-                return line; // No valid brackets found, return original
-            }
+
+            if (openBracketIndex == -1 ||
+                closeBracketIndex == -1) return line; // No valid brackets found, return original
 
             // Split the line into parts
             var indent = line[..openBracketIndex];
@@ -149,7 +142,7 @@ public class CrashLogReformatter
 
             // Replace spaces with 0s in the bracket content
             var normalizedBracketContent = bracketContent.Replace(' ', '0');
-            
+
             // Reconstruct the line
             return $"{indent}[{normalizedBracketContent}]{remainder}";
         }

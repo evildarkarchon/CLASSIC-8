@@ -67,7 +67,7 @@ performance_metrics:
   scan_time_excellent: 2.0  # seconds
   scan_time_good: 5.0       # seconds
   scan_time_poor: 10.0      # seconds
-  
+
 gpu_specific:
   nvidia:
     recommendations:
@@ -76,14 +76,14 @@ gpu_specific:
       - "Consider DLSS mods if using RTX GPU"
     warning_mods:
       - "ENB may require NVIDIA-specific tweaks"
-      
+  
   amd:
     recommendations:
       - "Update AMD drivers regularly for stability"
       - "Use Radeon Software to optimize game settings"
     warning_mods:
       - "Some ENB presets are optimized for NVIDIA"
-      
+  
   intel:
     recommendations:
       - "Intel integrated graphics may struggle with heavy mods"

@@ -22,7 +22,7 @@ public class ReportDataMapper
     /// Converts scan results to advanced report data
     /// </summary>
     public AdvancedReportData MapScanResultToReportData(
-        CoreScanResult scanResult, 
+        CoreScanResult scanResult,
         string fileName,
         string classicVersion = "1.0.0")
     {
@@ -143,7 +143,7 @@ public class ReportDataMapper
         }).ToList();
 
         // Map mod conflicts
-        reportData.ModConflicts = logResult.ModConflicts.Select(conflictText => 
+        reportData.ModConflicts = logResult.ModConflicts.Select(conflictText =>
             ParseModConflictText(conflictText)).ToList();
     }
 
@@ -167,9 +167,8 @@ public class ReportDataMapper
         if (crashLog.Segments.TryGetValue("SystemSpecs", out var systemSpecs))
         {
             var systemInfo = new SystemInfo();
-            
+
             foreach (var line in systemSpecs)
-            {
                 if (line.Contains("OS:", StringComparison.OrdinalIgnoreCase))
                 {
                     systemInfo.OperatingSystem = ExtractValue(line, "OS:");
@@ -187,8 +186,7 @@ public class ReportDataMapper
                 {
                     systemInfo.Memory = ExtractValue(line, "PHYSICAL MEMORY:");
                 }
-            }
-            
+
             reportData.SystemInfo = systemInfo;
         }
     }
@@ -215,20 +213,18 @@ public class ReportDataMapper
     {
         // Critical issues
         if (scanResult.FailedScans > scanResult.TotalLogs * 0.5)
-        {
             reportData.CriticalIssues.Add(new ReportIssue
             {
                 Type = ReportIssueType.SystemCompatibility,
                 Title = "High Failure Rate Detected",
-                Description = $"More than 50% of logs failed to process ({scanResult.FailedScans}/{scanResult.TotalLogs})",
+                Description =
+                    $"More than 50% of logs failed to process ({scanResult.FailedScans}/{scanResult.TotalLogs})",
                 Severity = 5,
                 Recommendation = "Check for corrupted log files or system compatibility issues"
             });
-        }
 
         // Warnings from errors
         foreach (var error in scanResult.Errors)
-        {
             reportData.Warnings.Add(new ReportIssue
             {
                 Type = ReportIssueType.GameConfiguration,
@@ -236,11 +232,9 @@ public class ReportDataMapper
                 Description = error,
                 Severity = 2
             });
-        }
 
         // Performance recommendations
         if (scanResult.ProcessingTime.TotalMinutes > 5)
-        {
             reportData.Recommendations.Add(new ReportIssue
             {
                 Type = ReportIssueType.PerformanceIssue,
@@ -249,7 +243,6 @@ public class ReportDataMapper
                 Severity = 2,
                 Recommendation = "Consider using parallel processing mode for better performance"
             });
-        }
     }
 
     /// <summary>
@@ -329,14 +322,14 @@ public class ReportDataMapper
     {
         // Parse conflict text like "[FrequentCrash] ModName: Description"
         var parts = conflictText.Split(new[] { "] ", ": " }, StringSplitOptions.RemoveEmptyEntries);
-        
+
         if (parts.Length >= 3)
         {
             var typeString = parts[0].TrimStart('[');
-            var conflictType = Enum.TryParse<ConflictType>(typeString, out var parsedType) 
-                ? parsedType 
+            var conflictType = Enum.TryParse<ConflictType>(typeString, out var parsedType)
+                ? parsedType
                 : ConflictType.ModPairConflict;
-            
+
             return new ModConflictResult
             {
                 Type = conflictType,
@@ -345,7 +338,7 @@ public class ReportDataMapper
                 Solution = parts.Length > 3 ? parts[3] : string.Empty
             };
         }
-        
+
         return new ModConflictResult
         {
             Type = ConflictType.ModPairConflict,
@@ -359,12 +352,12 @@ public class ReportDataMapper
     {
         if (string.IsNullOrEmpty(crashGenVersion))
             return "Unknown";
-            
+
         if (crashGenVersion.Contains("Buffout", StringComparison.OrdinalIgnoreCase))
             return "Buffout 4";
         if (crashGenVersion.Contains("Crash Logger", StringComparison.OrdinalIgnoreCase))
             return "Crash Logger";
-            
+
         return "Crash Reporter";
     }
 
@@ -372,12 +365,12 @@ public class ReportDataMapper
     {
         if (string.IsNullOrEmpty(gameVersion))
             return GameId.Unknown;
-            
+
         if (gameVersion.Contains("Fallout 4", StringComparison.OrdinalIgnoreCase))
             return GameId.Fallout4;
         if (gameVersion.Contains("Skyrim", StringComparison.OrdinalIgnoreCase))
             return GameId.SkyrimSE;
-            
+
         return GameId.Unknown;
     }
 
@@ -385,23 +378,24 @@ public class ReportDataMapper
     {
         if (string.IsNullOrEmpty(gpuInfo))
             return GpuManufacturer.Unknown;
-            
+
         var gpuLower = gpuInfo.ToLowerInvariant();
-        
-        if (gpuLower.Contains("nvidia") || gpuLower.Contains("geforce") || gpuLower.Contains("gtx") || gpuLower.Contains("rtx"))
+
+        if (gpuLower.Contains("nvidia") || gpuLower.Contains("geforce") || gpuLower.Contains("gtx") ||
+            gpuLower.Contains("rtx"))
             return GpuManufacturer.Nvidia;
         if (gpuLower.Contains("amd") || gpuLower.Contains("radeon") || gpuLower.Contains("rx"))
             return GpuManufacturer.Amd;
         if (gpuLower.Contains("intel") || gpuLower.Contains("uhd") || gpuLower.Contains("iris"))
             return GpuManufacturer.Intel;
-            
+
         return GpuManufacturer.Unknown;
     }
 
     private bool HasPluginIssues(PluginInfo plugin)
     {
         // Simple heuristic - could be enhanced with more sophisticated analysis
-        return plugin.HasPluginLimit || 
+        return plugin.HasPluginLimit ||
                plugin.FileName.Contains("crash", StringComparison.OrdinalIgnoreCase) ||
                plugin.LoadOrder >= 254;
     }
@@ -409,32 +403,35 @@ public class ReportDataMapper
     private string ExtractValue(string line, string prefix)
     {
         var index = line.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
-        if (index >= 0)
-        {
-            return line.Substring(index + prefix.Length).Trim();
-        }
+        if (index >= 0) return line.Substring(index + prefix.Length).Trim();
         return string.Empty;
     }
 
-    private int GetModConflictSeverity(ConflictType conflictType) => conflictType switch
+    private int GetModConflictSeverity(ConflictType conflictType)
     {
-        ConflictType.FrequentCrash => 4,
-        ConflictType.ModPairConflict => 3,
-        ConflictType.MissingImportant => 2,
-        ConflictType.HasSolution => 1,
-        ConflictType.GpuIncompatible => 3,
-        ConflictType.LoadOrderIssue => 2,
-        _ => 2
-    };
+        return conflictType switch
+        {
+            ConflictType.FrequentCrash => 4,
+            ConflictType.ModPairConflict => 3,
+            ConflictType.MissingImportant => 2,
+            ConflictType.HasSolution => 1,
+            ConflictType.GpuIncompatible => 3,
+            ConflictType.LoadOrderIssue => 2,
+            _ => 2
+        };
+    }
 
-    private int GetValidationSeverity(ValidationStatus status) => status switch
+    private int GetValidationSeverity(ValidationStatus status)
     {
-        ValidationStatus.Critical => 5,
-        ValidationStatus.Error => 4,
-        ValidationStatus.Warning => 2,
-        ValidationStatus.Valid => 0,
-        _ => 2
-    };
+        return status switch
+        {
+            ValidationStatus.Critical => 5,
+            ValidationStatus.Error => 4,
+            ValidationStatus.Warning => 2,
+            ValidationStatus.Valid => 0,
+            _ => 2
+        };
+    }
 
     /// <summary>
     /// Creates a minimal fallback report data when mapping fails

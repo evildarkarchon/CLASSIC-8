@@ -82,10 +82,7 @@ public class PastebinDialogViewModel : ViewModelBase
 
     private async Task FetchLog()
     {
-        if (string.IsNullOrWhiteSpace(UrlOrId))
-        {
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(UrlOrId)) return;
 
         try
         {
@@ -153,17 +150,11 @@ public class PastebinDialogViewModel : ViewModelBase
         this.RaisePropertyChanged(nameof(IsInputValid));
 
         if (string.IsNullOrWhiteSpace(UrlOrId))
-        {
             StatusMessage = "Enter a Pastebin URL or ID to fetch a crash log";
-        }
         else if (!_pastebinService.IsValidPastebinReference(UrlOrId))
-        {
             StatusMessage = "Invalid Pastebin URL or ID format";
-        }
         else
-        {
             StatusMessage = "Ready to fetch log";
-        }
     }
 
     #endregion

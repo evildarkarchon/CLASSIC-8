@@ -57,18 +57,19 @@ public class WryeBashChecker : IWryeBashChecker
         try
         {
             // Load settings from YAML
-            var missingHtmlSetting = await _yamlSettings.GetSettingAsync<string>("Game", "Warnings_MODS.Warn_WRYE_MissingHTML");
+            var missingHtmlSetting =
+                await _yamlSettings.GetSettingAsync<string>("Game", "Warnings_MODS.Warn_WRYE_MissingHTML");
             var vrSuffix = _gameConfiguration.IsVrMode ? "VR" : "";
-            var pluginCheckPath = await _yamlSettings.GetSettingAsync<string>("Game_Local", $"Game{vrSuffix}_Info.Docs_File_WryeBashPC");
-            var wryeWarnings = await _yamlSettings.GetSettingAsync<Dictionary<string, string>>("Main", "Warnings_WRYE") ?? new Dictionary<string, string>();
+            var pluginCheckPath =
+                await _yamlSettings.GetSettingAsync<string>("Game_Local", $"Game{vrSuffix}_Info.Docs_File_WryeBashPC");
+            var wryeWarnings =
+                await _yamlSettings.GetSettingAsync<Dictionary<string, string>>("Main", "Warnings_WRYE") ??
+                new Dictionary<string, string>();
 
             // Return early if report not found
             if (string.IsNullOrEmpty(pluginCheckPath) || !_fileSystem.File.Exists(pluginCheckPath))
             {
-                if (!string.IsNullOrEmpty(missingHtmlSetting))
-                {
-                    return missingHtmlSetting;
-                }
+                if (!string.IsNullOrEmpty(missingHtmlSetting)) return missingHtmlSetting;
                 throw new InvalidOperationException("ERROR: Warnings_WRYE missing from the database!");
             }
 
@@ -129,36 +130,25 @@ public class WryeBashChecker : IWryeBashChecker
                 var plugins = ExtractPluginsFromSection(section);
 
                 // Format section header
-                if (title != "Active Plugins:")
-                {
-                    messageParts.Add(FormatSectionHeader(title));
-                }
+                if (title != "Active Plugins:") messageParts.Add(FormatSectionHeader(title));
 
                 // Handle special ESL Capable section
                 if (title == "ESL Capable")
-                {
                     messageParts.AddRange(new[]
                     {
                         $"❓ There are {plugins.Count} plugins that can be given the ESL flag. This can be done with\n",
                         "  the SimpleESLify script to avoid reaching the plugin limit (254 esm/esp).\n",
                         $"  SimpleESLify: {ResourceLinks["simple_eslify"]}\n  -----\n"
                     });
-                }
 
                 // Add any matching warnings from settings
                 foreach (var (warningName, warningText) in wryeWarnings)
-                {
                     if (title.Contains(warningName))
-                    {
                         messageParts.Add(warningText);
-                    }
-                }
 
                 // List plugins (except for special sections)
                 if (title is not "ESL Capable" and not "Active Plugins:")
-                {
                     messageParts.AddRange(plugins.Select(plugin => $"    > {plugin}\n"));
-                }
             }
         }
         catch (Exception ex)
@@ -183,19 +173,13 @@ public class WryeBashChecker : IWryeBashChecker
         while (nextSibling != null)
         {
             // Stop if we've moved to a different section
-            if (nextSibling.TagName.Equals("H3", StringComparison.OrdinalIgnoreCase))
-            {
-                break;
-            }
+            if (nextSibling.TagName.Equals("H3", StringComparison.OrdinalIgnoreCase)) break;
 
             // Process the plugin entry
             if (nextSibling.TagName.Equals("P", StringComparison.OrdinalIgnoreCase))
             {
                 var text = nextSibling.TextContent?.Trim().Replace("•\u00A0 ", "") ?? "";
-                if (text.Contains(".esp") || text.Contains(".esl") || text.Contains(".esm"))
-                {
-                    plugins.Add(text);
-                }
+                if (text.Contains(".esp") || text.Contains(".esl") || text.Contains(".esm")) plugins.Add(text);
             }
 
             nextSibling = nextSibling.NextElementSibling;
@@ -230,7 +214,7 @@ public class WryeBashChecker : IWryeBashChecker
     private async Task<string> ReadFileWithEncodingAsync(string filePath)
     {
         var fileBytes = await _fileSystem.File.ReadAllBytesAsync(filePath);
-        
+
         // Detect encoding
         var detector = new CharsetDetector();
         detector.Feed(fileBytes, 0, fileBytes.Length);
@@ -238,7 +222,6 @@ public class WryeBashChecker : IWryeBashChecker
 
         var encoding = Encoding.UTF8; // Default fallback
         if (detector.Charset != null)
-        {
             try
             {
                 encoding = Encoding.GetEncoding(detector.Charset);
@@ -247,7 +230,6 @@ public class WryeBashChecker : IWryeBashChecker
             {
                 _logger.Warning(ex, "Failed to get encoding {Charset}, using UTF-8", detector.Charset);
             }
-        }
 
         return encoding.GetString(fileBytes);
     }

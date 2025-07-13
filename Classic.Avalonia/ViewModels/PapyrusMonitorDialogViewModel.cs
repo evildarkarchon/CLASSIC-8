@@ -137,29 +137,17 @@ public class PapyrusMonitorDialogViewModel : ViewModelBase, IDisposable
 
         // Update status message based on stats
         if (!stats.LogFileExists)
-        {
             StatusMessage = stats.ErrorMessage ?? "Papyrus log file not found";
-        }
         else if (stats.Errors > 0)
-        {
             StatusMessage = $"{stats.Errors} errors detected in Papyrus log!";
-        }
         else if (stats.Warnings > 0)
-        {
             StatusMessage = $"{stats.Warnings} warnings detected in Papyrus log.";
-        }
         else if (stats.Ratio > 0.8)
-        {
             StatusMessage = "Warning: High dumps-to-stacks ratio detected!";
-        }
         else if (stats.Ratio > 0.5)
-        {
             StatusMessage = "Caution: Elevated dumps-to-stacks ratio.";
-        }
         else
-        {
             StatusMessage = "Papyrus log appears normal.";
-        }
 
         // Raise property changed for computed properties
         this.RaisePropertyChanged(nameof(LastUpdated));

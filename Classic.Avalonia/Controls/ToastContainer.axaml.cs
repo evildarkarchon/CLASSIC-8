@@ -34,10 +34,7 @@ public partial class ToastContainer : UserControl
             toast.SetNotification(notification);
             toast.CloseRequested += (sender, e) =>
             {
-                if (sender is ToastNotification toastToRemove)
-                {
-                    RemoveToast(toastToRemove);
-                }
+                if (sender is ToastNotification toastToRemove) RemoveToast(toastToRemove);
             };
 
             // Add to UI and tracking
@@ -67,9 +64,6 @@ public partial class ToastContainer : UserControl
     public void ClearAllToasts()
     {
         var toastsToRemove = _activeToasts.ToList();
-        foreach (var toast in toastsToRemove)
-        {
-            RemoveToast(toast);
-        }
+        foreach (var toast in toastsToRemove) RemoveToast(toast);
     }
 }

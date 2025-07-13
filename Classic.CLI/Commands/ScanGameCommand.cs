@@ -14,46 +14,46 @@ public class ScanGameCommand : Command
     public ScanGameCommand() : base("scan-game", "Scan game files for issues")
     {
         var gamePathOption = new Option<DirectoryInfo?>(
-["--game-path", "-g"],
-            description: "Path to the game directory");
+            ["--game-path", "-g"],
+            "Path to the game directory");
 
         var modsPathOption = new Option<DirectoryInfo?>(
-["--mods-path", "-m"],
-            description: "Path to the mods directory");
+            ["--mods-path", "-m"],
+            "Path to the mods directory");
 
         var checkXseOption = new Option<bool>(
-["--check-xse", "-x"],
-            getDefaultValue: () => true,
-            description: "Check script extender plugins");
+            ["--check-xse", "-x"],
+            () => true,
+            "Check script extender plugins");
 
         var checkCrashgenOption = new Option<bool>(
-["--check-crashgen", "-c"],
-            getDefaultValue: () => true,
-            description: "Check crash generation settings");
+            ["--check-crashgen", "-c"],
+            () => true,
+            "Check crash generation settings");
 
         var checkLogsOption = new Option<bool>(
-["--check-logs", "-log"],
-            getDefaultValue: () => true,
-            description: "Check game logs for errors");
+            ["--check-logs", "-log"],
+            () => true,
+            "Check game logs for errors");
 
         var backupDocsOption = new Option<bool>(
-["--backup-docs", "-b"],
-            getDefaultValue: () => false,
-            description: "Backup documentation files found in mods");
+            ["--backup-docs", "-b"],
+            () => false,
+            "Backup documentation files found in mods");
 
         var verboseOption = new Option<bool>(
-["--verbose", "-v"],
-            getDefaultValue: () => false,
-            description: "Enable verbose logging");
+            ["--verbose", "-v"],
+            () => false,
+            "Enable verbose logging");
 
         var quietOption = new Option<bool>(
-["--quiet", "-q"],
-            getDefaultValue: () => false,
-            description: "Quiet mode - minimal output");
+            ["--quiet", "-q"],
+            () => false,
+            "Quiet mode - minimal output");
 
         var outputPathOption = new Option<DirectoryInfo?>(
-["--output", "-o"],
-            description: "Output directory for reports");
+            ["--output", "-o"],
+            "Output directory for reports");
 
         AddOption(gamePathOption);
         AddOption(modsPathOption);
@@ -156,7 +156,7 @@ public class ScanGameCommand : Command
             {
                 messageHandler.SendMessage("Checking script extender plugins...", MessageType.Info, MessageTarget.Cli);
                 // var xseChecker = serviceProvider.GetRequiredService<IGameScanner>();
-                
+
                 // Note: In a full implementation, we'd call the XsePluginChecker specifically
                 // For now, this is a placeholder
                 logger.Information("XSE plugin check completed");
@@ -165,7 +165,8 @@ public class ScanGameCommand : Command
             // Check Crashgen settings
             if (checkCrashgen)
             {
-                messageHandler.SendMessage("Checking crash generation settings...", MessageType.Info, MessageTarget.Cli);
+                messageHandler.SendMessage("Checking crash generation settings...", MessageType.Info,
+                    MessageTarget.Cli);
                 // Placeholder for crashgen check
                 logger.Information("Crashgen settings check completed");
             }
@@ -222,14 +223,8 @@ public class ScanGameCommand : Command
                 {
                     Console.WriteLine();
                     Console.WriteLine("Top issues:");
-                    foreach (var issue in scanResults.Take(5))
-                    {
-                        Console.WriteLine($"  - {issue}");
-                    }
-                    if (scanResults.Count > 5)
-                    {
-                        Console.WriteLine($"  ... and {scanResults.Count - 5} more");
-                    }
+                    foreach (var issue in scanResults.Take(5)) Console.WriteLine($"  - {issue}");
+                    if (scanResults.Count > 5) Console.WriteLine($"  ... and {scanResults.Count - 5} more");
                 }
             }
 
@@ -260,10 +255,8 @@ public class ScanGameCommand : Command
         };
 
         foreach (var path in possiblePaths)
-        {
             if (Directory.Exists(path))
                 return Task.FromResult(path);
-        }
 
         return Task.FromResult(string.Empty);
     }
@@ -274,14 +267,14 @@ public class ScanGameCommand : Command
         var gameName = Path.GetFileName(gameDirectory);
         var mo2ModsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "ModOrganizer", gameName, "mods");
-        
+
         if (Directory.Exists(mo2ModsPath))
             return Task.FromResult(mo2ModsPath);
 
         // Check for Vortex mods
         var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         var vortexModsPath = Path.Combine(documentsPath, "Vortex Mods", gameName);
-        
+
         if (Directory.Exists(vortexModsPath))
             return Task.FromResult(vortexModsPath);
 
@@ -290,7 +283,7 @@ public class ScanGameCommand : Command
         return Task.FromResult(Directory.Exists(dataPath) ? dataPath : string.Empty);
     }
 
-    private async Task<List<string>> ScanLooseFilesAsync(string modsDirectory, IMessageHandler messageHandler, 
+    private async Task<List<string>> ScanLooseFilesAsync(string modsDirectory, IMessageHandler messageHandler,
         bool backupDocs, CancellationToken cancellationToken)
     {
         var issues = new List<string>();
@@ -309,10 +302,8 @@ public class ScanGameCommand : Command
             // Check for problematic file types
             var dllFiles = Directory.GetFiles(modFolder, "*.dll", SearchOption.AllDirectories);
             foreach (var dll in dllFiles)
-            {
                 if (!IsValidScriptExtenderDll(dll))
                     issues.Add($"Suspicious DLL found: {Path.GetRelativePath(modsDirectory, dll)}");
-            }
 
             // Check texture dimensions
             var textureFiles = Directory.GetFiles(modFolder, "*.dds", SearchOption.AllDirectories);
@@ -332,7 +323,7 @@ public class ScanGameCommand : Command
 
                 foreach (var doc in docFiles)
                 {
-                    var backupPath = Path.Combine(modsDirectory, "_Documentation_Backup", 
+                    var backupPath = Path.Combine(modsDirectory, "_Documentation_Backup",
                         Path.GetFileName(modFolder), Path.GetRelativePath(modFolder, doc));
                     Directory.CreateDirectory(Path.GetDirectoryName(backupPath)!);
                     File.Copy(doc, backupPath, true);
@@ -365,9 +356,7 @@ public class ScanGameCommand : Command
             // Basic validation - in full implementation would use BSArch.exe
             var fileInfo = new FileInfo(archive);
             if (fileInfo.Length < 1024) // Too small to be valid
-            {
                 issues.Add($"Invalid archive (too small): {Path.GetRelativePath(modsDirectory, archive)}");
-            }
         }
 
         return Task.FromResult(issues);
@@ -379,7 +368,7 @@ public class ScanGameCommand : Command
         var issues = new List<string>();
         var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         var gameName = Path.GetFileName(gameDirectory);
-        
+
         var logPaths = new[]
         {
             Path.Combine(documentsPath, "My Games", gameName, "Logs"),
@@ -389,24 +378,20 @@ public class ScanGameCommand : Command
         foreach (var logPath in logPaths.Where(Directory.Exists))
         {
             var logFiles = Directory.GetFiles(logPath, "*.log", SearchOption.AllDirectories);
-            
+
             foreach (var logFile in logFiles)
             {
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
                 var content = await File.ReadAllTextAsync(logFile, cancellationToken);
-                
+
                 // Check for common error patterns
                 if (content.Contains("ERROR", StringComparison.OrdinalIgnoreCase))
-                {
                     issues.Add($"Errors found in log: {Path.GetFileName(logFile)}");
-                }
-                
+
                 if (content.Contains("EXCEPTION", StringComparison.OrdinalIgnoreCase))
-                {
                     issues.Add($"Exceptions found in log: {Path.GetFileName(logFile)}");
-                }
             }
         }
 
@@ -426,23 +411,19 @@ public class ScanGameCommand : Command
     {
         // Basic texture validation - in full implementation would read DDS header
         var fileInfo = new FileInfo(texturePath);
-        
+
         // Check file size
         if (fileInfo.Length > 100 * 1024 * 1024) // 100MB
-        {
             return Task.FromResult("Texture file is extremely large (>100MB)");
-        }
 
         // Check path for common issues
         if (texturePath.Contains("HighRes", StringComparison.OrdinalIgnoreCase) && fileInfo.Length < 1024)
-        {
             return Task.FromResult("High-res texture is suspiciously small");
-        }
 
         return Task.FromResult(string.Empty);
     }
 
-    private static async Task GenerateReportAsync(string reportPath, List<string> issues, 
+    private static async Task GenerateReportAsync(string reportPath, List<string> issues,
         string gameDirectory, string? modsDirectory)
     {
         var report = new System.Text.StringBuilder();
@@ -460,10 +441,7 @@ public class ScanGameCommand : Command
         if (issues.Count > 0)
         {
             report.AppendLine("## Issues Found");
-            foreach (var issue in issues)
-            {
-                report.AppendLine($"- {issue}");
-            }
+            foreach (var issue in issues) report.AppendLine($"- {issue}");
         }
         else
         {

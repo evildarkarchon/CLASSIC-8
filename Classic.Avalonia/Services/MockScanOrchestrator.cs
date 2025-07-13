@@ -14,10 +14,10 @@ public class MockScanOrchestrator : IScanOrchestrator
     {
         // Mock implementation for UI development
         await Task.Delay(2000, cancellationToken); // Simulate work
-        
+
         var startTime = DateTime.Now.AddSeconds(-2);
         var endTime = DateTime.Now;
-        
+
         return new ScanResult
         {
             TotalLogs = 5,
@@ -36,7 +36,7 @@ public class MockScanOrchestrator : IScanOrchestrator
             Performance = new PerformanceMetrics
             {
                 TotalMemoryUsed = 1024 * 1024 * 50, // 50MB
-                PeakMemoryUsage = 1024 * 1024 * 75,  // 75MB
+                PeakMemoryUsage = 1024 * 1024 * 75, // 75MB
                 CpuUsagePercent = 25.5,
                 FilesReadPerSecond = 2,
                 CacheHits = 10,
@@ -51,11 +51,12 @@ public class MockScanOrchestrator : IScanOrchestrator
             }
         };
     }
-    
-    public async Task<ScanLogResult> ScanSingleLogAsync(string logPath, ScanRequest? config, CancellationToken cancellationToken = default)
+
+    public async Task<ScanLogResult> ScanSingleLogAsync(string logPath, ScanRequest? config,
+        CancellationToken cancellationToken = default)
     {
         await Task.Delay(500, cancellationToken);
-        
+
         return new ScanLogResult
         {
             LogPath = logPath,
@@ -73,16 +74,16 @@ public class MockScanOrchestrator : IScanOrchestrator
             Suspects = new List<string> { "SuspectY", "SuspectZ" }
         };
     }
-    
+
     public async Task<ScanLogResult> ScanSingleLogAsync(string logPath, CancellationToken cancellationToken = default)
     {
         return await ScanSingleLogAsync(logPath, null, cancellationToken);
     }
-    
+
     public async Task<PerformanceMetrics> GetStatisticsAsync(CancellationToken cancellationToken = default)
     {
         await Task.Delay(100, cancellationToken);
-        
+
         return new PerformanceMetrics
         {
             TotalMemoryUsed = 1024 * 1024 * 30,
@@ -93,31 +94,27 @@ public class MockScanOrchestrator : IScanOrchestrator
             CacheMisses = 5
         };
     }
-    
+
     public ValidationResult ValidateRequest(ScanRequest request)
     {
         var result = new ValidationResult();
-        
-        if (string.IsNullOrWhiteSpace(request.OutputDirectory))
-        {
-            result.AddError("Output directory is required");
-        }
-        
-        if (request.MaxConcurrentLogs <= 0)
-        {
-            result.AddWarning("Max concurrent logs should be greater than 0");
-        }
-        
+
+        if (string.IsNullOrWhiteSpace(request.OutputDirectory)) result.AddError("Output directory is required");
+
+        if (request.MaxConcurrentLogs <= 0) result.AddWarning("Max concurrent logs should be greater than 0");
+
         return result;
     }
-    
-    public async Task<ProcessingMode> GetOptimalProcessingModeAsync(ScanRequest request, CancellationToken cancellationToken = default)
+
+    public async Task<ProcessingMode> GetOptimalProcessingModeAsync(ScanRequest request,
+        CancellationToken cancellationToken = default)
     {
         await Task.Delay(50, cancellationToken);
         return ProcessingMode.Adaptive;
     }
-    
-    public async Task<TimeSpan> EstimateProcessingTimeAsync(ScanRequest request, CancellationToken cancellationToken = default)
+
+    public async Task<TimeSpan> EstimateProcessingTimeAsync(ScanRequest request,
+        CancellationToken cancellationToken = default)
     {
         await Task.Delay(50, cancellationToken);
         return TimeSpan.FromMinutes(2); // Estimate 2 minutes

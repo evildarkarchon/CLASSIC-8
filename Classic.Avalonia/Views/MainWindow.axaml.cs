@@ -44,10 +44,7 @@ public partial class MainWindow : Window
         SetupDragAndDrop();
 
         // Restore window state
-        if (_windowStateService != null)
-        {
-            await _windowStateService.RestoreWindowStateAsync(this);
-        }
+        if (_windowStateService != null) await _windowStateService.RestoreWindowStateAsync(this);
     }
 
     private void SetupDragAndDrop()
@@ -62,10 +59,7 @@ public partial class MainWindow : Window
     private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {
         // Save window state before closing
-        if (_windowStateService != null)
-        {
-            await _windowStateService.SaveWindowStateAsync(this);
-        }
+        if (_windowStateService != null) await _windowStateService.SaveWindowStateAsync(this);
     }
 
     private void InitializeServices()
@@ -83,10 +77,7 @@ public partial class MainWindow : Window
                 _logger = app.Services.GetService<ILogger>();
 
                 // Subscribe to notification events
-                if (_notificationService != null)
-                {
-                    _notificationService.NotificationAdded += OnNotificationAdded;
-                }
+                if (_notificationService != null) _notificationService.NotificationAdded += OnNotificationAdded;
             }
         }
     }
@@ -137,21 +128,16 @@ public partial class MainWindow : Window
             {
                 _notificationService = app.Services.GetService<INotificationService>();
                 if (_notificationService != null)
-                {
                     // Subscribe to notifications
                     ((Infrastructure.Services.NotificationService)_notificationService).NotificationAdded +=
                         OnNotificationAdded;
-                }
             }
         }
     }
 
     private async void OnNotificationAdded(object? sender, NotificationMessage notification)
     {
-        if (_toastContainer != null)
-        {
-            await _toastContainer.ShowToastAsync(notification);
-        }
+        if (_toastContainer != null) await _toastContainer.ShowToastAsync(notification);
     }
 
     #region Drag and Drop Event Handlers
@@ -172,13 +158,9 @@ public partial class MainWindow : Window
     private void OnDragOver(object? sender, DragEventArgs e)
     {
         if (_dragDropService?.ValidateDropData(e) == true)
-        {
             e.DragEffects = DragDropEffects.Copy;
-        }
         else
-        {
             e.DragEffects = DragDropEffects.None;
-        }
     }
 
     private void OnDragLeave(object? sender, DragEventArgs e)
@@ -191,7 +173,6 @@ public partial class MainWindow : Window
         RemoveDropZoneStyle();
 
         if (_dragDropService != null)
-        {
             try
             {
                 await _dragDropService.ProcessDroppedFilesAsync(e);
@@ -200,7 +181,6 @@ public partial class MainWindow : Window
             {
                 _logger?.Error(ex, "Error processing dropped files");
             }
-        }
     }
 
     private void AddDropZoneStyle()

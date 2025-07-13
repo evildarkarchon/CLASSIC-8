@@ -47,10 +47,7 @@ public class NotificationService : INotificationService
         NotificationAdded?.Invoke(this, notification);
 
         // Play audio notification if enabled
-        if (_settingsService.Settings.SoundOnCompletion)
-        {
-            await _audioService.PlayNotificationAsync(type, volume: 0.5);
-        }
+        if (_settingsService.Settings.SoundOnCompletion) await _audioService.PlayNotificationAsync(type, 0.5);
     }
 
     public async Task ShowNotificationAsync(string title, string message,
@@ -73,9 +70,7 @@ public class NotificationService : INotificationService
                       $"Success: {result.SuccessfulScans}, Failed: {result.FailedScans}";
 
         if (result.ModConflicts.Any())
-        {
             message += $"\nTop conflicts: {string.Join(", ", result.ModConflicts.Take(3).Select(m => m.Key))}";
-        }
 
         await ShowToastAsync(title, message, type);
     }
@@ -85,10 +80,7 @@ public class NotificationService : INotificationService
         var title = $"{operation} Failed";
         var message = $"Error: {exception.Message}";
 
-        if (exception.InnerException != null)
-        {
-            message += $"\nDetails: {exception.InnerException.Message}";
-        }
+        if (exception.InnerException != null) message += $"\nDetails: {exception.InnerException.Message}";
 
         await ShowToastAsync(title, message, NotificationType.Error);
     }
@@ -99,10 +91,7 @@ public class NotificationService : INotificationService
         var title = $"{operation} {category}";
         var message = result.Message;
 
-        if (result.ProcessedFiles.Count > 0)
-        {
-            message += $"\nProcessed {result.ProcessedFiles.Count} files";
-        }
+        if (result.ProcessedFiles.Count > 0) message += $"\nProcessed {result.ProcessedFiles.Count} files";
 
         await ShowToastAsync(title, message, type);
     }
@@ -114,7 +103,7 @@ public class NotificationService : INotificationService
 
         try
         {
-            await _audioService.PlayNotificationAsync(type, volume: 0.5);
+            await _audioService.PlayNotificationAsync(type, 0.5);
         }
         catch (Exception ex)
         {
@@ -185,17 +174,10 @@ public class NotificationService : INotificationService
 
         // Keep only recent notifications
         while (_notifications.TryDequeue(out var notification))
-        {
             if (notification.Timestamp > cutoff)
-            {
                 tempList.Add(notification);
-            }
-        }
 
-        foreach (var notification in tempList)
-        {
-            _notifications.Enqueue(notification);
-        }
+        foreach (var notification in tempList) _notifications.Enqueue(notification);
     }
 
     public void Dispose()

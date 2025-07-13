@@ -37,16 +37,12 @@ public class PastebinService : IPastebinService, IDisposable
     public async Task<PastebinResult> FetchLogAsync(string urlOrId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(urlOrId))
-        {
             return PastebinResult.CreateFailure(urlOrId, "URL or ID cannot be empty");
-        }
 
         var trimmedInput = urlOrId.Trim();
 
         if (!IsValidPastebinReference(trimmedInput))
-        {
             return PastebinResult.CreateFailure(trimmedInput, "Invalid Pastebin URL or ID format");
-        }
 
         var rawUrl = GetRawUrl(trimmedInput);
         _logger.Information("Fetching Pastebin content from {RawUrl}", rawUrl);
@@ -65,15 +61,10 @@ public class PastebinService : IPastebinService, IDisposable
             var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (string.IsNullOrWhiteSpace(content))
-            {
                 return PastebinResult.CreateFailure(trimmedInput, "Pastebin content is empty");
-            }
 
             // Check if this looks like a crash log (basic validation)
-            if (!IsLikelyCrashLog(content))
-            {
-                _logger.Warning("Downloaded content doesn't appear to be a crash log");
-            }
+            if (!IsLikelyCrashLog(content)) _logger.Warning("Downloaded content doesn't appear to be a crash log");
 
             var filePath = await SaveContentToFileAsync(rawUrl, content, cancellationToken).ConfigureAwait(false);
             var contentSize = content.Length;
@@ -102,24 +93,15 @@ public class PastebinService : IPastebinService, IDisposable
 
     public bool IsValidPastebinReference(string urlOrId)
     {
-        if (string.IsNullOrWhiteSpace(urlOrId))
-        {
-            return false;
-        }
+        if (string.IsNullOrWhiteSpace(urlOrId)) return false;
 
         var trimmed = urlOrId.Trim();
 
         // Check if it's a valid Pastebin URL
-        if (PastebinUrlRegex.IsMatch(trimmed))
-        {
-            return true;
-        }
+        if (PastebinUrlRegex.IsMatch(trimmed)) return true;
 
         // Check if it's a valid Pastebin ID
-        if (PastebinIdRegex.IsMatch(trimmed))
-        {
-            return true;
-        }
+        if (PastebinIdRegex.IsMatch(trimmed)) return true;
 
         return false;
     }
@@ -137,10 +119,7 @@ public class PastebinService : IPastebinService, IDisposable
         }
 
         // If it's just an ID, create the raw URL
-        if (PastebinIdRegex.IsMatch(trimmed))
-        {
-            return $"https://pastebin.com/raw/{trimmed}";
-        }
+        if (PastebinIdRegex.IsMatch(trimmed)) return $"https://pastebin.com/raw/{trimmed}";
 
         // Fallback - assume it's an ID and try to make it work
         return $"https://pastebin.com/raw/{trimmed}";
@@ -148,10 +127,7 @@ public class PastebinService : IPastebinService, IDisposable
 
     private static bool IsLikelyCrashLog(string content)
     {
-        if (string.IsNullOrWhiteSpace(content))
-        {
-            return false;
-        }
+        if (string.IsNullOrWhiteSpace(content)) return false;
 
         var lowerContent = content.ToLowerInvariant();
 
@@ -174,12 +150,8 @@ public class PastebinService : IPastebinService, IDisposable
 
         var indicatorCount = 0;
         foreach (var indicator in crashIndicators)
-        {
             if (lowerContent.Contains(indicator))
-            {
                 indicatorCount++;
-            }
-        }
 
         // If we find multiple indicators, it's likely a crash log
         return indicatorCount >= 2;

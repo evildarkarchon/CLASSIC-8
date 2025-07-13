@@ -14,18 +14,18 @@ public class AdaptiveProcessingEngine
     private readonly ILogger<AdaptiveProcessingEngine> _logger;
     private readonly PerformanceMonitor _performanceMonitor;
     private readonly ResourceManager _resourceManager;
-    
+
     // Performance history for decision making
     private readonly List<ProcessingPerformanceRecord> _performanceHistory = new();
     private readonly Dictionary<ProcessingMode, ProcessingModeStats> _modeStats = new();
     private readonly object _lock = new();
-    
+
     // Adaptive parameters
     private const int MaxHistoryRecords = 50;
     private const double PerformanceThreshold = 0.8; // 80% efficiency threshold
     private const double MemoryPressureThreshold = 0.75; // 75% memory usage threshold
     private const double CpuPressureThreshold = 0.85; // 85% CPU usage threshold
-    
+
     public AdaptiveProcessingEngine(
         ILogger<AdaptiveProcessingEngine> logger,
         PerformanceMonitor performanceMonitor,
@@ -34,21 +34,19 @@ public class AdaptiveProcessingEngine
         _logger = logger;
         _performanceMonitor = performanceMonitor;
         _resourceManager = resourceManager;
-        
+
         // Initialize mode statistics
-        foreach (ProcessingMode mode in Enum.GetValues<ProcessingMode>())
-        {
+        foreach (var mode in Enum.GetValues<ProcessingMode>())
             _modeStats[mode] = new ProcessingModeStats { Mode = mode };
-        }
-        
+
         _logger.LogInformation("Adaptive processing engine initialized");
     }
-    
+
     /// <summary>
     /// Determines the optimal processing mode based on current conditions
     /// </summary>
     public async Task<ProcessingMode> GetOptimalProcessingModeAsync(
-        ScanRequest request, 
+        ScanRequest request,
         CancellationToken cancellationToken = default)
     {
         lock (_lock)
@@ -58,7 +56,7 @@ public class AdaptiveProcessingEngine
                 // Get current system state
                 var resourceUsage = _resourceManager.GetResourceUsage();
                 var performanceMetrics = _performanceMonitor.GetStatisticsAsync().Result;
-                
+
                 // Create decision context
                 var context = new ProcessingDecisionContext
                 {
@@ -72,14 +70,14 @@ public class AdaptiveProcessingEngine
                     AverageFileSize = CalculateAverageFileSize(request.LogFiles),
                     SystemLoad = CalculateSystemLoad(performanceMetrics, resourceUsage)
                 };
-                
+
                 var optimalMode = SelectOptimalMode(context);
-                
+
                 _logger.LogInformation("Selected processing mode: {Mode} for {FileCount} files " +
-                    "(Memory: {MemoryPercent:F1}%, CPU: {CpuPercent:F1}%, Load: {SystemLoad:F2})",
-                    optimalMode, context.FileCount, context.MemoryUsagePercent, 
+                                       "(Memory: {MemoryPercent:F1}%, CPU: {CpuPercent:F1}%, Load: {SystemLoad:F2})",
+                    optimalMode, context.FileCount, context.MemoryUsagePercent,
                     context.CpuUsagePercent, context.SystemLoad);
-                
+
                 return optimalMode;
             }
             catch (Exception ex)
@@ -89,7 +87,7 @@ public class AdaptiveProcessingEngine
             }
         }
     }
-    
+
     /// <summary>
     /// Calculates optimal worker thread count based on current conditions
     /// </summary>
@@ -97,7 +95,7 @@ public class AdaptiveProcessingEngine
     {
         var resourceUsage = _resourceManager.GetResourceUsage();
         var baseWorkerCount = Environment.ProcessorCount;
-        
+
         // Adjust based on processing mode
         var modeMultiplier = mode switch
         {
@@ -107,34 +105,31 @@ public class AdaptiveProcessingEngine
             ProcessingMode.Adaptive => 1.8,
             _ => 1.0
         };
-        
+
         var optimalCount = (int)(baseWorkerCount * modeMultiplier);
-        
+
         // Adjust for system pressure
         if (resourceUsage.IsUnderMemoryPressure)
         {
             optimalCount = Math.Max(1, optimalCount / 2);
             _logger.LogDebug("Reduced worker count due to memory pressure: {Count}", optimalCount);
         }
-        
+
         if (resourceUsage.IsUnderCpuPressure)
         {
             optimalCount = Math.Max(1, optimalCount / 2);
             _logger.LogDebug("Reduced worker count due to CPU pressure: {Count}", optimalCount);
         }
-        
+
         // Adjust for file count
-        if (request.LogFiles.Count < optimalCount)
-        {
-            optimalCount = request.LogFiles.Count;
-        }
-        
+        if (request.LogFiles.Count < optimalCount) optimalCount = request.LogFiles.Count;
+
         // Respect system limits
         optimalCount = Math.Min(optimalCount, resourceUsage.MaxWorkerThreads);
-        
+
         return Math.Max(1, optimalCount);
     }
-    
+
     /// <summary>
     /// Calculates optimal batch size based on current conditions
     /// </summary>
@@ -142,17 +137,12 @@ public class AdaptiveProcessingEngine
     {
         var resourceUsage = _resourceManager.GetResourceUsage();
         var baseBatchSize = request.BatchSize;
-        
+
         // Adjust based on memory pressure
         if (resourceUsage.MemoryUsagePercent > 80)
-        {
             baseBatchSize = Math.Max(10, baseBatchSize / 4);
-        }
-        else if (resourceUsage.MemoryUsagePercent > 60)
-        {
-            baseBatchSize = Math.Max(25, baseBatchSize / 2);
-        }
-        
+        else if (resourceUsage.MemoryUsagePercent > 60) baseBatchSize = Math.Max(25, baseBatchSize / 2);
+
         // Adjust based on processing mode
         var adjustedBatchSize = mode switch
         {
@@ -162,11 +152,11 @@ public class AdaptiveProcessingEngine
             ProcessingMode.Adaptive => baseBatchSize,
             _ => baseBatchSize
         };
-        
+
         // Ensure reasonable bounds
         return Math.Max(1, Math.Min(adjustedBatchSize, 1000));
     }
-    
+
     /// <summary>
     /// Records performance data for a completed processing operation
     /// </summary>
@@ -181,33 +171,27 @@ public class AdaptiveProcessingEngine
                 stats.TotalProcessingTime += data.ProcessingTime;
                 stats.TotalFilesProcessed += data.FilesProcessed;
                 stats.TotalMemoryUsed += data.PeakMemoryUsage;
-                
+
                 // Update efficiency metrics
                 var efficiency = CalculateEfficiency(data);
                 stats.EfficiencySum += efficiency;
                 stats.AverageEfficiency = stats.EfficiencySum / stats.TotalRuns;
-                
+
                 if (efficiency > stats.BestEfficiency)
                 {
                     stats.BestEfficiency = efficiency;
                     stats.BestPerformanceContext = data.Context;
                 }
-                
-                if (efficiency < stats.WorstEfficiency)
-                {
-                    stats.WorstEfficiency = efficiency;
-                }
-                
+
+                if (efficiency < stats.WorstEfficiency) stats.WorstEfficiency = efficiency;
+
                 // Update recent performance
                 stats.RecentEfficiencies.Add(efficiency);
-                if (stats.RecentEfficiencies.Count > 10)
-                {
-                    stats.RecentEfficiencies.RemoveAt(0);
-                }
-                
+                if (stats.RecentEfficiencies.Count > 10) stats.RecentEfficiencies.RemoveAt(0);
+
                 stats.RecentAverageEfficiency = stats.RecentEfficiencies.Average();
             }
-            
+
             // Add to performance history
             var record = new ProcessingPerformanceRecord
             {
@@ -216,46 +200,43 @@ public class AdaptiveProcessingEngine
                 Data = data,
                 Efficiency = CalculateEfficiency(data)
             };
-            
+
             _performanceHistory.Add(record);
-            
+
             // Trim history if needed
-            if (_performanceHistory.Count > MaxHistoryRecords)
-            {
-                _performanceHistory.RemoveAt(0);
-            }
-            
+            if (_performanceHistory.Count > MaxHistoryRecords) _performanceHistory.RemoveAt(0);
+
             _logger.LogDebug("Recorded performance data for {Mode}: {Efficiency:F2}% efficiency, " +
-                "{FilesPerSecond:F2} files/sec, {MemoryMB:F0}MB peak",
+                             "{FilesPerSecond:F2} files/sec, {MemoryMB:F0}MB peak",
                 mode, record.Efficiency, data.FilesPerSecond, data.PeakMemoryUsage / 1024.0 / 1024.0);
         }
     }
-    
+
     /// <summary>
     /// Monitors processing performance and suggests adaptations
     /// </summary>
     public async Task<ProcessingAdaptation?> MonitorAndAdaptAsync(
-        ProcessingMode currentMode, 
+        ProcessingMode currentMode,
         ProcessingPerformanceData currentData,
         CancellationToken cancellationToken = default)
     {
         var currentEfficiency = CalculateEfficiency(currentData);
-        
+
         // Check if current performance is below threshold
         if (currentEfficiency < PerformanceThreshold)
         {
             var resourceUsage = _resourceManager.GetResourceUsage();
             var recommendations = _resourceManager.GetProcessingRecommendations();
-            
+
             // Determine if we should switch modes
             var suggestedMode = recommendations.SuggestedProcessingMode;
-            
+
             if (suggestedMode != currentMode)
             {
                 _logger.LogInformation("Performance below threshold ({Efficiency:F2}%), " +
-                    "suggesting switch from {CurrentMode} to {SuggestedMode}",
+                                       "suggesting switch from {CurrentMode} to {SuggestedMode}",
                     currentEfficiency, currentMode, suggestedMode);
-                
+
                 return new ProcessingAdaptation
                 {
                     SuggestedMode = suggestedMode,
@@ -266,74 +247,50 @@ public class AdaptiveProcessingEngine
                 };
             }
         }
-        
+
         // Check for resource pressure adaptations
         var currentResourceUsage = _resourceManager.GetResourceUsage();
         if (currentResourceUsage.IsUnderMemoryPressure || currentResourceUsage.IsUnderCpuPressure)
         {
             var adaptation = CreateResourcePressureAdaptation(currentMode, currentResourceUsage);
-            if (adaptation != null)
-            {
-                return adaptation;
-            }
+            if (adaptation != null) return adaptation;
         }
-        
+
         return null;
     }
-    
+
     /// <summary>
     /// Selects the optimal processing mode based on decision context
     /// </summary>
     private ProcessingMode SelectOptimalMode(ProcessingDecisionContext context)
     {
         // Rule-based decision making with performance history influence
-        
+
         // Critical resource pressure - force sequential
-        if (context.IsUnderMemoryPressure && context.MemoryUsagePercent > 90)
-        {
-            return ProcessingMode.Sequential;
-        }
-        
-        if (context.IsUnderCpuPressure && context.CpuUsagePercent > 95)
-        {
-            return ProcessingMode.Sequential;
-        }
-        
+        if (context.IsUnderMemoryPressure && context.MemoryUsagePercent > 90) return ProcessingMode.Sequential;
+
+        if (context.IsUnderCpuPressure && context.CpuUsagePercent > 95) return ProcessingMode.Sequential;
+
         // Use performance history if available
         if (context.HasPerformanceHistory)
         {
             var historicalBest = GetBestPerformingMode(context);
-            if (historicalBest != ProcessingMode.Sequential)
-            {
-                return historicalBest;
-            }
+            if (historicalBest != ProcessingMode.Sequential) return historicalBest;
         }
-        
+
         // Default heuristic rules
-        if (context.FileCount <= 3)
-        {
-            return ProcessingMode.Sequential;
-        }
-        
-        if (context.SystemLoad > 0.8)
-        {
-            return ProcessingMode.Sequential;
-        }
-        
-        if (context.FileCount <= 20 && context.SystemLoad < 0.6)
-        {
-            return ProcessingMode.Parallel;
-        }
-        
-        if (context.FileCount > 50 && context.SystemLoad < 0.7)
-        {
-            return ProcessingMode.ProducerConsumer;
-        }
-        
+        if (context.FileCount <= 3) return ProcessingMode.Sequential;
+
+        if (context.SystemLoad > 0.8) return ProcessingMode.Sequential;
+
+        if (context.FileCount <= 20 && context.SystemLoad < 0.6) return ProcessingMode.Parallel;
+
+        if (context.FileCount > 50 && context.SystemLoad < 0.7) return ProcessingMode.ProducerConsumer;
+
         // Default to adaptive for complex scenarios
         return ProcessingMode.Adaptive;
     }
-    
+
     /// <summary>
     /// Gets the best performing mode from performance history
     /// </summary>
@@ -346,10 +303,10 @@ public class AdaptiveProcessingEngine
             .Select(g => new { Mode = g.Key, AverageEfficiency = g.Average(r => r.Efficiency) })
             .OrderByDescending(x => x.AverageEfficiency)
             .FirstOrDefault();
-        
+
         return similarContexts?.Mode ?? ProcessingMode.Adaptive;
     }
-    
+
     /// <summary>
     /// Determines if two processing contexts are similar
     /// </summary>
@@ -359,10 +316,10 @@ public class AdaptiveProcessingEngine
         var fileCountSimilar = Math.Abs(historical.FileCount - current.FileCount) < current.FileCount * 0.3;
         var memoryUsageSimilar = Math.Abs(historical.MemoryUsagePercent - current.MemoryUsagePercent) < 20;
         var systemLoadSimilar = Math.Abs(historical.SystemLoad - current.SystemLoad) < 0.3;
-        
+
         return fileCountSimilar && memoryUsageSimilar && systemLoadSimilar;
     }
-    
+
     /// <summary>
     /// Calculates processing efficiency based on performance data
     /// </summary>
@@ -370,50 +327,49 @@ public class AdaptiveProcessingEngine
     {
         // Multi-factor efficiency calculation
         var factors = new List<double>();
-        
+
         // Throughput factor (files per second)
         if (data.FilesPerSecond > 0)
         {
             var maxExpectedThroughput = Environment.ProcessorCount * 2; // Expected max files/sec
-            factors.Add(Math.Min(100, (data.FilesPerSecond / maxExpectedThroughput) * 100));
+            factors.Add(Math.Min(100, data.FilesPerSecond / maxExpectedThroughput * 100));
         }
-        
+
         // Memory efficiency factor
         if (data.PeakMemoryUsage > 0)
         {
-            var memoryEfficiency = 100 - (data.PeakMemoryUsage / (2L * 1024 * 1024 * 1024) * 100); // 2GB baseline
+            var memoryEfficiency = 100 - data.PeakMemoryUsage / (2L * 1024 * 1024 * 1024) * 100; // 2GB baseline
             factors.Add(Math.Max(0, Math.Min(100, memoryEfficiency)));
         }
-        
+
         // CPU efficiency factor (inverse of usage)
         if (data.AverageCpuUsage > 0)
         {
             var cpuEfficiency = 100 - Math.Min(100, data.AverageCpuUsage);
             factors.Add(Math.Max(0, cpuEfficiency));
         }
-        
+
         // Error rate factor
         if (data.TotalFiles > 0)
         {
-            var successRate = ((double)(data.TotalFiles - data.ErrorCount) / data.TotalFiles) * 100;
+            var successRate = (double)(data.TotalFiles - data.ErrorCount) / data.TotalFiles * 100;
             factors.Add(successRate);
         }
-        
+
         return factors.Count > 0 ? factors.Average() : 0;
     }
-    
+
     /// <summary>
     /// Calculates average file size for processing decisions
     /// </summary>
     private long CalculateAverageFileSize(List<string> logFiles)
     {
         if (logFiles.Count == 0) return 0;
-        
+
         var totalSize = 0L;
         var validFiles = 0;
-        
+
         foreach (var file in logFiles.Take(Math.Min(10, logFiles.Count))) // Sample first 10 files
-        {
             try
             {
                 var info = new FileInfo(file);
@@ -427,31 +383,30 @@ public class AdaptiveProcessingEngine
             {
                 // Ignore file access errors
             }
-        }
-        
+
         return validFiles > 0 ? totalSize / validFiles : 0;
     }
-    
+
     /// <summary>
     /// Calculates overall system load factor
     /// </summary>
     private double CalculateSystemLoad(PerformanceMetrics performanceMetrics, ResourceUsageStats resourceUsage)
     {
         var factors = new List<double>();
-        
+
         // CPU load factor
         factors.Add(performanceMetrics.CpuUsagePercent / 100.0);
-        
+
         // Memory load factor
         factors.Add(resourceUsage.MemoryUsagePercent / 100.0);
-        
+
         // Thread availability factor
         var threadUtilization = 1.0 - (double)resourceUsage.AvailableWorkerThreads / resourceUsage.MaxWorkerThreads;
         factors.Add(threadUtilization);
-        
+
         return factors.Average();
     }
-    
+
     /// <summary>
     /// Gets fallback processing mode based on file count
     /// </summary>
@@ -464,14 +419,14 @@ public class AdaptiveProcessingEngine
             _ => ProcessingMode.ProducerConsumer
         };
     }
-    
+
     /// <summary>
     /// Creates adaptation recommendation for resource pressure
     /// </summary>
-    private ProcessingAdaptation? CreateResourcePressureAdaptation(ProcessingMode currentMode, ResourceUsageStats resourceUsage)
+    private ProcessingAdaptation? CreateResourcePressureAdaptation(ProcessingMode currentMode,
+        ResourceUsageStats resourceUsage)
     {
         if (resourceUsage.IsUnderMemoryPressure && currentMode != ProcessingMode.Sequential)
-        {
             return new ProcessingAdaptation
             {
                 SuggestedMode = ProcessingMode.Sequential,
@@ -480,10 +435,8 @@ public class AdaptiveProcessingEngine
                 Reason = "Memory pressure detected",
                 Confidence = 0.9
             };
-        }
-        
+
         if (resourceUsage.IsUnderCpuPressure && currentMode == ProcessingMode.ProducerConsumer)
-        {
             return new ProcessingAdaptation
             {
                 SuggestedMode = ProcessingMode.Parallel,
@@ -492,11 +445,10 @@ public class AdaptiveProcessingEngine
                 Reason = "CPU pressure detected",
                 Confidence = 0.8
             };
-        }
-        
+
         return null;
     }
-    
+
     /// <summary>
     /// Calculates confidence level for adaptation recommendation
     /// </summary>
@@ -504,22 +456,18 @@ public class AdaptiveProcessingEngine
     {
         // Base confidence
         var confidence = 0.7;
-        
+
         // Increase confidence based on mode statistics
         if (_modeStats.TryGetValue(suggestedMode, out var stats) && stats.TotalRuns > 5)
-        {
             confidence += (stats.RecentAverageEfficiency - 50) / 100.0; // Scale recent performance
-        }
-        
+
         // Decrease confidence for dramatic mode changes
         if (currentMode == ProcessingMode.ProducerConsumer && suggestedMode == ProcessingMode.Sequential)
-        {
             confidence -= 0.2;
-        }
-        
+
         return Math.Max(0.1, Math.Min(1.0, confidence));
     }
-    
+
     /// <summary>
     /// Gets performance statistics for all processing modes
     /// </summary>
@@ -591,7 +539,10 @@ public class ProcessingModeStats
     public ProcessingDecisionContext? BestPerformanceContext { get; set; }
     public List<double> RecentEfficiencies { get; set; } = new();
     public double RecentAverageEfficiency { get; set; }
-    public double AverageFilesPerSecond => TotalProcessingTime.TotalSeconds > 0 ? TotalFilesProcessed / TotalProcessingTime.TotalSeconds : 0;
+
+    public double AverageFilesPerSecond => TotalProcessingTime.TotalSeconds > 0
+        ? TotalFilesProcessed / TotalProcessingTime.TotalSeconds
+        : 0;
 }
 
 /// <summary>

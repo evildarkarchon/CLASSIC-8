@@ -52,14 +52,14 @@ public class UpdateService : IUpdateService
         return await CheckForUpdatesAsync(updateSource, includePreReleases, cancellationToken);
     }
 
-    public async Task<UpdateCheckResult> CheckForUpdatesAsync(string updateSource, bool includePreReleases, 
+    public async Task<UpdateCheckResult> CheckForUpdatesAsync(string updateSource, bool includePreReleases,
         CancellationToken cancellationToken = default)
     {
-        Logger.Debug("Starting update check - Source: {UpdateSource}, PreReleases: {IncludePreReleases}", 
+        Logger.Debug("Starting update check - Source: {UpdateSource}, PreReleases: {IncludePreReleases}",
             updateSource, includePreReleases);
 
         var currentVersion = GetCurrentVersion();
-        
+
         if (!IsValidUpdateSource(updateSource))
         {
             var errorMessage = $"Invalid update source: {updateSource}. Valid sources are: GitHub, Nexus, Both";
@@ -73,7 +73,7 @@ public class UpdateService : IUpdateService
         VersionInfo? gitHubVersion = null;
         VersionInfo? nexusVersion = null;
         GitHubRelease? latestRelease = null;
-        
+
         var gitHubFailed = false;
         var nexusFailed = false;
 
@@ -81,7 +81,6 @@ public class UpdateService : IUpdateService
         {
             // Check GitHub
             if (useGitHub)
-            {
                 try
                 {
                     var (version, release) = await GetGitHubVersionAsync(includePreReleases, cancellationToken);
@@ -94,14 +93,13 @@ public class UpdateService : IUpdateService
                     Logger.Error(ex, "GitHub version check failed");
                     gitHubFailed = true;
                 }
-            }
 
             // Check Nexus (only for stable releases)
             if (useNexus)
-            {
                 try
                 {
-                    nexusVersion = await _nexusModsService.GetLatestVersionAsync(NexusGameId, NexusModId, cancellationToken);
+                    nexusVersion =
+                        await _nexusModsService.GetLatestVersionAsync(NexusGameId, NexusModId, cancellationToken);
                     Logger.Information("Nexus version check completed: {Version}", nexusVersion);
                 }
                 catch (Exception ex)
@@ -109,7 +107,6 @@ public class UpdateService : IUpdateService
                     Logger.Error(ex, "Nexus version check failed");
                     nexusFailed = true;
                 }
-            }
 
             // Check for source failures
             CheckSourceFailuresAndThrow(useGitHub, useNexus, gitHubFailed, nexusFailed);
@@ -121,7 +118,8 @@ public class UpdateService : IUpdateService
             Logger.Information("Update check completed - Current: {Current}, Latest: {Latest}, Available: {Available}",
                 currentVersion, latestVersion, isUpdateAvailable);
 
-            return UpdateCheckResult.Success(currentVersion, latestVersion, latestRelease, updateSource, isUpdateAvailable);
+            return UpdateCheckResult.Success(currentVersion, latestVersion, latestRelease, updateSource,
+                isUpdateAvailable);
         }
         catch (UpdateCheckException)
         {
@@ -138,22 +136,19 @@ public class UpdateService : IUpdateService
     public VersionInfo? GetCurrentVersion()
     {
         // Try to get version from VersionService first (assembly version)
-        if (_versionService is VersionService versionService)
-        {
-            return versionService.GetCurrentApplicationVersion();
-        }
+        if (_versionService is VersionService versionService) return versionService.GetCurrentApplicationVersion();
 
         Logger.Warning("Could not get current version from VersionService");
         return null;
     }
 
-    private async Task<(VersionInfo? version, GitHubRelease? release)> GetGitHubVersionAsync(bool includePreReleases, 
+    private async Task<(VersionInfo? version, GitHubRelease? release)> GetGitHubVersionAsync(bool includePreReleases,
         CancellationToken cancellationToken)
     {
         Logger.Debug("Fetching GitHub release details for {Owner}/{Repo}", RepoOwner, RepoName);
-        
+
         var releaseDetails = await _gitHubApiService.GetReleaseDetailsAsync(RepoOwner, RepoName, cancellationToken);
-        
+
         if (releaseDetails == null)
         {
             Logger.Warning("No release details found from GitHub");
@@ -163,18 +158,14 @@ public class UpdateService : IUpdateService
         var candidateVersions = new List<(VersionInfo version, GitHubRelease release)>();
 
         // Check latest endpoint release
-        if (releaseDetails.LatestEndpointRelease?.Version != null && 
+        if (releaseDetails.LatestEndpointRelease?.Version != null &&
             (!releaseDetails.LatestEndpointRelease.IsPreRelease || includePreReleases))
-        {
             candidateVersions.Add((releaseDetails.LatestEndpointRelease.Version, releaseDetails.LatestEndpointRelease));
-        }
 
         // Check top of list release
-        if (releaseDetails.TopOfListRelease?.Version != null && 
+        if (releaseDetails.TopOfListRelease?.Version != null &&
             (!releaseDetails.TopOfListRelease.IsPreRelease || includePreReleases))
-        {
             candidateVersions.Add((releaseDetails.TopOfListRelease.Version, releaseDetails.TopOfListRelease));
-        }
 
         if (candidateVersions.Count == 0)
         {
@@ -185,7 +176,7 @@ public class UpdateService : IUpdateService
         // Return the highest version
         var latest = candidateVersions.OrderByDescending(c => c.version).First();
         Logger.Information("Determined latest GitHub version: {Version}", latest.version);
-        
+
         return latest;
     }
 
@@ -193,7 +184,7 @@ public class UpdateService : IUpdateService
     {
         if (gitHubVersion == null) return nexusVersion;
         if (nexusVersion == null) return gitHubVersion;
-        
+
         return gitHubVersion > nexusVersion ? gitHubVersion : nexusVersion;
     }
 
@@ -205,18 +196,13 @@ public class UpdateService : IUpdateService
     private static void CheckSourceFailuresAndThrow(bool useGitHub, bool useNexus, bool gitHubFailed, bool nexusFailed)
     {
         if (useGitHub && !useNexus && gitHubFailed)
-        {
-            throw new UpdateCheckException("Unable to fetch version information from GitHub (selected as only source).");
-        }
-        
+            throw new UpdateCheckException(
+                "Unable to fetch version information from GitHub (selected as only source).");
+
         if (useNexus && !useGitHub && nexusFailed)
-        {
             throw new UpdateCheckException("Unable to fetch version information from Nexus (selected as only source).");
-        }
-        
+
         if (useGitHub && useNexus && gitHubFailed && nexusFailed)
-        {
             throw new UpdateCheckException("Unable to fetch version information from both GitHub and Nexus.");
-        }
     }
 }

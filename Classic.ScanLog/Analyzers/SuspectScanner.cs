@@ -452,41 +452,39 @@ public class SuspectScanner
     /// <param name="crashLog">The crash log to analyze</param>
     /// <param name="advancedSuspects">Dictionary of advanced suspect patterns</param>
     /// <returns>List of detected suspects using advanced patterns</returns>
-    public List<DetectedSuspect> ScanWithAdvancedPatterns(CrashLog crashLog, Dictionary<string, List<string>> advancedSuspects)
+    public List<DetectedSuspect> ScanWithAdvancedPatterns(CrashLog crashLog,
+        Dictionary<string, List<string>> advancedSuspects)
     {
         var detectedSuspects = new List<DetectedSuspect>();
         var mainError = crashLog.MainError ?? string.Empty;
         var callStackIntact = GetCallStackAsString(crashLog);
-        
+
         foreach (var (errorKey, signalList) in advancedSuspects)
         {
             // Parse error information (format: "severity | name")
             var parts = errorKey.Split(" | ", 2);
             if (parts.Length != 2 || !int.TryParse(parts[0], out var severity))
                 continue;
-                
+
             var errorName = parts[1];
-            
+
             // Initialize match status tracking
             var matchStatus = new AdvancedMatchStatus();
-            
+
             // Process each signal in the list
-            bool shouldSkipError = false;
+            var shouldSkipError = false;
             foreach (var signal in signalList)
-            {
                 if (ProcessAdvancedSignal(signal, mainError, callStackIntact, matchStatus))
                 {
                     shouldSkipError = true;
                     break; // NOT condition met, skip this suspect
                 }
-            }
-            
+
             if (shouldSkipError)
                 continue;
-                
+
             // Determine if we have a match based on processed signals
             if (IsAdvancedSuspectMatch(matchStatus))
-            {
                 detectedSuspects.Add(new DetectedSuspect
                 {
                     Name = errorName,
@@ -496,9 +494,8 @@ public class SuspectScanner
                     Confidence = CalculateConfidence(matchStatus),
                     Solutions = new List<string> { $"Investigate {errorName} related issues" }
                 });
-            }
         }
-        
+
         return detectedSuspects;
     }
 
@@ -510,66 +507,58 @@ public class SuspectScanner
     /// <param name="callStackIntact">Complete call stack as string</param>
     /// <param name="matchStatus">Match status to update</param>
     /// <returns>True if processing should stop (NOT condition met)</returns>
-    private bool ProcessAdvancedSignal(string signal, string mainError, string callStackIntact, AdvancedMatchStatus matchStatus)
+    private bool ProcessAdvancedSignal(string signal, string mainError, string callStackIntact,
+        AdvancedMatchStatus matchStatus)
     {
         // Constants for signal modifiers
         const string MainErrorRequired = "ME-REQ";
         const string MainErrorOptional = "ME-OPT";
         const string CallStackNegative = "NOT";
-        
+
         if (!signal.Contains('|'))
         {
             // Simple case: direct string match in callstack
-            if (callStackIntact.Contains(signal, StringComparison.OrdinalIgnoreCase))
-            {
-                matchStatus.StackFound = true;
-            }
+            if (callStackIntact.Contains(signal, StringComparison.OrdinalIgnoreCase)) matchStatus.StackFound = true;
             return false;
         }
-        
+
         var parts = signal.Split('|', 2);
         if (parts.Length != 2)
             return false;
-            
+
         var signalModifier = parts[0].Trim();
         var signalString = parts[1].Trim();
-        
+
         // Process based on signal modifier
         switch (signalModifier)
         {
             case MainErrorRequired:
                 matchStatus.HasRequiredItem = true;
                 if (mainError.Contains(signalString, StringComparison.OrdinalIgnoreCase))
-                {
                     matchStatus.ErrorReqFound = true;
-                }
                 break;
-                
+
             case MainErrorOptional:
                 if (mainError.Contains(signalString, StringComparison.OrdinalIgnoreCase))
-                {
                     matchStatus.ErrorOptFound = true;
-                }
                 break;
-                
+
             case CallStackNegative:
                 // Return true to break out of loop if NOT condition is met
                 return callStackIntact.Contains(signalString, StringComparison.OrdinalIgnoreCase);
-                
+
             default:
                 // Check for numeric occurrence counting (e.g., "3|pattern" for minimum 3 occurrences)
                 if (int.TryParse(signalModifier, out var minOccurrences))
                 {
                     var regex = new Regex(Regex.Escape(signalString), RegexOptions.IgnoreCase);
                     var matches = regex.Matches(callStackIntact);
-                    if (matches.Count >= minOccurrences)
-                    {
-                        matchStatus.StackFound = true;
-                    }
+                    if (matches.Count >= minOccurrences) matchStatus.StackFound = true;
                 }
+
                 break;
         }
-        
+
         return false;
     }
 
@@ -580,10 +569,7 @@ public class SuspectScanner
     /// <returns>True if conditions indicate a suspect match</returns>
     private bool IsAdvancedSuspectMatch(AdvancedMatchStatus matchStatus)
     {
-        if (matchStatus.HasRequiredItem)
-        {
-            return matchStatus.ErrorReqFound;
-        }
+        if (matchStatus.HasRequiredItem) return matchStatus.ErrorReqFound;
         return matchStatus.ErrorOptFound || matchStatus.StackFound;
     }
 
@@ -596,18 +582,12 @@ public class SuspectScanner
     {
         var callStackSegments = new[] { "PROBABLE CALL STACK", "STACK", "MODULES" };
         var callStackBuilder = new System.Text.StringBuilder();
-        
+
         foreach (var segmentName in callStackSegments)
-        {
             if (crashLog.Segments.TryGetValue(segmentName, out var lines))
-            {
                 foreach (var line in lines)
-                {
                     callStackBuilder.AppendLine(line);
-                }
-            }
-        }
-        
+
         return callStackBuilder.ToString();
     }
 
@@ -621,15 +601,11 @@ public class SuspectScanner
     private List<string> GetMatchedPatterns(List<string> signalList, string mainError, string callStackIntact)
     {
         var matchedPatterns = new List<string>();
-        
+
         foreach (var signal in signalList)
-        {
             if (!signal.Contains('|'))
             {
-                if (callStackIntact.Contains(signal, StringComparison.OrdinalIgnoreCase))
-                {
-                    matchedPatterns.Add(signal);
-                }
+                if (callStackIntact.Contains(signal, StringComparison.OrdinalIgnoreCase)) matchedPatterns.Add(signal);
             }
             else
             {
@@ -638,20 +614,15 @@ public class SuspectScanner
                 {
                     var signalString = parts[1].Trim();
                     var modifier = parts[0].Trim();
-                    
-                    if ((modifier == "ME-REQ" || modifier == "ME-OPT") && 
+
+                    if ((modifier == "ME-REQ" || modifier == "ME-OPT") &&
                         mainError.Contains(signalString, StringComparison.OrdinalIgnoreCase))
-                    {
                         matchedPatterns.Add($"{modifier}|{signalString}");
-                    }
                     else if (callStackIntact.Contains(signalString, StringComparison.OrdinalIgnoreCase))
-                    {
                         matchedPatterns.Add(signalString);
-                    }
                 }
             }
-        }
-        
+
         return matchedPatterns;
     }
 
@@ -662,14 +633,14 @@ public class SuspectScanner
     /// <returns>Confidence score between 0 and 1</returns>
     private double CalculateConfidence(AdvancedMatchStatus matchStatus)
     {
-        double confidence = 0.5; // Base confidence
-        
+        var confidence = 0.5; // Base confidence
+
         if (matchStatus.ErrorReqFound || matchStatus.ErrorOptFound)
             confidence += 0.3; // Higher confidence for main error matches
-            
+
         if (matchStatus.StackFound)
             confidence += 0.2; // Additional confidence for stack matches
-            
+
         return Math.Min(confidence, 1.0);
     }
 
@@ -682,11 +653,10 @@ public class SuspectScanner
     {
         if (string.IsNullOrEmpty(mainError))
             return null;
-            
+
         var mainErrorLower = mainError.ToLowerInvariant();
-        
+
         if (mainErrorLower.Contains(".dll") && !mainErrorLower.Contains("tbbmalloc"))
-        {
             return new DetectedSuspect
             {
                 Name = "DLL Crash Detected",
@@ -701,8 +671,7 @@ public class SuspectScanner
                 },
                 Confidence = 0.8
             };
-        }
-        
+
         return null;
     }
 }

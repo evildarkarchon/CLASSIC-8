@@ -34,11 +34,11 @@ public class GameConfiguration : IGameConfiguration
         {
             // Load VR mode setting
             _isVrMode = await yamlSettings.GetSettingAsync<bool?>("Classic", "VR Mode") ?? false;
-            
+
             // Load current game setting
             _currentGame = await yamlSettings.GetSettingAsync<string>("Classic", "Managed Game") ?? "Fallout4";
-            
-            _logger.Information("Game configuration initialized: VR Mode = {IsVrMode}, Current Game = {CurrentGame}", 
+
+            _logger.Information("Game configuration initialized: VR Mode = {IsVrMode}, Current Game = {CurrentGame}",
                 _isVrMode, _currentGame);
         }
         catch (Exception ex)

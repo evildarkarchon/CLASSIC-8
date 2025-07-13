@@ -28,10 +28,7 @@ public class SettingsService : ISettingsService
         {
             lock (_lock)
             {
-                if (_cachedSettings == null)
-                {
-                    LoadSettings();
-                }
+                if (_cachedSettings == null) LoadSettings();
                 return _cachedSettings!;
             }
         }
@@ -41,12 +38,9 @@ public class SettingsService : ISettingsService
     {
         lock (_lock)
         {
-            if (_cachedSettings != null)
-            {
-                SaveSettingsToYaml(_cachedSettings);
-            }
+            if (_cachedSettings != null) SaveSettingsToYaml(_cachedSettings);
         }
-        
+
         await _yamlSettings.SaveAsync();
         _logger.Information("Settings saved successfully");
     }
@@ -59,6 +53,7 @@ public class SettingsService : ISettingsService
             _cachedSettings = null;
             LoadSettings();
         }
+
         _logger.Information("Settings reloaded from disk");
     }
 
@@ -70,17 +65,14 @@ public class SettingsService : ISettingsService
     public void SetSetting<T>(string key, T value)
     {
         _yamlSettings.Set(YamlStore.Settings, $"CLASSIC_Settings.{key}", value);
-        
+
         // Update cached settings if the property exists
         lock (_lock)
         {
             if (_cachedSettings != null)
             {
                 var property = typeof(ClassicSettings).GetProperty(key.Replace(" ", ""));
-                if (property != null && property.CanWrite)
-                {
-                    property.SetValue(_cachedSettings, value);
-                }
+                if (property != null && property.CanWrite) property.SetValue(_cachedSettings, value);
             }
         }
     }
@@ -88,29 +80,26 @@ public class SettingsService : ISettingsService
     private void LoadSettings()
     {
         _cachedSettings = new ClassicSettings();
-        
+
         // Load each property from YAML
         foreach (var property in typeof(ClassicSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (!property.CanWrite) continue;
-            
+
             var yamlKey = ConvertPropertyNameToYamlKey(property.Name);
             var defaultValue = property.GetValue(_cachedSettings);
-            
+
             try
             {
                 var value = GetSettingForProperty(property, yamlKey, defaultValue);
-                if (value != null)
-                {
-                    property.SetValue(_cachedSettings, value);
-                }
+                if (value != null) property.SetValue(_cachedSettings, value);
             }
             catch (Exception ex)
             {
                 _logger.Warning(ex, "Failed to load setting {Key}, using default value", yamlKey);
             }
         }
-        
+
         _logger.Debug("Loaded settings from YAML");
     }
 
@@ -118,7 +107,7 @@ public class SettingsService : ISettingsService
     {
         var method = typeof(IYamlSettings).GetMethod(nameof(IYamlSettings.Get))!;
         var genericMethod = method.MakeGenericMethod(property.PropertyType);
-        
+
         return genericMethod.Invoke(_yamlSettings, [YamlStore.Settings, $"CLASSIC_Settings.{yamlKey}", defaultValue]);
     }
 
@@ -127,10 +116,10 @@ public class SettingsService : ISettingsService
         foreach (var property in typeof(ClassicSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (!property.CanRead) continue;
-            
+
             var yamlKey = ConvertPropertyNameToYamlKey(property.Name);
             var value = property.GetValue(settings);
-            
+
             if (value != null)
             {
                 var method = typeof(IYamlSettings).GetMethod(nameof(IYamlSettings.Set))!;
@@ -145,24 +134,20 @@ public class SettingsService : ISettingsService
         // Convert from PascalCase to space-separated words
         // e.g., "ManagedGame" -> "Managed Game", "FCXMode" -> "FCX Mode"
         var result = propertyName[0].ToString();
-        
-        for (int i = 1; i < propertyName.Length; i++)
+
+        for (var i = 1; i < propertyName.Length; i++)
         {
             if (char.IsUpper(propertyName[i]))
             {
                 // Check if it's an acronym (consecutive capitals)
                 if (i + 1 < propertyName.Length && !char.IsUpper(propertyName[i + 1]))
-                {
                     result += " ";
-                }
-                else if (i > 0 && !char.IsUpper(propertyName[i - 1]))
-                {
-                    result += " ";
-                }
+                else if (i > 0 && !char.IsUpper(propertyName[i - 1])) result += " ";
             }
+
             result += propertyName[i];
         }
-        
+
         return result;
     }
 }

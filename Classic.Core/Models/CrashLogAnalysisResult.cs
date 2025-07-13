@@ -19,9 +19,12 @@ public class CrashLogAnalysisResult
     public string CrashGenName { get; set; } = "Buffout 4 NG";
     public Version LatestCrashGenVersion { get; set; } = new();
     public Version LatestCrashGenVrVersion { get; set; } = new();
-    public bool IsOutdated => DetectedCrashGenVersion < LatestCrashGenVersion || DetectedCrashGenVersion < LatestCrashGenVrVersion;
-    
+
+    public bool IsOutdated => DetectedCrashGenVersion < LatestCrashGenVersion ||
+                              DetectedCrashGenVersion < LatestCrashGenVrVersion;
+
     private Version? _detectedCrashGenVersion;
+
     public Version DetectedCrashGenVersion
     {
         get
@@ -31,6 +34,7 @@ public class CrashLogAnalysisResult
                 Version.TryParse(CrashLog.CrashGenVersion, out var version);
                 _detectedCrashGenVersion = version ?? new Version();
             }
+
             return _detectedCrashGenVersion ?? new Version();
         }
         set => _detectedCrashGenVersion = value;

@@ -15,23 +15,23 @@ public interface IThemeService
     /// Gets the current theme variant.
     /// </summary>
     ThemeVariant CurrentTheme { get; }
-    
+
     /// <summary>
     /// Sets the theme for the application.
     /// </summary>
     /// <param name="themeName">Theme name (Dark, Light, Auto)</param>
     Task SetThemeAsync(string themeName);
-    
+
     /// <summary>
     /// Initializes the theme service and applies the saved theme.
     /// </summary>
     Task InitializeAsync();
-    
+
     /// <summary>
     /// Toggles between light and dark themes.
     /// </summary>
     Task ToggleThemeAsync();
-    
+
     /// <summary>
     /// Event fired when the theme changes.
     /// </summary>
@@ -45,7 +45,7 @@ public class ThemeChangedEventArgs : EventArgs
 {
     public string ThemeName { get; }
     public ThemeVariant ThemeVariant { get; }
-    
+
     public ThemeChangedEventArgs(string themeName, ThemeVariant themeVariant)
     {
         ThemeName = themeName;
@@ -93,11 +93,11 @@ public class ThemeService : IThemeService
         try
         {
             await ApplyTheme(themeName);
-            
+
             // Save to settings
             _settingsService.Settings.Theme.CurrentTheme = themeName;
             await _settingsService.SaveAsync();
-            
+
             _logger.Information("Theme changed to: {ThemeName}", themeName);
         }
         catch (Exception ex)
@@ -117,7 +117,7 @@ public class ThemeService : IThemeService
             "Auto" => "Dark", // Default toggle behavior for Auto
             _ => "Dark"
         };
-        
+
         await SetThemeAsync(newTheme);
     }
 
@@ -140,9 +140,9 @@ public class ThemeService : IThemeService
 
         _currentTheme = themeVariant;
         app.RequestedThemeVariant = themeVariant;
-        
+
         ThemeChanged?.Invoke(this, new ThemeChangedEventArgs(themeName, themeVariant));
-        
+
         await Task.CompletedTask; // For future async theme operations
     }
 

@@ -128,10 +128,7 @@ public class MainWindowViewModel : ViewModelBase
         ShowPastebinDialogCommand = ReactiveCommand.Create(ShowPastebinDialog);
 
         // Subscribe to drag and drop events if service is available
-        if (_dragDropService != null)
-        {
-            _dragDropService.FilesDropped += OnFilesDropped;
-        }
+        if (_dragDropService != null) _dragDropService.FilesDropped += OnFilesDropped;
 
         // Initialize resource links
         InitializeResourceLinks();
@@ -143,10 +140,7 @@ public class MainWindowViewModel : ViewModelBase
         LoadSettings();
 
         // Restore selected tab from settings
-        if (_windowStateService != null)
-        {
-            SelectedTabIndex = _windowStateService.GetSelectedTab();
-        }
+        if (_windowStateService != null) SelectedTabIndex = _windowStateService.GetSelectedTab();
     }
 
     #region Properties
@@ -402,7 +396,7 @@ public class MainWindowViewModel : ViewModelBase
             // Show completion notification
             await _notificationService.ShowScanCompletedAsync(result);
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             _logger.Error(ex, "Error during crash logs scan");
             _progressService.FailProgress($"Scan failed: {ex.Message}");
@@ -442,7 +436,7 @@ public class MainWindowViewModel : ViewModelBase
             // Show completion notification
             await _notificationService.ShowScanCompletedAsync(result);
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             _logger.Error(ex, "Error during game files scan");
             _progressService.FailProgress($"Game files scan failed: {ex.Message}");
@@ -479,10 +473,7 @@ public class MainWindowViewModel : ViewModelBase
             if (!string.IsNullOrWhiteSpace(SelectedModsFolder) && Directory.Exists(SelectedModsFolder))
             {
                 var currentFolder = await topLevel.StorageProvider.TryGetFolderFromPathAsync(SelectedModsFolder);
-                if (currentFolder != null)
-                {
-                    options.SuggestedStartLocation = currentFolder;
-                }
+                if (currentFolder != null) options.SuggestedStartLocation = currentFolder;
             }
 
             var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(options);
@@ -532,10 +523,7 @@ public class MainWindowViewModel : ViewModelBase
             if (!string.IsNullOrWhiteSpace(SelectedScanFolder) && Directory.Exists(SelectedScanFolder))
             {
                 var currentFolder = await topLevel.StorageProvider.TryGetFolderFromPathAsync(SelectedScanFolder);
-                if (currentFolder != null)
-                {
-                    options.SuggestedStartLocation = currentFolder;
-                }
+                if (currentFolder != null) options.SuggestedStartLocation = currentFolder;
             }
 
             var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(options);
@@ -586,10 +574,7 @@ public class MainWindowViewModel : ViewModelBase
             if (Directory.Exists(documentsPath))
             {
                 var documentsFolder = await topLevel.StorageProvider.TryGetFolderFromPathAsync(documentsPath);
-                if (documentsFolder != null)
-                {
-                    options.SuggestedStartLocation = documentsFolder;
-                }
+                if (documentsFolder != null) options.SuggestedStartLocation = documentsFolder;
             }
 
             var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(options);
@@ -599,12 +584,8 @@ public class MainWindowViewModel : ViewModelBase
                 var selectedPath = folders[0].Path.LocalPath;
 
                 // Validate the selected path contains game INI files
-                if (ValidateIniFolder(selectedPath))
-                {
-                    _logger.Information("Selected INI folder: {Path}", selectedPath);
-
-                    // TODO: Update game INI path in settings and save
-                }
+                if (ValidateIniFolder(selectedPath)) _logger.Information("Selected INI folder: {Path}", selectedPath);
+                // TODO: Update game INI path in settings and save
             }
         }
         catch (Exception ex)
@@ -700,10 +681,7 @@ public class MainWindowViewModel : ViewModelBase
 
             var mainWindow = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)
                 ?.MainWindow;
-            if (mainWindow != null)
-            {
-                await aboutDialog.ShowDialog(mainWindow);
-            }
+            if (mainWindow != null) await aboutDialog.ShowDialog(mainWindow);
         }
         catch (Exception ex)
         {
@@ -724,10 +702,7 @@ public class MainWindowViewModel : ViewModelBase
 
             var mainWindow = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)
                 ?.MainWindow;
-            if (mainWindow != null)
-            {
-                await helpDialog.ShowDialog(mainWindow);
-            }
+            if (mainWindow != null) await helpDialog.ShowDialog(mainWindow);
         }
         catch (Exception ex)
         {
@@ -749,7 +724,7 @@ public class MainWindowViewModel : ViewModelBase
 
         try
         {
-            GameFileOperationResult result = action.ToUpperInvariant() switch
+            var result = action.ToUpperInvariant() switch
             {
                 "BACKUP" => await _gameFileManager.BackupFilesAsync(category),
                 "RESTORE" => await _gameFileManager.RestoreFilesAsync(category),
@@ -758,13 +733,9 @@ public class MainWindowViewModel : ViewModelBase
             };
 
             if (result.Success)
-            {
                 _logger.Information("Game file operation completed successfully: {Message}", result.Message);
-            }
             else
-            {
                 _logger.Warning("Game file operation failed: {Message}", result.Message);
-            }
 
             // Show result to user via notification
             await _notificationService.ShowGameFileOperationAsync(action, category, result);
@@ -802,9 +773,7 @@ public class MainWindowViewModel : ViewModelBase
                      new ResourceLinkViewModel("BETHINI PIE", "https://www.nexusmods.com/site/mods/631"),
                      new ResourceLinkViewModel("WRYE BASH", "https://www.nexusmods.com/fallout4/mods/20032")
                  })
-        {
             ResourceLinks.Add(link);
-        }
     }
 
     private void LoadSettings()
@@ -959,9 +928,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             stats.AppendLine("Top Conflicts:");
             foreach (var conflict in result.ModConflicts.Take(3))
-            {
                 stats.AppendLine($"  • {conflict.Key} ({conflict.Value}x)");
-            }
         }
 
         ScanStatistics = stats.ToString();
@@ -1027,10 +994,7 @@ public class MainWindowViewModel : ViewModelBase
                 // Save tab selection
                 _ = Task.Run(async () =>
                 {
-                    if (_windowStateService != null)
-                    {
-                        await _windowStateService.SaveSelectedTabAsync(tabIndex);
-                    }
+                    if (_windowStateService != null) await _windowStateService.SaveSelectedTabAsync(tabIndex);
                 });
             }
         }
@@ -1099,10 +1063,7 @@ public class MainWindowViewModel : ViewModelBase
 
     private async Task StopPapyrusMonitoring()
     {
-        if (_papyrusService == null)
-        {
-            return;
-        }
+        if (_papyrusService == null) return;
 
         try
         {
@@ -1129,10 +1090,7 @@ public class MainWindowViewModel : ViewModelBase
 
     private void ShowPapyrusMonitorDialog()
     {
-        if (_papyrusService == null)
-        {
-            return;
-        }
+        if (_papyrusService == null) return;
 
         try
         {

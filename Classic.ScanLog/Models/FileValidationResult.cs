@@ -25,8 +25,9 @@ public class TextureValidationResult : FileValidationResult
     public int Width { get; set; }
     public int Height { get; set; }
     public string Format { get; set; } = string.Empty;
-    public bool IsPowerOfTwo => Width > 0 && Height > 0 && 
-                                (Width & (Width - 1)) == 0 && 
+
+    public bool IsPowerOfTwo => Width > 0 && Height > 0 &&
+                                (Width & (Width - 1)) == 0 &&
                                 (Height & (Height - 1)) == 0;
 }
 

@@ -38,8 +38,8 @@ public class ScanLogConfiguration
     /// </summary>
     public List<string> RecordsToDetect { get; set; } = new()
     {
-        ".bgsm", ".bto", ".btr", ".dds", ".dll+", ".fuz", ".hkb", ".hkx", ".ini", ".nif", 
-        ".pex", ".strings", ".swf", ".txt", ".uvd", ".wav", ".xwm", "data/", "data\\", 
+        ".bgsm", ".bto", ".btr", ".dds", ".dll+", ".fuz", ".hkb", ".hkx", ".ini", ".nif",
+        ".pex", ".strings", ".swf", ".txt", ".uvd", ".wav", ".xwm", "data/", "data\\",
         "scaleform", "editorid:", "file:", "function:", "name:"
     };
 
@@ -48,8 +48,8 @@ public class ScanLogConfiguration
     /// </summary>
     public List<string> RecordsToIgnore { get; set; } = new()
     {
-        "\"\"", "...", "FE:", ".esl", ".esm", ".esp", ".exe", "Buffout4.dll+", "KERNEL", 
-        "MSVC", "USER32", "Unhandled", "cudart64_75.dll+", "d3d11.dll+", "dxgi.dll+", 
+        "\"\"", "...", "FE:", ".esl", ".esm", ".esp", ".exe", "Buffout4.dll+", "KERNEL",
+        "MSVC", "USER32", "Unhandled", "cudart64_75.dll+", "d3d11.dll+", "dxgi.dll+",
         "f4se", "flexRelease_x64.dll+", "kernel32.dll+", "ntdll", "nvcuda64.dll+"
     };
 

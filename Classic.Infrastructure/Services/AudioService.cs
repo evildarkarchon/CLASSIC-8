@@ -30,7 +30,7 @@ public class AudioService : IAudioService
         {
             // Clamp volume between 0.0 and 1.0
             volume = Math.Clamp(volume, 0.0, 1.0);
-            
+
             var filePath = await ExtractEmbeddedResourceAsync(resourceName);
             if (filePath == null)
             {
@@ -63,17 +63,10 @@ public class AudioService : IAudioService
     public bool IsAudioSupported()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
             return CheckWindowsAudioSupport();
-        }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
             return CheckLinuxAudioSupport();
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            return CheckMacAudioSupport();
-        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) return CheckMacAudioSupport();
 
         return false;
     }
@@ -81,24 +74,22 @@ public class AudioService : IAudioService
     private async Task<string?> ExtractEmbeddedResourceAsync(string resourceName)
     {
         if (_extractedFiles.TryGetValue(resourceName, out var existingPath) && File.Exists(existingPath))
-        {
             return existingPath;
-        }
 
         try
         {
             // Get the Avalonia assembly that contains the embedded resources
             var avaloniaAssembly = AppDomain.CurrentDomain.GetAssemblies()
                 .FirstOrDefault(a => a.GetName().Name == "Classic.Avalonia");
-            
+
             if (avaloniaAssembly == null)
             {
                 _logger.Warning("Classic.Avalonia assembly not found");
                 return null;
             }
-            
+
             var resourcePath = $"Classic.Avalonia.Resources.Audio.{resourceName}";
-            
+
             using var stream = avaloniaAssembly.GetManifestResourceStream(resourcePath);
             if (stream == null)
             {
@@ -109,7 +100,7 @@ public class AudioService : IAudioService
             var filePath = Path.Combine(_tempDirectory, resourceName);
             using var fileStream = File.Create(filePath);
             await stream.CopyToAsync(fileStream);
-            
+
             _extractedFiles[resourceName] = filePath;
             return filePath;
         }
@@ -123,21 +114,13 @@ public class AudioService : IAudioService
     private async Task PlayAudioFileAsync(string filePath, double volume)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
             await PlayWindowsAudioAsync(filePath, volume);
-        }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
             await PlayLinuxAudioAsync(filePath, volume);
-        }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
             await PlayMacAudioAsync(filePath, volume);
-        }
         else
-        {
             _logger.Information("Audio playback not supported on this platform");
-        }
     }
 
     private async Task PlayWindowsAudioAsync(string filePath, double volume)
@@ -156,7 +139,7 @@ public class AudioService : IAudioService
                 $mediaPlayer.Stop()
                 $mediaPlayer.Close()
             ";
-            
+
             using var process = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -172,11 +155,9 @@ public class AudioService : IAudioService
 
             process.Start();
             await process.WaitForExitAsync();
-            
+
             if (process.ExitCode != 0)
-            {
                 _logger.Warning("Windows audio playback failed with exit code: {ExitCode}", process.ExitCode);
-            }
         }
         catch (Exception ex)
         {
@@ -195,7 +176,6 @@ public class AudioService : IAudioService
         };
 
         foreach (var (command, args) in audioCommands)
-        {
             try
             {
                 using var process = new Process
@@ -213,7 +193,7 @@ public class AudioService : IAudioService
 
                 process.Start();
                 await process.WaitForExitAsync();
-                
+
                 if (process.ExitCode == 0)
                 {
                     _logger.Debug("Successfully played audio using {Command}", command);
@@ -225,7 +205,6 @@ public class AudioService : IAudioService
                 _logger.Debug(ex, "Failed to play audio using {Command}", command);
                 continue;
             }
-        }
 
         _logger.Warning("All Linux audio playback methods failed");
     }
@@ -236,7 +215,7 @@ public class AudioService : IAudioService
         {
             // Use afplay with volume control
             var volumeArg = $"-v {volume:F2}";
-            
+
             using var process = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -252,11 +231,9 @@ public class AudioService : IAudioService
 
             process.Start();
             await process.WaitForExitAsync();
-            
+
             if (process.ExitCode != 0)
-            {
                 _logger.Warning("macOS audio playback failed with exit code: {ExitCode}", process.ExitCode);
-            }
         }
         catch (Exception ex)
         {
@@ -268,8 +245,10 @@ public class AudioService : IAudioService
     {
         try
         {
-            return File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "powershell.exe")) ||
-                   File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86), "WindowsPowerShell", "v1.0", "powershell.exe"));
+            return File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),
+                       "powershell.exe")) ||
+                   File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86),
+                       "WindowsPowerShell", "v1.0", "powershell.exe"));
         }
         catch
         {
@@ -280,9 +259,8 @@ public class AudioService : IAudioService
     private bool CheckLinuxAudioSupport()
     {
         var audioCommands = new[] { "paplay", "aplay", "ffplay", "mpv" };
-        
+
         foreach (var command in audioCommands)
-        {
             try
             {
                 using var process = new Process
@@ -296,21 +274,17 @@ public class AudioService : IAudioService
                         RedirectStandardOutput = true
                     }
                 };
-                
+
                 process.Start();
                 process.WaitForExit();
-                
-                if (process.ExitCode == 0)
-                {
-                    return true;
-                }
+
+                if (process.ExitCode == 0) return true;
             }
             catch
             {
                 continue;
             }
-        }
-        
+
         return false;
     }
 
@@ -329,10 +303,10 @@ public class AudioService : IAudioService
                     RedirectStandardOutput = true
                 }
             };
-            
+
             process.Start();
             process.WaitForExit();
-            
+
             return process.ExitCode == 0;
         }
         catch
@@ -345,10 +319,7 @@ public class AudioService : IAudioService
     {
         try
         {
-            if (Directory.Exists(_tempDirectory))
-            {
-                Directory.Delete(_tempDirectory, true);
-            }
+            if (Directory.Exists(_tempDirectory)) Directory.Delete(_tempDirectory, true);
         }
         catch (Exception ex)
         {

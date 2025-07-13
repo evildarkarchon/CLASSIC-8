@@ -44,9 +44,10 @@ public class VersionService : IVersionService
         }
 
         var isUpdateAvailable = currentVersion < latestVersion;
-        Logger.Debug("Update check: Current={CurrentVersion}, Latest={LatestVersion}, UpdateAvailable={UpdateAvailable}", 
+        Logger.Debug(
+            "Update check: Current={CurrentVersion}, Latest={LatestVersion}, UpdateAvailable={UpdateAvailable}",
             currentVersion, latestVersion, isUpdateAvailable);
-        
+
         return isUpdateAvailable;
     }
 
@@ -60,7 +61,7 @@ public class VersionService : IVersionService
         {
             var assembly = Assembly.GetExecutingAssembly();
             var assemblyVersion = assembly.GetName().Version;
-            
+
             if (assemblyVersion != null)
             {
                 var version = new VersionInfo(assemblyVersion.Major, assemblyVersion.Minor, assemblyVersion.Build);

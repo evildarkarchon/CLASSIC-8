@@ -46,7 +46,7 @@ public class GameHintsLoader
                 .Build();
 
             var config = deserializer.Deserialize<GameHintsConfig>(yamlContent);
-            
+
             if (config?.GameHints?.Count > 0)
             {
                 _cachedConfig = config;
@@ -72,7 +72,7 @@ public class GameHintsLoader
     public async Task<List<string>> GetRandomHintsAsync(int count = 3, CancellationToken cancellationToken = default)
     {
         var config = await LoadGameHintsAsync(cancellationToken);
-        
+
         if (config.GameHints.Count == 0)
             return new List<string>();
 
@@ -86,10 +86,11 @@ public class GameHintsLoader
     /// <summary>
     /// Gets GPU-specific recommendations
     /// </summary>
-    public async Task<List<string>> GetGpuRecommendationsAsync(GpuManufacturer manufacturer, CancellationToken cancellationToken = default)
+    public async Task<List<string>> GetGpuRecommendationsAsync(GpuManufacturer manufacturer,
+        CancellationToken cancellationToken = default)
     {
         var config = await LoadGameHintsAsync(cancellationToken);
-        
+
         return manufacturer switch
         {
             GpuManufacturer.Nvidia => config.GpuSpecific?.Nvidia?.Recommendations ?? new List<string>(),
@@ -102,10 +103,11 @@ public class GameHintsLoader
     /// <summary>
     /// Gets warning configuration by type
     /// </summary>
-    public async Task<WarningConfig?> GetWarningConfigAsync(string warningType, CancellationToken cancellationToken = default)
+    public async Task<WarningConfig?> GetWarningConfigAsync(string warningType,
+        CancellationToken cancellationToken = default)
     {
         var config = await LoadGameHintsAsync(cancellationToken);
-        
+
         return warningType.ToLowerInvariant() switch
         {
             "plugin_limit" => config.Warnings?.PluginLimit,

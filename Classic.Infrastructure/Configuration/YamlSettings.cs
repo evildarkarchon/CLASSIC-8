@@ -53,18 +53,12 @@ public class YamlSettings : IYamlSettings
         var cacheKey = GetCacheKey(store, path);
 
         // Check cache first
-        if (_cache.TryGetValue(cacheKey, out var cachedValue))
-        {
-            return (T?)cachedValue;
-        }
+        if (_cache.TryGetValue(cacheKey, out var cachedValue)) return (T?)cachedValue;
 
         lock (_lock)
         {
             // Double-check after acquiring lock
-            if (_cache.TryGetValue(cacheKey, out cachedValue))
-            {
-                return (T?)cachedValue;
-            }
+            if (_cache.TryGetValue(cacheKey, out cachedValue)) return (T?)cachedValue;
 
             try
             {
@@ -92,9 +86,7 @@ public class YamlSettings : IYamlSettings
     public void Set<T>(YamlStore store, string path, T value)
     {
         if (StaticStores.Contains(store))
-        {
             throw new InvalidOperationException($"Cannot modify static YAML store: {store}");
-        }
 
         lock (_lock)
         {
@@ -143,7 +135,6 @@ public class YamlSettings : IYamlSettings
         var storesToSave = _dirtyStores.ToList();
 
         foreach (var store in storesToSave)
-        {
             try
             {
                 await SaveDocumentAsync(store);
@@ -155,7 +146,6 @@ public class YamlSettings : IYamlSettings
                 _logger.Error(ex, "Failed to save {Store}", store);
                 throw;
             }
-        }
     }
 
     public void Reload()
@@ -201,9 +191,7 @@ public class YamlSettings : IYamlSettings
             {
                 var lastWriteTime = File.GetLastWriteTime(filePath);
                 if (_lastModified.TryGetValue(store, out var cachedTime) && lastWriteTime <= cachedTime)
-                {
                     return document;
-                }
             }
         }
 
@@ -216,10 +204,8 @@ public class YamlSettings : IYamlSettings
         var filePath = GetStorePath(store);
 
         if (!File.Exists(filePath))
-        {
             // Create default file if it doesn't exist
             CreateDefaultFile(store, filePath);
-        }
 
         try
         {
@@ -250,10 +236,7 @@ public class YamlSettings : IYamlSettings
         _logger.Information("Creating default file for {Store} at {FilePath}", store, filePath);
 
         var directory = Path.GetDirectoryName(filePath);
-        if (!string.IsNullOrEmpty(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
+        if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
 
         var defaultContent = GetDefaultContent(store);
         File.WriteAllText(filePath, defaultContent, Encoding.UTF8);
@@ -299,23 +282,16 @@ Game_Info:
     private T? GetValueFromDocument<T>(YamlDocument document, string path, T? defaultValue)
     {
         var keys = path.Split('.');
-        YamlNode? current = document.RootNode;
+        var current = document.RootNode;
 
         foreach (var key in keys)
-        {
             if (current is YamlMappingNode mapping &&
                 mapping.Children.TryGetValue(new YamlScalarNode(key), out var child))
-            {
                 current = child;
-            }
             else
-            {
                 return defaultValue;
-            }
-        }
 
         if (current is YamlScalarNode scalar)
-        {
             try
             {
                 var value = scalar.Value;
@@ -335,11 +311,9 @@ Game_Info:
             {
                 return defaultValue;
             }
-        }
 
         // For complex types, serialize the node and deserialize to the target type
         if (current != null)
-        {
             try
             {
                 using var writer = new StringWriter();
@@ -351,7 +325,6 @@ Game_Info:
             {
                 return defaultValue;
             }
-        }
 
         return defaultValue;
     }
@@ -359,7 +332,7 @@ Game_Info:
     private void SetValueInDocument<T>(YamlDocument document, string path, T value)
     {
         var keys = path.Split('.');
-        YamlMappingNode? current = document.RootNode as YamlMappingNode;
+        var current = document.RootNode as YamlMappingNode;
 
         if (current == null)
         {
@@ -371,7 +344,7 @@ Game_Info:
         }
 
         // Navigate to parent node, creating nodes as needed
-        for (int i = 0; i < keys.Length - 1; i++)
+        for (var i = 0; i < keys.Length - 1; i++)
         {
             var key = new YamlScalarNode(keys[i]);
 
@@ -403,9 +376,7 @@ Game_Info:
     private YamlNode CreateValueNode<T>(T value)
     {
         if (value is string || value is int || value is bool || value is double || value is float)
-        {
             return new YamlScalarNode(value.ToString() ?? string.Empty);
-        }
 
         // For complex types, serialize and parse back as YAML
         var serialized = _serializer.Serialize(value);
@@ -417,18 +388,12 @@ Game_Info:
 
     private async Task SaveDocumentAsync(YamlStore store)
     {
-        if (!_documents.TryGetValue(store, out var document))
-        {
-            return;
-        }
+        if (!_documents.TryGetValue(store, out var document)) return;
 
         var filePath = GetStorePath(store);
         var directory = Path.GetDirectoryName(filePath);
 
-        if (!string.IsNullOrEmpty(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
+        if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
 
         using var writer = new StringWriter();
         var stream = new YamlStream(document);
@@ -447,10 +412,8 @@ Game_Info:
     {
         // Find which store this document belongs to
         foreach (var kvp in _documents)
-        {
             if (kvp.Value == document)
                 return kvp.Key;
-        }
 
         throw new InvalidOperationException("Document not found in any store");
     }

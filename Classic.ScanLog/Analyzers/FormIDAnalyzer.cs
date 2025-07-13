@@ -39,15 +39,11 @@ public class FormIdAnalyzer : IFormIdAnalyzer
         _databasePaths = databasePaths?.ToList() ?? new List<string>();
         _formIdDbExists = _databasePaths.Any(path => File.Exists(path));
         _queryCache = new ConcurrentDictionary<(string, string), string>();
-        
+
         if (_formIdDbExists)
-        {
             _logger.LogInformation("FormID database found, enabling database lookups");
-        }
         else
-        {
             _logger.LogDebug("No FormID database found, database lookups disabled");
-        }
     }
 
     /// <summary>
@@ -336,14 +332,11 @@ public class FormIdAnalyzer : IFormIdAnalyzer
     /// <param name="gameName">Name of the game for database queries</param>
     /// <returns>Formatted report of FormID matches</returns>
     public async Task<string> PerformFormIdMatchingAsync(
-        List<string> formIdMatches, 
-        Dictionary<string, string> crashLogPlugins, 
+        List<string> formIdMatches,
+        Dictionary<string, string> crashLogPlugins,
         string gameName = "Fallout4")
     {
-        if (!formIdMatches.Any())
-        {
-            return "* COULDN'T FIND ANY FORM ID SUSPECTS *";
-        }
+        if (!formIdMatches.Any()) return "* COULDN'T FIND ANY FORM ID SUSPECTS *";
 
         var report = new System.Text.StringBuilder();
         var formIdCounts = formIdMatches
@@ -360,13 +353,13 @@ public class FormIdAnalyzer : IFormIdAnalyzer
             var pluginPrefix = formIdHex[..2]; // First 2 characters (plugin index)
 
             // Find matching plugin
-            var matchingPlugin = crashLogPlugins.FirstOrDefault(kvp => 
+            var matchingPlugin = crashLogPlugins.FirstOrDefault(kvp =>
                 kvp.Value.Equals(pluginPrefix, StringComparison.OrdinalIgnoreCase));
 
             if (!string.IsNullOrEmpty(matchingPlugin.Key))
             {
                 var baseFormId = formIdHex[2..]; // Remove plugin prefix
-                
+
                 if (_showFormIdValues && _formIdDbExists)
                 {
                     var dbEntry = await LookupFormIdValueAsync(baseFormId, matchingPlugin.Key, gameName);
@@ -384,7 +377,8 @@ public class FormIdAnalyzer : IFormIdAnalyzer
         report.AppendLine();
         report.AppendLine("[Last number counts how many times each Form ID shows up in the crash log.]");
         report.AppendLine("These Form IDs were caught by Buffout 4 and some of them might be related to this crash.");
-        report.AppendLine("You can try searching any listed Form IDs in xEdit and see if they lead to relevant records.");
+        report.AppendLine(
+            "You can try searching any listed Form IDs in xEdit and see if they lead to relevant records.");
 
         return report.ToString();
     }
@@ -398,18 +392,12 @@ public class FormIdAnalyzer : IFormIdAnalyzer
     /// <returns>Database entry if found, null otherwise</returns>
     public async Task<string?> LookupFormIdValueAsync(string formId, string plugin, string gameName = "Fallout4")
     {
-        if (!_formIdDbExists)
-        {
-            return null;
-        }
+        if (!_formIdDbExists) return null;
 
         var cacheKey = (formId.ToUpperInvariant(), plugin.ToLowerInvariant());
-        
+
         // Check cache first
-        if (_queryCache.TryGetValue(cacheKey, out var cachedResult))
-        {
-            return cachedResult;
-        }
+        if (_queryCache.TryGetValue(cacheKey, out var cachedResult)) return cachedResult;
 
         // Try each database path using connection pool
         foreach (var dbPath in _databasePaths)
@@ -421,14 +409,14 @@ public class FormIdAnalyzer : IFormIdAnalyzer
             {
                 var query = $"SELECT entry FROM {gameName} WHERE formid = @formid AND plugin = @plugin COLLATE NOCASE";
                 var result = await _connectionPool.ExecuteScalarAsync<string>(
-                    dbPath, 
+                    dbPath,
                     query,
                     command =>
                     {
                         command.Parameters.AddWithValue("@formid", formId);
                         command.Parameters.AddWithValue("@plugin", plugin);
                     });
-                
+
                 if (!string.IsNullOrEmpty(result))
                 {
                     _queryCache.TryAdd(cacheKey, result);
@@ -452,7 +440,8 @@ public class FormIdAnalyzer : IFormIdAnalyzer
     public List<string> ExtractFormIdsFromCallStack(IEnumerable<string> callStackLines)
     {
         var formIdMatches = new List<string>();
-        var formIdPattern = new Regex(@"^\s*Form ID:\s*0x([0-9A-F]{8})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        var formIdPattern =
+            new Regex(@"^\s*Form ID:\s*0x([0-9A-F]{8})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         foreach (var line in callStackLines)
         {
@@ -463,12 +452,9 @@ public class FormIdAnalyzer : IFormIdAnalyzer
             if (match.Success)
             {
                 var formIdHex = match.Groups[1].Value.ToUpperInvariant();
-                
+
                 // Skip FF-prefixed FormIDs (plugin limit indicators)
-                if (!formIdHex.StartsWith("FF"))
-                {
-                    formIdMatches.Add($"Form ID: {formIdHex}");
-                }
+                if (!formIdHex.StartsWith("FF")) formIdMatches.Add($"Form ID: {formIdHex}");
             }
         }
 
@@ -482,7 +468,7 @@ public class FormIdAnalyzer : IFormIdAnalyzer
     public FormIdDatabaseStatus GetDatabaseStatus()
     {
         var validDatabases = _databasePaths.Where(File.Exists).ToList();
-        
+
         return new FormIdDatabaseStatus
         {
             DatabaseExists = _formIdDbExists,

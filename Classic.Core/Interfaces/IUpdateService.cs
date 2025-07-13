@@ -21,7 +21,7 @@ public interface IUpdateService
     /// <param name="includePreReleases">Whether to include pre-releases</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the update check</returns>
-    Task<UpdateCheckResult> CheckForUpdatesAsync(string updateSource, bool includePreReleases, 
+    Task<UpdateCheckResult> CheckForUpdatesAsync(string updateSource, bool includePreReleases,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -43,7 +43,7 @@ public interface IGitHubApiService
     /// <param name="repo">Repository name</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Latest stable release or null if not found</returns>
-    Task<GitHubRelease?> GetLatestStableReleaseAsync(string owner, string repo, 
+    Task<GitHubRelease?> GetLatestStableReleaseAsync(string owner, string repo,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -53,7 +53,7 @@ public interface IGitHubApiService
     /// <param name="repo">Repository name</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Latest pre-release or null if not found</returns>
-    Task<GitHubRelease?> GetLatestPreReleaseAsync(string owner, string repo, 
+    Task<GitHubRelease?> GetLatestPreReleaseAsync(string owner, string repo,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -63,7 +63,7 @@ public interface IGitHubApiService
     /// <param name="repo">Repository name</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Detailed release comparison information</returns>
-    Task<GitHubReleaseDetails?> GetReleaseDetailsAsync(string owner, string repo, 
+    Task<GitHubReleaseDetails?> GetReleaseDetailsAsync(string owner, string repo,
         CancellationToken cancellationToken = default);
 }
 
@@ -79,7 +79,7 @@ public interface INexusModsService
     /// <param name="modId">Mod identifier</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Latest version from Nexus or null if not found</returns>
-    Task<VersionInfo?> GetLatestVersionAsync(string gameId, string modId, 
+    Task<VersionInfo?> GetLatestVersionAsync(string gameId, string modId,
         CancellationToken cancellationToken = default);
 }
 

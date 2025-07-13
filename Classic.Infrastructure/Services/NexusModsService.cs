@@ -71,13 +71,9 @@ public class NexusModsService : INexusModsService
             var parsedVersion = _versionService.ParseVersion(versionString);
 
             if (parsedVersion != null)
-            {
                 Logger.Debug("Successfully parsed Nexus version: {Version}", parsedVersion);
-            }
             else
-            {
                 Logger.Debug("Failed to parse version string from Nexus: '{VersionString}'", versionString);
-            }
 
             return parsedVersion;
         }

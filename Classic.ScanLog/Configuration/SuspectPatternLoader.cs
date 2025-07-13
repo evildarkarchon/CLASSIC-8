@@ -42,7 +42,8 @@ public class SuspectPatternLoader
             await using var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null)
             {
-                _logger.LogWarning("Could not find embedded suspect patterns resource: {ResourceName}. Available resources: {Available}", 
+                _logger.LogWarning(
+                    "Could not find embedded suspect patterns resource: {ResourceName}. Available resources: {Available}",
                     resourceName, string.Join(", ", resourceNames));
                 return CreateEmptyDatabase();
             }
@@ -51,8 +52,8 @@ public class SuspectPatternLoader
             var yamlContent = await reader.ReadToEndAsync();
 
             var database = _yamlDeserializer.Deserialize<SuspectPatternDatabase>(yamlContent);
-            
-            _logger.LogInformation("Loaded {ErrorCount} error patterns and {StackCount} stack patterns", 
+
+            _logger.LogInformation("Loaded {ErrorCount} error patterns and {StackCount} stack patterns",
                 database.CrashlogErrorCheck?.Count ?? 0,
                 database.CrashlogStackCheck?.Count ?? 0);
 
@@ -85,7 +86,7 @@ public class SuspectPatternLoader
             var yamlContent = await File.ReadAllTextAsync(filePath);
             var database = _yamlDeserializer.Deserialize<SuspectPatternDatabase>(yamlContent);
 
-            _logger.LogInformation("Loaded {ErrorCount} error patterns and {StackCount} stack patterns from {FilePath}", 
+            _logger.LogInformation("Loaded {ErrorCount} error patterns and {StackCount} stack patterns from {FilePath}",
                 database.CrashlogErrorCheck?.Count ?? 0,
                 database.CrashlogStackCheck?.Count ?? 0,
                 filePath);

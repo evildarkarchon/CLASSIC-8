@@ -16,7 +16,8 @@ public partial class ToastNotification : UserControl
         AvaloniaProperty.Register<ToastNotification, string>(nameof(Message), string.Empty);
 
     public static readonly StyledProperty<NotificationType> NotificationTypeProperty =
-        AvaloniaProperty.Register<ToastNotification, NotificationType>(nameof(NotificationType), NotificationType.Information);
+        AvaloniaProperty.Register<ToastNotification, NotificationType>(nameof(NotificationType),
+            NotificationType.Information);
 
     public event EventHandler<EventArgs>? CloseRequested;
 
@@ -49,17 +50,10 @@ public partial class ToastNotification : UserControl
         base.OnPropertyChanged(change);
 
         if (change.Property == TitleProperty)
-        {
             TitleTextBlock.Text = Title;
-        }
         else if (change.Property == MessageProperty)
-        {
             MessageTextBlock.Text = Message;
-        }
-        else if (change.Property == NotificationTypeProperty)
-        {
-            UpdateNotificationTypeStyle();
-        }
+        else if (change.Property == NotificationTypeProperty) UpdateNotificationTypeStyle();
     }
 
     private void UpdateNotificationTypeStyle()

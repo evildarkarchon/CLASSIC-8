@@ -38,7 +38,8 @@ public class AudioValidator
     /// <summary>
     /// Validates an audio file for format and compatibility
     /// </summary>
-    public async Task<AudioValidationResult> ValidateAudioAsync(string filePath, string relativePath, CancellationToken cancellationToken = default)
+    public async Task<AudioValidationResult> ValidateAudioAsync(string filePath, string relativePath,
+        CancellationToken cancellationToken = default)
     {
         var result = new AudioValidationResult
         {
@@ -177,7 +178,7 @@ public class AudioValidator
         {
             // XWM files are Bethesda's proprietary format - basic validation
             var fileInfo = _fileSystem.FileInfo.New(result.FilePath);
-            
+
             if (fileInfo.Length == 0)
             {
                 result.Status = ValidationStatus.Error;
@@ -189,10 +190,7 @@ public class AudioValidator
             result.Properties["FileSize"] = fileInfo.Length;
 
             // XWM is the preferred format for game audio
-            if (result.Status == ValidationStatus.Valid)
-            {
-                result.Description += " - Optimal format for game performance";
-            }
+            if (result.Status == ValidationStatus.Valid) result.Description += " - Optimal format for game performance";
         }
         catch (Exception ex)
         {
@@ -213,7 +211,7 @@ public class AudioValidator
         try
         {
             var fileInfo = _fileSystem.FileInfo.New(result.FilePath);
-            
+
             if (fileInfo.Length == 0)
             {
                 result.Status = ValidationStatus.Error;
@@ -256,7 +254,7 @@ public class AudioValidator
     /// Validates multiple audio files in parallel
     /// </summary>
     public async Task<List<AudioValidationResult>> ValidateAudioFilesAsync(
-        IEnumerable<(string filePath, string relativePath)> audioFiles, 
+        IEnumerable<(string filePath, string relativePath)> audioFiles,
         CancellationToken cancellationToken = default)
     {
         var tasks = audioFiles.Select(async audio =>

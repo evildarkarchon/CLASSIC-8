@@ -53,7 +53,7 @@ public class GameFileValidator
     /// Validates all files in a directory recursively
     /// </summary>
     public async Task<GameFileValidationSummary> ValidateDirectoryAsync(
-        string directoryPath, 
+        string directoryPath,
         CancellationToken cancellationToken = default)
     {
         var summary = new GameFileValidationSummary
@@ -131,7 +131,7 @@ public class GameFileValidator
     /// Validates a single file
     /// </summary>
     public async Task<FileValidationResult> ValidateFileAsync(
-        string filePath, 
+        string filePath,
         string? relativePath = null,
         CancellationToken cancellationToken = default)
     {
@@ -140,24 +140,16 @@ public class GameFileValidator
         try
         {
             if (IsTextureFile(filePath))
-            {
                 return await _textureValidator.ValidateTextureAsync(filePath, relativePath, cancellationToken);
-            }
-            
+
             if (ArchiveValidator.IsSupportedArchive(filePath))
-            {
                 return await _archiveValidator.ValidateArchiveAsync(filePath, relativePath, cancellationToken);
-            }
-            
+
             if (AudioValidator.IsAudioFile(filePath))
-            {
                 return await _audioValidator.ValidateAudioAsync(filePath, relativePath, cancellationToken);
-            }
-            
+
             if (ScriptValidator.IsScriptFile(filePath))
-            {
                 return await _scriptValidator.ValidateScriptAsync(filePath, relativePath, cancellationToken);
-            }
 
             // General file validation
             return new FileValidationResult
@@ -197,7 +189,7 @@ public class GameFileValidator
             foreach (var file in _fileSystem.Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories))
             {
                 var fileName = Path.GetFileName(file);
-                
+
                 // Skip unwanted files
                 if (SkipFiles.Contains(fileName))
                     continue;
@@ -218,7 +210,7 @@ public class GameFileValidator
     /// Validates texture files
     /// </summary>
     private async Task ValidateTextureFilesAsync(
-        GameFileValidationSummary summary, 
+        GameFileValidationSummary summary,
         List<(string filePath, string relativePath)> textureFiles,
         CancellationToken cancellationToken)
     {
@@ -313,7 +305,7 @@ public class GameFileValidator
         // Check for previs/precombine files
         var previsFiles = allFiles
             .Where(f => f.filePath.EndsWith(".uvd", StringComparison.OrdinalIgnoreCase) ||
-                       f.filePath.EndsWith("_oc.nif", StringComparison.OrdinalIgnoreCase))
+                        f.filePath.EndsWith("_oc.nif", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         if (previsFiles.Any())
@@ -328,7 +320,7 @@ public class GameFileValidator
                 Description = $"Found {previsFiles.Count} previs files that may require Previs Repair Pack (PRP)",
                 Recommendation = "Ensure Previs Repair Pack is installed and properly positioned in load order"
             };
-            
+
             summary.SpecialResults.Add(previsResult);
         }
 
@@ -355,26 +347,26 @@ public class GameFileValidationSummary
     public DateTime EndTime { get; set; }
     public TimeSpan Duration => EndTime - StartTime;
     public bool Success { get; set; }
-    
+
     public int TotalFilesScanned { get; set; }
     public List<string> Errors { get; set; } = new();
-    
+
     public List<TextureValidationResult> TextureResults { get; set; } = new();
     public List<ArchiveValidationResult> ArchiveResults { get; set; } = new();
     public List<AudioValidationResult> AudioResults { get; set; } = new();
     public List<ScriptValidationResult> ScriptResults { get; set; } = new();
     public List<FileValidationResult> SpecialResults { get; set; } = new();
-    
+
     public int TotalIssues => TextureResults.Count(r => r.Status != ValidationStatus.Valid) +
                               ArchiveResults.Count(r => r.Status != ValidationStatus.Valid) +
                               AudioResults.Count(r => r.Status != ValidationStatus.Valid) +
                               ScriptResults.Count(r => r.Status != ValidationStatus.Valid) +
                               SpecialResults.Count(r => r.Status != ValidationStatus.Valid);
-                              
+
     public int CriticalIssues => GetIssueCount(ValidationStatus.Critical);
     public int ErrorIssues => GetIssueCount(ValidationStatus.Error);
     public int WarningIssues => GetIssueCount(ValidationStatus.Warning);
-    
+
     private int GetIssueCount(ValidationStatus status)
     {
         return TextureResults.Count(r => r.Status == status) +

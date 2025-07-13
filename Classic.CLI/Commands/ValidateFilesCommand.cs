@@ -76,7 +76,7 @@ public class ValidateFilesCommand : Command
             var verbose = context.ParseResult.GetValueForOption(verboseOption);
             var quiet = context.ParseResult.GetValueForOption(quietOption);
 
-            await ExecuteAsync(context, path, output, recursive, texturesOnly, archivesOnly, 
+            await ExecuteAsync(context, path, output, recursive, texturesOnly, archivesOnly,
                 audioOnly, scriptsOnly, verbose, quiet, context.GetCancellationToken());
         });
     }
@@ -96,7 +96,7 @@ public class ValidateFilesCommand : Command
     {
         // Configure logging
         var logLevel = verbose ? LogEventLevel.Debug : quiet ? LogEventLevel.Warning : LogEventLevel.Information;
-        
+
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Is(logLevel)
             .WriteTo.Console()
@@ -118,7 +118,7 @@ public class ValidateFilesCommand : Command
             var services = new ServiceCollection();
 
             // Add logging services  
-            services.AddLogging(builder => 
+            services.AddLogging(builder =>
             {
                 builder.ClearProviders();
                 builder.AddConsole();
@@ -162,10 +162,10 @@ public class ValidateFilesCommand : Command
                 // Validate all file types
                 var summary = await gameFileValidator.ValidateDirectoryAsync(path, cancellationToken);
                 await GenerateValidationReportAsync(summary, outputDirectory, logger, cancellationToken);
-                
+
                 // Print summary
                 PrintValidationSummary(summary, logger);
-                
+
                 // Set exit code based on results
                 context.ExitCode = summary.CriticalIssues > 0 ? 2 : summary.ErrorIssues > 0 ? 1 : 0;
             }
@@ -205,7 +205,7 @@ public class ValidateFilesCommand : Command
         {
             var textureFiles = allFiles.Where(f => IsTextureFile(f.f)).ToList();
             logger.Information("Validating {Count} texture files", textureFiles.Count);
-            
+
             var results = await textureValidator.ValidateTexturesAsync(textureFiles, cancellationToken);
             await WriteValidationResultsAsync(results, Path.Combine(outputDirectory, "texture-validation.txt"), logger);
         }
@@ -214,7 +214,7 @@ public class ValidateFilesCommand : Command
         {
             var archiveFiles = allFiles.Where(f => ArchiveValidator.IsSupportedArchive(f.f)).ToList();
             logger.Information("Validating {Count} archive files", archiveFiles.Count);
-            
+
             var results = await archiveValidator.ValidateArchivesAsync(archiveFiles, cancellationToken);
             await WriteValidationResultsAsync(results, Path.Combine(outputDirectory, "archive-validation.txt"), logger);
         }
@@ -223,7 +223,7 @@ public class ValidateFilesCommand : Command
         {
             var audioFiles = allFiles.Where(f => AudioValidator.IsAudioFile(f.f)).ToList();
             logger.Information("Validating {Count} audio files", audioFiles.Count);
-            
+
             var results = await audioValidator.ValidateAudioFilesAsync(audioFiles, cancellationToken);
             await WriteValidationResultsAsync(results, Path.Combine(outputDirectory, "audio-validation.txt"), logger);
         }
@@ -232,15 +232,15 @@ public class ValidateFilesCommand : Command
         {
             var scriptFiles = allFiles.Where(f => ScriptValidator.IsScriptFile(f.f)).ToList();
             logger.Information("Validating {Count} script files", scriptFiles.Count);
-            
+
             var results = await scriptValidator.ValidateScriptsAsync(scriptFiles, cancellationToken);
             await WriteValidationResultsAsync(results, Path.Combine(outputDirectory, "script-validation.txt"), logger);
         }
     }
 
     private async Task WriteValidationResultsAsync<T>(
-        List<T> results, 
-        string outputPath, 
+        List<T> results,
+        string outputPath,
         ILogger logger) where T : FileValidationResult
     {
         try
@@ -252,12 +252,12 @@ public class ValidateFilesCommand : Command
             report.AppendLine();
 
             var issueResults = results.Where(r => r.Status != ValidationStatus.Valid).ToList();
-            
+
             if (issueResults.Any())
             {
                 report.AppendLine("## Issues Found");
                 report.AppendLine();
-                
+
                 foreach (var result in issueResults.OrderByDescending(r => r.Status))
                 {
                     report.AppendLine($"### {result.Status}: {result.RelativePath}");
@@ -293,15 +293,16 @@ public class ValidateFilesCommand : Command
     {
         try
         {
-            var reportPath = Path.Combine(outputDirectory, $"file-validation-report-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.md");
-            
+            var reportPath = Path.Combine(outputDirectory,
+                $"file-validation-report-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.md");
+
             var report = new System.Text.StringBuilder();
             report.AppendLine("# Game File Validation Report");
             report.AppendLine($"**Directory**: {summary.DirectoryPath}");
             report.AppendLine($"**Generated**: {summary.EndTime:yyyy-MM-dd HH:mm:ss}");
             report.AppendLine($"**Duration**: {summary.Duration:mm\\:ss}");
             report.AppendLine();
-            
+
             report.AppendLine("## Summary");
             report.AppendLine($"- **Total Files Scanned**: {summary.TotalFilesScanned:N0}");
             report.AppendLine($"- **Total Issues**: {summary.TotalIssues:N0}");
@@ -311,11 +312,16 @@ public class ValidateFilesCommand : Command
             report.AppendLine();
 
             // Add detailed results for each type
-            AppendValidationResults(report, "Texture Issues", summary.TextureResults.Where(r => r.Status != ValidationStatus.Valid));
-            AppendValidationResults(report, "Archive Issues", summary.ArchiveResults.Where(r => r.Status != ValidationStatus.Valid));
-            AppendValidationResults(report, "Audio Issues", summary.AudioResults.Where(r => r.Status != ValidationStatus.Valid));
-            AppendValidationResults(report, "Script Issues", summary.ScriptResults.Where(r => r.Status != ValidationStatus.Valid));
-            AppendValidationResults(report, "Special Issues", summary.SpecialResults.Where(r => r.Status != ValidationStatus.Valid));
+            AppendValidationResults(report, "Texture Issues",
+                summary.TextureResults.Where(r => r.Status != ValidationStatus.Valid));
+            AppendValidationResults(report, "Archive Issues",
+                summary.ArchiveResults.Where(r => r.Status != ValidationStatus.Valid));
+            AppendValidationResults(report, "Audio Issues",
+                summary.AudioResults.Where(r => r.Status != ValidationStatus.Valid));
+            AppendValidationResults(report, "Script Issues",
+                summary.ScriptResults.Where(r => r.Status != ValidationStatus.Valid));
+            AppendValidationResults(report, "Special Issues",
+                summary.SpecialResults.Where(r => r.Status != ValidationStatus.Valid));
 
             await File.WriteAllTextAsync(reportPath, report.ToString(), cancellationToken);
             logger.Information("Comprehensive validation report written to: {ReportPath}", reportPath);
@@ -326,7 +332,8 @@ public class ValidateFilesCommand : Command
         }
     }
 
-    private void AppendValidationResults<T>(System.Text.StringBuilder report, string sectionTitle, IEnumerable<T> results) where T : FileValidationResult
+    private void AppendValidationResults<T>(System.Text.StringBuilder report, string sectionTitle,
+        IEnumerable<T> results) where T : FileValidationResult
     {
         var resultList = results.ToList();
         if (!resultList.Any()) return;
@@ -359,23 +366,15 @@ public class ValidateFilesCommand : Command
         logger.Information("  Errors: {Errors:N0}", summary.ErrorIssues);
         logger.Information("  Warnings: {Warnings:N0}", summary.WarningIssues);
         logger.Information("  Total: {Total:N0}", summary.TotalIssues);
-        
+
         if (summary.TotalIssues == 0)
-        {
             logger.Information("✅ All files passed validation!");
-        }
         else if (summary.CriticalIssues > 0)
-        {
             logger.Warning("❌ Critical issues found that require immediate attention");
-        }
         else if (summary.ErrorIssues > 0)
-        {
             logger.Warning("⚠️ Errors found that should be addressed");
-        }
         else
-        {
             logger.Information("ℹ️ Minor warnings found");
-        }
     }
 
     private static bool IsTextureFile(string filePath)

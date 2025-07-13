@@ -39,7 +39,8 @@ public class TextureValidator
     /// <summary>
     /// Validates a texture file for format and dimensions
     /// </summary>
-    public async Task<TextureValidationResult> ValidateTextureAsync(string filePath, string relativePath, CancellationToken cancellationToken = default)
+    public async Task<TextureValidationResult> ValidateTextureAsync(string filePath, string relativePath,
+        CancellationToken cancellationToken = default)
     {
         var result = new TextureValidationResult
         {
@@ -52,7 +53,7 @@ public class TextureValidator
         try
         {
             var extension = Path.GetExtension(filePath).ToLowerInvariant();
-            
+
             // Check for invalid texture formats
             if (InvalidTextureFormats.Contains(extension))
             {
@@ -67,7 +68,8 @@ public class TextureValidator
                 result.Status = ValidationStatus.Warning;
                 result.Issue = $"Invalid texture format: {extension.ToUpperInvariant()}";
                 result.Description = "Texture files should be in DDS format for optimal game performance";
-                result.Recommendation = "Convert texture to DDS format using a tool like Paint.NET with DDS plugin or Photoshop";
+                result.Recommendation =
+                    "Convert texture to DDS format using a tool like Paint.NET with DDS plugin or Photoshop";
                 result.Format = extension.ToUpperInvariant();
                 return result;
             }
@@ -137,7 +139,8 @@ public class TextureValidator
             {
                 result.Status = ValidationStatus.Warning;
                 result.Issue = $"DDS dimensions not power of 2: {result.Width}x{result.Height}";
-                result.Description = "Texture dimensions should be power of 2 (e.g., 512x512, 1024x1024) for optimal performance";
+                result.Description =
+                    "Texture dimensions should be power of 2 (e.g., 512x512, 1024x1024) for optimal performance";
                 result.Recommendation = "Resize texture to nearest power of 2 dimensions";
             }
             else
@@ -171,7 +174,7 @@ public class TextureValidator
     /// </summary>
     private static bool IsExemptPath(string relativePath)
     {
-        return ExemptPaths.Any(exemptPath => 
+        return ExemptPaths.Any(exemptPath =>
             relativePath.Contains(exemptPath, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -179,7 +182,7 @@ public class TextureValidator
     /// Validates multiple texture files in parallel
     /// </summary>
     public async Task<List<TextureValidationResult>> ValidateTexturesAsync(
-        IEnumerable<(string filePath, string relativePath)> textures, 
+        IEnumerable<(string filePath, string relativePath)> textures,
         CancellationToken cancellationToken = default)
     {
         var tasks = textures.Select(async texture =>

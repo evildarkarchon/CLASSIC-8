@@ -40,42 +40,34 @@ public class GameFileManager : IGameFileManager
         {
             var gameRoot = GetGameRootDirectory();
             if (string.IsNullOrEmpty(gameRoot) || !_fileSystem.Directory.Exists(gameRoot))
-            {
                 return new GameFileOperationResult
                 {
                     Success = false,
                     Message = "Game root directory not found. Please configure game paths in settings."
                 };
-            }
 
             var backupDir = GetBackupDirectory(category);
             _fileSystem.Directory.CreateDirectory(backupDir);
 
             var filesToBackup = GetFilesForCategory(gameRoot, category);
             if (!filesToBackup.Any())
-            {
                 return new GameFileOperationResult
                 {
                     Success = false,
                     Message = $"No {category} files found to backup."
                 };
-            }
 
             var processedFiles = new List<string>();
             var errors = new List<string>();
 
             foreach (var sourceFile in filesToBackup)
-            {
                 try
                 {
                     var relativePath = _fileSystem.Path.GetRelativePath(gameRoot, sourceFile);
                     var backupFile = _fileSystem.Path.Combine(backupDir, relativePath);
                     var backupFileDir = _fileSystem.Path.GetDirectoryName(backupFile);
 
-                    if (!string.IsNullOrEmpty(backupFileDir))
-                    {
-                        _fileSystem.Directory.CreateDirectory(backupFileDir);
-                    }
+                    if (!string.IsNullOrEmpty(backupFileDir)) _fileSystem.Directory.CreateDirectory(backupFileDir);
 
                     await using var source = _fileSystem.File.OpenRead(sourceFile);
                     await using var destination = _fileSystem.File.Create(backupFile);
@@ -90,7 +82,6 @@ public class GameFileManager : IGameFileManager
                     errors.Add(error);
                     _logger.Warning(ex, "Failed to backup file: {File}", sourceFile);
                 }
-            }
 
             return new GameFileOperationResult
             {
@@ -122,49 +113,39 @@ public class GameFileManager : IGameFileManager
         {
             var gameRoot = GetGameRootDirectory();
             if (string.IsNullOrEmpty(gameRoot) || !_fileSystem.Directory.Exists(gameRoot))
-            {
                 return new GameFileOperationResult
                 {
                     Success = false,
                     Message = "Game root directory not found. Please configure game paths in settings."
                 };
-            }
 
             var backupDir = GetBackupDirectory(category);
             if (!_fileSystem.Directory.Exists(backupDir))
-            {
                 return new GameFileOperationResult
                 {
                     Success = false,
                     Message = $"No backup found for {category}."
                 };
-            }
 
             var backupFiles = _fileSystem.Directory.GetFiles(backupDir, "*", SearchOption.AllDirectories);
             if (!backupFiles.Any())
-            {
                 return new GameFileOperationResult
                 {
                     Success = false,
                     Message = $"Backup directory for {category} is empty."
                 };
-            }
 
             var processedFiles = new List<string>();
             var errors = new List<string>();
 
             foreach (var backupFile in backupFiles)
-            {
                 try
                 {
                     var relativePath = _fileSystem.Path.GetRelativePath(backupDir, backupFile);
                     var targetFile = _fileSystem.Path.Combine(gameRoot, relativePath);
                     var targetDir = _fileSystem.Path.GetDirectoryName(targetFile);
 
-                    if (!string.IsNullOrEmpty(targetDir))
-                    {
-                        _fileSystem.Directory.CreateDirectory(targetDir);
-                    }
+                    if (!string.IsNullOrEmpty(targetDir)) _fileSystem.Directory.CreateDirectory(targetDir);
 
                     await using var source = _fileSystem.File.OpenRead(backupFile);
                     await using var destination = _fileSystem.File.Create(targetFile);
@@ -179,7 +160,6 @@ public class GameFileManager : IGameFileManager
                     errors.Add(error);
                     _logger.Warning(ex, "Failed to restore file: {File}", backupFile);
                 }
-            }
 
             return new GameFileOperationResult
             {
@@ -211,39 +191,31 @@ public class GameFileManager : IGameFileManager
         {
             var gameRoot = GetGameRootDirectory();
             if (string.IsNullOrEmpty(gameRoot) || !_fileSystem.Directory.Exists(gameRoot))
-            {
                 return Task.FromResult(new GameFileOperationResult
                 {
                     Success = false,
                     Message = "Game root directory not found. Please configure game paths in settings."
                 });
-            }
 
             var filesToRemove = GetFilesForCategory(gameRoot, category);
             if (!filesToRemove.Any())
-            {
                 return Task.FromResult(new GameFileOperationResult
                 {
                     Success = true,
                     Message = $"No {category} files found to remove."
                 });
-            }
 
             var processedFiles = new List<string>();
             var errors = new List<string>();
 
             foreach (var file in filesToRemove)
-            {
                 try
                 {
                     var relativePath = _fileSystem.Path.GetRelativePath(gameRoot, file);
 
                     // Remove read-only attribute if present
                     var fileInfo = _fileSystem.FileInfo.New(file);
-                    if (fileInfo.Exists && fileInfo.IsReadOnly)
-                    {
-                        fileInfo.IsReadOnly = false;
-                    }
+                    if (fileInfo.Exists && fileInfo.IsReadOnly) fileInfo.IsReadOnly = false;
 
                     _fileSystem.File.Delete(file);
                     processedFiles.Add(relativePath);
@@ -255,7 +227,6 @@ public class GameFileManager : IGameFileManager
                     errors.Add(error);
                     _logger.Warning(ex, "Failed to remove file: {File}", file);
                 }
-            }
 
             return Task.FromResult(new GameFileOperationResult
             {
@@ -316,7 +287,6 @@ public class GameFileManager : IGameFileManager
         }
 
         foreach (var pattern in patterns)
-        {
             try
             {
                 var matchingFiles = _fileSystem.Directory.GetFiles(gameRoot, pattern, SearchOption.TopDirectoryOnly);
@@ -326,7 +296,6 @@ public class GameFileManager : IGameFileManager
             {
                 _logger.Warning(ex, "Error searching for pattern {Pattern} in {GameRoot}", pattern, gameRoot);
             }
-        }
 
         return files.Distinct().ToList();
     }

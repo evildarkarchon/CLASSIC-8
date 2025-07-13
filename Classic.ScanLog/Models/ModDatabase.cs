@@ -7,17 +7,13 @@ namespace Classic.ScanLog.Models;
 /// </summary>
 public class ModConflictDatabase
 {
-    [YamlMember(Alias = "mods_core")]
-    public Dictionary<string, object> ModsCore { get; set; } = new();
+    [YamlMember(Alias = "mods_core")] public Dictionary<string, object> ModsCore { get; set; } = new();
 
-    [YamlMember(Alias = "mods_freq")]
-    public Dictionary<string, object> ModsFreq { get; set; } = new();
+    [YamlMember(Alias = "mods_freq")] public Dictionary<string, object> ModsFreq { get; set; } = new();
 
-    [YamlMember(Alias = "mods_conf")]
-    public Dictionary<string, object> ModsConf { get; set; } = new();
+    [YamlMember(Alias = "mods_conf")] public Dictionary<string, object> ModsConf { get; set; } = new();
 
-    [YamlMember(Alias = "mods_solu")]
-    public Dictionary<string, object> ModsSolu { get; set; } = new();
+    [YamlMember(Alias = "mods_solu")] public Dictionary<string, object> ModsSolu { get; set; } = new();
 
     [YamlMember(Alias = "gpu_compatibility")]
     public GpuCompatibility? GpuCompatibility { get; set; }
@@ -34,8 +30,7 @@ public class GpuCompatibility
     [YamlMember(Alias = "nvidia_specific")]
     public List<string> NvidiaSpecific { get; set; } = new();
 
-    [YamlMember(Alias = "amd_specific")]
-    public List<string> AmdSpecific { get; set; } = new();
+    [YamlMember(Alias = "amd_specific")] public List<string> AmdSpecific { get; set; } = new();
 }
 
 /// <summary>
@@ -43,11 +38,9 @@ public class GpuCompatibility
 /// </summary>
 public class ModEntry
 {
-    [YamlMember(Alias = "gpu_constraint")]
-    public string? GpuConstraint { get; set; }
+    [YamlMember(Alias = "gpu_constraint")] public string? GpuConstraint { get; set; }
 
-    [YamlMember(Alias = "description")]
-    public string Description { get; set; } = string.Empty;
+    [YamlMember(Alias = "description")] public string Description { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -110,4 +103,3 @@ public enum GpuManufacturer
     Amd,
     Intel
 }
-

@@ -8,7 +8,7 @@ public class Program
     public static async Task<int> Main(string[] args)
     {
         var rootCommand = new RootCommand("CLASSIC-8 - Crash Log Analysis and Game Scanner Tool");
-        
+
         // Add commands
         rootCommand.AddCommand(new ScanLogsCommand());
         rootCommand.AddCommand(new ScanGameCommand());
