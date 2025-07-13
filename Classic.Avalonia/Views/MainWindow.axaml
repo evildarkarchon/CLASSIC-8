@@ -348,6 +348,10 @@
                                             ToolTip.Tip="Open the Crash Logs directory in your file explorer." Margin="2" />
                                     <Button Classes="secondary" Content="CHECK UPDATES" Command="{Binding CheckForUpdatesCommand}" 
                                             ToolTip.Tip="Manually check for CLASSIC updates. (Ctrl+U)" Margin="2" />
+                                    <Button Classes="success" Content="📊 PAPYRUS MONITOR" Command="{Binding StartPapyrusMonitoringCommand}" 
+                                            ToolTip.Tip="Start monitoring Papyrus logs for real-time analysis." Margin="2" />
+                                    <Button Classes="secondary" Content="📋 PASTEBIN FETCH" Command="{Binding ShowPastebinDialogCommand}" 
+                                            ToolTip.Tip="Fetch crash logs from Pastebin URLs." Margin="2" />
                                 </WrapPanel>
                                 
                                 <Button Classes="danger" Content="EXIT" Command="{Binding ExitCommand}" 

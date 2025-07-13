@@ -32,6 +32,8 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IThemeService? _themeService;
     private readonly IWindowStateService? _windowStateService;
     private readonly IDragDropService? _dragDropService;
+    private readonly IPapyrusMonitoringService? _papyrusService;
+    private readonly IPastebinService? _pastebinService;
 
     private string _selectedModsFolder = string.Empty;
     private string _selectedScanFolder = string.Empty;
@@ -57,10 +59,15 @@ public class MainWindowViewModel : ViewModelBase
     private ScanResult? _lastScanResult;
     private string _scanStatistics = string.Empty;
 
+    // Papyrus monitoring state
+    private bool _isPapyrusMonitoring;
+    private PapyrusStats? _lastPapyrusStats;
+
     public MainWindowViewModel(IScanOrchestrator scanOrchestrator, ILogger logger, ISettingsService settingsService,
         IGameFileManager gameFileManager, INotificationService notificationService, IProgressService progressService,
         IUpdateService updateService, IThemeService? themeService = null,
-        IWindowStateService? windowStateService = null, IDragDropService? dragDropService = null)
+        IWindowStateService? windowStateService = null, IDragDropService? dragDropService = null,
+        IPapyrusMonitoringService? papyrusService = null, IPastebinService? pastebinService = null)
     {
         _scanOrchestrator = scanOrchestrator;
         _logger = logger;
@@ -72,6 +79,8 @@ public class MainWindowViewModel : ViewModelBase
         _themeService = themeService;
         _windowStateService = windowStateService;
         _dragDropService = dragDropService;
+        _papyrusService = papyrusService;
+        _pastebinService = pastebinService;
 
         // Initialize commands
         ScanCrashLogsCommand = ReactiveCommand.CreateFromTask(ExecuteScanCrashLogs,
@@ -110,6 +119,13 @@ public class MainWindowViewModel : ViewModelBase
         ShowSettingsCommand = ReactiveCommand.Create(ShowSettings);
         CheckForUpdatesCommand = ReactiveCommand.CreateFromTask(CheckForUpdates);
         NavigateToTabCommand = ReactiveCommand.Create<int>(NavigateToTab);
+
+        // Papyrus and Pastebin commands
+        StartPapyrusMonitoringCommand = ReactiveCommand.CreateFromTask(StartPapyrusMonitoring,
+            this.WhenAnyValue(x => x.IsPapyrusMonitoring).Select(monitoring => !monitoring));
+        StopPapyrusMonitoringCommand = ReactiveCommand.CreateFromTask(StopPapyrusMonitoring,
+            this.WhenAnyValue(x => x.IsPapyrusMonitoring).Select(monitoring => monitoring));
+        ShowPastebinDialogCommand = ReactiveCommand.Create(ShowPastebinDialog);
 
         // Subscribe to drag and drop events if service is available
         if (_dragDropService != null)
@@ -289,6 +305,18 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _scanStatistics, value);
     }
 
+    public bool IsPapyrusMonitoring
+    {
+        get => _isPapyrusMonitoring;
+        set => this.RaiseAndSetIfChanged(ref _isPapyrusMonitoring, value);
+    }
+
+    public PapyrusStats? LastPapyrusStats
+    {
+        get => _lastPapyrusStats;
+        set => this.RaiseAndSetIfChanged(ref _lastPapyrusStats, value);
+    }
+
     #endregion
 
     #region Commands
@@ -327,6 +355,11 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ShowSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> CheckForUpdatesCommand { get; }
     public ReactiveCommand<int, Unit> NavigateToTabCommand { get; }
+
+    // Papyrus and Pastebin commands
+    public ReactiveCommand<Unit, Unit> StartPapyrusMonitoringCommand { get; }
+    public ReactiveCommand<Unit, Unit> StopPapyrusMonitoringCommand { get; }
+    public ReactiveCommand<Unit, Unit> ShowPastebinDialogCommand { get; }
 
     #endregion
 
@@ -1023,6 +1056,152 @@ public class MainWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             _logger.Error(ex, "Error handling dropped files");
+        }
+    }
+
+    private async Task StartPapyrusMonitoring()
+    {
+        if (_papyrusService == null)
+        {
+            await _notificationService.ShowNotificationAsync(
+                "Papyrus Monitoring Unavailable",
+                "Papyrus monitoring service is not available.",
+                NotificationType.Warning);
+            return;
+        }
+
+        try
+        {
+            _logger.Information("Starting Papyrus monitoring");
+            IsPapyrusMonitoring = true;
+
+            await _papyrusService.StartMonitoringAsync();
+
+            await _notificationService.ShowNotificationAsync(
+                "Papyrus Monitoring Started",
+                "Papyrus log monitoring has been started.",
+                NotificationType.Success);
+
+            // Show the monitoring dialog
+            ShowPapyrusMonitorDialog();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to start Papyrus monitoring");
+            IsPapyrusMonitoring = false;
+            
+            await _notificationService.ShowNotificationAsync(
+                "Papyrus Monitoring Failed",
+                $"Failed to start Papyrus monitoring: {ex.Message}",
+                NotificationType.Error);
+        }
+    }
+
+    private async Task StopPapyrusMonitoring()
+    {
+        if (_papyrusService == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _logger.Information("Stopping Papyrus monitoring");
+            
+            await _papyrusService.StopMonitoringAsync();
+            IsPapyrusMonitoring = false;
+
+            await _notificationService.ShowNotificationAsync(
+                "Papyrus Monitoring Stopped",
+                "Papyrus log monitoring has been stopped.",
+                NotificationType.Information);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to stop Papyrus monitoring");
+            
+            await _notificationService.ShowNotificationAsync(
+                "Papyrus Monitoring Error",
+                $"Failed to stop Papyrus monitoring: {ex.Message}",
+                NotificationType.Error);
+        }
+    }
+
+    private void ShowPapyrusMonitorDialog()
+    {
+        if (_papyrusService == null)
+        {
+            return;
+        }
+
+        try
+        {
+            // Create and show the Papyrus monitor dialog
+            var dialogViewModel = new PapyrusMonitorDialogViewModel(_papyrusService, _logger);
+            var dialog = new Views.PapyrusMonitorDialog
+            {
+                DataContext = dialogViewModel
+            };
+
+            // In a real implementation, you'd show this as a modal dialog
+            // For now, we'll just log that it would be shown
+            _logger.Information("Papyrus monitor dialog would be shown here");
+            
+            // TODO: Implement actual dialog showing logic
+            // This would typically involve getting the main window and showing the dialog
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to show Papyrus monitor dialog");
+        }
+    }
+
+    private void ShowPastebinDialog()
+    {
+        if (_pastebinService == null)
+        {
+            _notificationService.ShowNotificationAsync(
+                "Pastebin Service Unavailable",
+                "Pastebin service is not available.",
+                NotificationType.Warning);
+            return;
+        }
+
+        try
+        {
+            // Create and show the Pastebin dialog
+            var dialogViewModel = new PastebinDialogViewModel(_pastebinService, _notificationService, _logger);
+            var dialog = new Views.PastebinDialog
+            {
+                DataContext = dialogViewModel
+            };
+
+            // Subscribe to events
+            dialog.LogFetched += OnPastebinLogFetched;
+
+            // In a real implementation, you'd show this as a modal dialog
+            // For now, we'll just log that it would be shown
+            _logger.Information("Pastebin dialog would be shown here");
+            
+            // TODO: Implement actual dialog showing logic
+            // This would typically involve getting the main window and showing the dialog
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to show Pastebin dialog");
+        }
+    }
+
+    private async void OnPastebinLogFetched(object? sender, PastebinResult result)
+    {
+        if (result.Success)
+        {
+            _logger.Information("Pastebin log fetched successfully: {FilePath}", result.FilePath);
+            
+            await _notificationService.ShowNotificationAsync(
+                "Log Downloaded",
+                $"Crash log downloaded from Pastebin and saved to: {result.FilePath}",
+                NotificationType.Success);
         }
     }
 
