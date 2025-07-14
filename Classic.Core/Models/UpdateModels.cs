@@ -5,7 +5,7 @@ namespace Classic.Core.Models;
 /// <summary>
 /// Represents version information with comparison capabilities
 /// </summary>
-public record VersionInfo(int Major, int Minor, int Patch, string? PreRelease = null)
+public record VersionInfo(int Major, int Minor, int Patch, string? PreRelease = null) : IComparable<VersionInfo>
 {
     public static VersionInfo Parse(string versionString)
     {
@@ -175,4 +175,37 @@ public record GitHubReleaseDetails
     public GitHubRelease? LatestEndpointRelease { get; init; }
     public GitHubRelease? TopOfListRelease { get; init; }
     public bool AreSameReleaseById { get; init; }
+}
+
+/// <summary>
+/// Result from an update source check
+/// </summary>
+public record UpdateSourceResult
+{
+    public bool IsSuccess { get; init; }
+    public VersionInfo? Version { get; init; }
+    public GitHubRelease? Release { get; init; }
+    public string? ErrorMessage { get; init; }
+    public string SourceName { get; init; } = string.Empty;
+
+    public static UpdateSourceResult Success(VersionInfo version, string sourceName, GitHubRelease? release = null)
+    {
+        return new UpdateSourceResult
+        {
+            IsSuccess = true,
+            Version = version,
+            Release = release,
+            SourceName = sourceName
+        };
+    }
+
+    public static UpdateSourceResult Failure(string errorMessage, string sourceName)
+    {
+        return new UpdateSourceResult
+        {
+            IsSuccess = false,
+            ErrorMessage = errorMessage,
+            SourceName = sourceName
+        };
+    }
 }

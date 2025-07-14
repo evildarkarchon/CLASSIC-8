@@ -8,6 +8,7 @@ using Classic.Infrastructure.Messaging;
 using Classic.Infrastructure.Reporting;
 using Classic.Infrastructure.Reporting.Templates;
 using Classic.Infrastructure.Services;
+using Classic.Infrastructure.Services.UpdateSources;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.IO.Abstractions;
@@ -51,13 +52,22 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAudioService, AudioService>();
         services.AddSingleton<INotificationService, NotificationService>();
 
-        // Register HTTP client for update services
-        services.AddHttpClient<IGitHubApiService, GitHubApiService>();
-        services.AddHttpClient<INexusModsService, NexusModsService>();
+        // Register HTTP clients for update sources
+        services.AddHttpClient<GitHubUpdateSource>();
+        services.AddHttpClient<NexusModsUpdateSource>();
 
-        // Register update services
+        // Register update sources (strategy pattern)
+        services.AddScoped<IUpdateSource, GitHubUpdateSource>();
+        services.AddScoped<IUpdateSource, NexusModsUpdateSource>();
+        services.AddScoped<IUpdateSourceFactory, UpdateSourceFactory>();
+
+        // Register version and update services
         services.AddSingleton<IVersionService, VersionService>();
         services.AddScoped<IUpdateService, UpdateService>();
+
+        // Register legacy interfaces for backward compatibility (marked obsolete)
+        services.AddHttpClient<IGitHubApiService, GitHubApiService>();
+        services.AddHttpClient<INexusModsService, NexusModsService>();
 
         // Register Papyrus and Pastebin services
         services.AddSingleton<IPapyrusMonitoringService, PapyrusMonitoringService>();

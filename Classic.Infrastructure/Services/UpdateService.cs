@@ -6,30 +6,21 @@ using Serilog;
 namespace Classic.Infrastructure.Services;
 
 /// <summary>
-/// Main service for checking application updates from various sources
+/// Main service for checking application updates from various sources using strategy pattern
 /// </summary>
 public class UpdateService : IUpdateService
 {
     private static readonly ILogger Logger = Log.ForContext<UpdateService>();
-    private readonly IGitHubApiService _gitHubApiService;
-    private readonly INexusModsService _nexusModsService;
+    private readonly IUpdateSourceFactory _updateSourceFactory;
     private readonly IVersionService _versionService;
     private readonly ISettingsService _settingsService;
 
-    // Constants based on Python implementation
-    private const string RepoOwner = "evildarkarchon";
-    private const string RepoName = "CLASSIC-Fallout4";
-    private const string NexusGameId = "fallout4";
-    private const string NexusModId = "56255";
-
     public UpdateService(
-        IGitHubApiService gitHubApiService,
-        INexusModsService nexusModsService,
+        IUpdateSourceFactory updateSourceFactory,
         IVersionService versionService,
         ISettingsService settingsService)
     {
-        _gitHubApiService = gitHubApiService;
-        _nexusModsService = nexusModsService;
+        _updateSourceFactory = updateSourceFactory;
         _versionService = versionService;
         _settingsService = settingsService;
     }
@@ -62,64 +53,52 @@ public class UpdateService : IUpdateService
 
         if (!IsValidUpdateSource(updateSource))
         {
-            var errorMessage = $"Invalid update source: {updateSource}. Valid sources are: GitHub, Nexus, Both";
+            var errorMessage = $"Invalid update source: {updateSource}. Valid sources are: {GetValidSourcesString()}";
             Logger.Warning(errorMessage);
             return UpdateCheckResult.Failure(errorMessage, updateSource);
         }
 
-        var useGitHub = updateSource is "Both" or "GitHub";
-        var useNexus = updateSource is "Both" or "Nexus" && !includePreReleases; // Nexus doesn't support prereleases
-
-        VersionInfo? gitHubVersion = null;
-        VersionInfo? nexusVersion = null;
-        GitHubRelease? latestRelease = null;
-
-        var gitHubFailed = false;
-        var nexusFailed = false;
-
         try
         {
-            // Check GitHub
-            if (useGitHub)
-                try
+            var sourceNames = GetSourceNamesFromUpdateSource(updateSource);
+            var sourceResults = new List<UpdateSourceResult>();
+
+            // Check each specified source
+            foreach (var sourceName in sourceNames)
+            {
+                var source = _updateSourceFactory.GetSource(sourceName);
+                if (source == null)
                 {
-                    var (version, release) = await GetGitHubVersionAsync(includePreReleases, cancellationToken);
-                    gitHubVersion = version;
-                    latestRelease = release;
-                    Logger.Information("GitHub version check completed: {Version}", gitHubVersion);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, "GitHub version check failed");
-                    gitHubFailed = true;
+                    Logger.Warning("Update source '{SourceName}' not found", sourceName);
+                    continue;
                 }
 
-            // Check Nexus (only for stable releases)
-            if (useNexus)
-                try
-                {
-                    nexusVersion =
-                        await _nexusModsService.GetLatestVersionAsync(NexusGameId, NexusModId, cancellationToken);
-                    Logger.Information("Nexus version check completed: {Version}", nexusVersion);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, "Nexus version check failed");
-                    nexusFailed = true;
-                }
+                // Skip sources that don't support pre-releases if pre-releases are requested
+                var effectiveIncludePreReleases = includePreReleases && source.SupportsPreReleases;
+                
+                var result = await source.GetLatestVersionAsync(effectiveIncludePreReleases, cancellationToken);
+                sourceResults.Add(result);
+            }
 
-            // Check for source failures
-            CheckSourceFailuresAndThrow(useGitHub, useNexus, gitHubFailed, nexusFailed);
+            // Check if all sources failed
+            var successfulResults = sourceResults.Where(r => r.IsSuccess).ToList();
+            if (successfulResults.Count == 0)
+            {
+                var failedSources = sourceResults.Select(r => $"{r.SourceName}: {r.ErrorMessage}");
+                var errorMessage = $"All update sources failed: {string.Join("; ", failedSources)}";
+                Logger.Error(errorMessage);
+                return UpdateCheckResult.Failure(errorMessage, updateSource);
+            }
 
-            // Determine the latest version
-            var latestVersion = GetLatestVersion(gitHubVersion, nexusVersion);
-            var isUpdateAvailable = _versionService.IsUpdateAvailable(currentVersion, latestVersion);
+            // Determine the latest version from successful results
+            var latestResult = GetLatestVersionFromResults(successfulResults);
+            var isUpdateAvailable = _versionService.IsUpdateAvailable(currentVersion, latestResult.Version);
 
             Logger.Information("Update check completed - Current: {Current}, Latest: {Latest}, Available: {Available}",
-                currentVersion, latestVersion, isUpdateAvailable);
+                currentVersion, latestResult.Version, isUpdateAvailable);
 
-            return UpdateCheckResult.Success(currentVersion, latestVersion, latestRelease, updateSource,
-                isUpdateAvailable);
+            return UpdateCheckResult.Success(currentVersion, latestResult.Version, latestResult.Release, 
+                updateSource, isUpdateAvailable);
         }
         catch (UpdateCheckException)
         {
@@ -135,74 +114,68 @@ public class UpdateService : IUpdateService
 
     public VersionInfo? GetCurrentVersion()
     {
-        // Try to get version from VersionService first (assembly version)
-        if (_versionService is VersionService versionService) return versionService.GetCurrentApplicationVersion();
+        // Try to get version from VersionService (assembly version)
+        if (_versionService is VersionService versionService) 
+            return versionService.GetCurrentApplicationVersion();
 
         Logger.Warning("Could not get current version from VersionService");
         return null;
     }
 
-    private async Task<(VersionInfo? version, GitHubRelease? release)> GetGitHubVersionAsync(bool includePreReleases,
-        CancellationToken cancellationToken)
+    private IEnumerable<string> GetSourceNamesFromUpdateSource(string updateSource)
     {
-        Logger.Debug("Fetching GitHub release details for {Owner}/{Repo}", RepoOwner, RepoName);
-
-        var releaseDetails = await _gitHubApiService.GetReleaseDetailsAsync(RepoOwner, RepoName, cancellationToken);
-
-        if (releaseDetails == null)
+        return updateSource.ToLowerInvariant() switch
         {
-            Logger.Warning("No release details found from GitHub");
-            return (null, null);
+            "both" => new[] { "GitHub", "Nexus" },
+            "github" => new[] { "GitHub" },
+            "nexus" => new[] { "Nexus" },
+            _ => new[] { updateSource } // Allow custom source names
+        };
+    }
+
+    private UpdateSourceResult GetLatestVersionFromResults(IEnumerable<UpdateSourceResult> results)
+    {
+        var resultsList = results.ToList();
+        if (resultsList.Count == 0)
+            throw new InvalidOperationException("No results provided");
+
+        if (resultsList.Count == 1)
+            return resultsList[0];
+
+        // Find the result with the highest version
+        var latestResult = resultsList
+            .Where(r => r.Version != null)
+            .OrderByDescending(r => r.Version)
+            .FirstOrDefault();
+
+        if (latestResult == null)
+            throw new InvalidOperationException("No valid versions found in results");
+
+        return latestResult;
+    }
+
+    private bool IsValidUpdateSource(string updateSource)
+    {
+        if (string.IsNullOrWhiteSpace(updateSource))
+            return false;
+
+        // Check standard source names
+        if (updateSource.Equals("Both", StringComparison.OrdinalIgnoreCase) ||
+            updateSource.Equals("GitHub", StringComparison.OrdinalIgnoreCase) ||
+            updateSource.Equals("Nexus", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
         }
 
-        var candidateVersions = new List<(VersionInfo version, GitHubRelease release)>();
-
-        // Check latest endpoint release
-        if (releaseDetails.LatestEndpointRelease?.Version != null &&
-            (!releaseDetails.LatestEndpointRelease.IsPreRelease || includePreReleases))
-            candidateVersions.Add((releaseDetails.LatestEndpointRelease.Version, releaseDetails.LatestEndpointRelease));
-
-        // Check top of list release
-        if (releaseDetails.TopOfListRelease?.Version != null &&
-            (!releaseDetails.TopOfListRelease.IsPreRelease || includePreReleases))
-            candidateVersions.Add((releaseDetails.TopOfListRelease.Version, releaseDetails.TopOfListRelease));
-
-        if (candidateVersions.Count == 0)
-        {
-            Logger.Warning("No suitable releases found on GitHub");
-            return (null, null);
-        }
-
-        // Return the highest version
-        var latest = candidateVersions.OrderByDescending(c => c.version).First();
-        Logger.Information("Determined latest GitHub version: {Version}", latest.version);
-
-        return latest;
+        // Check if it's a valid registered source
+        return _updateSourceFactory.GetSource(updateSource) != null;
     }
 
-    private static VersionInfo? GetLatestVersion(VersionInfo? gitHubVersion, VersionInfo? nexusVersion)
+    private string GetValidSourcesString()
     {
-        if (gitHubVersion == null) return nexusVersion;
-        if (nexusVersion == null) return gitHubVersion;
-
-        return gitHubVersion > nexusVersion ? gitHubVersion : nexusVersion;
-    }
-
-    private static bool IsValidUpdateSource(string updateSource)
-    {
-        return updateSource is "Both" or "GitHub" or "Nexus";
-    }
-
-    private static void CheckSourceFailuresAndThrow(bool useGitHub, bool useNexus, bool gitHubFailed, bool nexusFailed)
-    {
-        if (useGitHub && !useNexus && gitHubFailed)
-            throw new UpdateCheckException(
-                "Unable to fetch version information from GitHub (selected as only source).");
-
-        if (useNexus && !useGitHub && nexusFailed)
-            throw new UpdateCheckException("Unable to fetch version information from Nexus (selected as only source).");
-
-        if (useGitHub && useNexus && gitHubFailed && nexusFailed)
-            throw new UpdateCheckException("Unable to fetch version information from both GitHub and Nexus.");
+        var registeredSources = _updateSourceFactory.GetAllSources().Select(s => s.SourceName);
+        var standardSources = new[] { "Both", "GitHub", "Nexus" };
+        var allSources = standardSources.Concat(registeredSources).Distinct();
+        return string.Join(", ", allSources);
     }
 }

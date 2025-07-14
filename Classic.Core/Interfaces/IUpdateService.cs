@@ -34,6 +34,7 @@ public interface IUpdateService
 /// <summary>
 /// Service for interacting with GitHub API for release information
 /// </summary>
+[Obsolete("Use IUpdateSource with GitHubUpdateSource instead. This interface will be removed in a future version.")]
 public interface IGitHubApiService
 {
     /// <summary>
@@ -70,6 +71,7 @@ public interface IGitHubApiService
 /// <summary>
 /// Service for checking versions from Nexus Mods
 /// </summary>
+[Obsolete("Use IUpdateSource with NexusModsUpdateSource instead. This interface will be removed in a future version.")]
 public interface INexusModsService
 {
     /// <summary>
