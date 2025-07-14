@@ -14,25 +14,25 @@ public class GitHubUpdateSource : UpdateSourceBase
     private readonly string _owner;
     private readonly string _repo;
 
-    public GitHubUpdateSource(HttpClient httpClient, IVersionService versionService, 
-        string owner = "evildarkarchon", string repo = "CLASSIC-Fallout4") 
+    public GitHubUpdateSource(HttpClient httpClient, IVersionService versionService,
+        string owner = "evildarkarchon", string repo = "CLASSIC-Fallout4")
         : base(httpClient, versionService)
     {
         _owner = owner;
         _repo = repo;
-        
+
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         };
-        
+
         ConfigureHttpClient();
     }
 
     public override string SourceName => "GitHub";
     public override bool SupportsPreReleases => true;
 
-    protected override async Task<UpdateSourceResult> GetLatestVersionInternalAsync(bool includePreReleases, 
+    protected override async Task<UpdateSourceResult> GetLatestVersionInternalAsync(bool includePreReleases,
         CancellationToken cancellationToken)
     {
         var releaseDetails = await GetReleaseDetailsAsync(cancellationToken);
@@ -108,7 +108,7 @@ public class GitHubUpdateSource : UpdateSourceBase
         var allReleasesJsonContent = await allReleasesResponse.Content.ReadAsStringAsync(cancellationToken);
         var allReleases = JsonSerializer.Deserialize<GitHubRelease[]>(allReleasesJsonContent, _jsonOptions);
 
-        if (allReleases?.Length > 0) 
+        if (allReleases?.Length > 0)
             topOfListRelease = allReleases[0];
 
         var areSameReleaseById = latestEndpointRelease?.Id == topOfListRelease?.Id &&

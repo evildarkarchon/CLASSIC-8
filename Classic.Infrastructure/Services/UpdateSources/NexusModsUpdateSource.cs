@@ -17,8 +17,8 @@ public class NexusModsUpdateSource : UpdateSourceBase
     private const string VersionPropertyValue = "Version";
     private const string VersionDataProperty = "twitter:data1";
 
-    public NexusModsUpdateSource(HttpClient httpClient, IVersionService versionService, 
-        string gameId = "fallout4", string modId = "56255") 
+    public NexusModsUpdateSource(HttpClient httpClient, IVersionService versionService,
+        string gameId = "fallout4", string modId = "56255")
         : base(httpClient, versionService)
     {
         _gameId = gameId;
@@ -29,7 +29,7 @@ public class NexusModsUpdateSource : UpdateSourceBase
     public override string SourceName => "Nexus";
     public override bool SupportsPreReleases => false; // Nexus doesn't support pre-releases
 
-    protected override async Task<UpdateSourceResult> GetLatestVersionInternalAsync(bool includePreReleases, 
+    protected override async Task<UpdateSourceResult> GetLatestVersionInternalAsync(bool includePreReleases,
         CancellationToken cancellationToken)
     {
         var nexusModUrl = $"https://www.nexusmods.com/{_gameId}/mods/{_modId}";

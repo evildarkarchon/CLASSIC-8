@@ -17,8 +17,8 @@ public class UpdateSourceFactory : IUpdateSourceFactory
         {
             RegisterSource(source);
         }
-        
-        Logger.Debug("Initialized UpdateSourceFactory with {SourceCount} sources: {Sources}", 
+
+        Logger.Debug("Initialized UpdateSourceFactory with {SourceCount} sources: {Sources}",
             _sources.Count, string.Join(", ", _sources.Keys));
     }
 
@@ -31,10 +31,10 @@ public class UpdateSourceFactory : IUpdateSourceFactory
         }
 
         var found = _sources.TryGetValue(sourceName.Trim(), out var source);
-        
+
         if (!found)
         {
-            Logger.Warning("Update source '{SourceName}' not found. Available sources: {AvailableSources}", 
+            Logger.Warning("Update source '{SourceName}' not found. Available sources: {AvailableSources}",
                 sourceName, string.Join(", ", _sources.Keys));
         }
         else
@@ -54,7 +54,7 @@ public class UpdateSourceFactory : IUpdateSourceFactory
     public IEnumerable<IUpdateSource> GetPreReleaseCapableSources()
     {
         var preReleaseSources = _sources.Values.Where(s => s.SupportsPreReleases).ToList();
-        Logger.Debug("Returning {PreReleaseSourceCount} pre-release capable sources: {Sources}", 
+        Logger.Debug("Returning {PreReleaseSourceCount} pre-release capable sources: {Sources}",
             preReleaseSources.Count, string.Join(", ", preReleaseSources.Select(s => s.SourceName)));
         return preReleaseSources;
     }
@@ -75,12 +75,12 @@ public class UpdateSourceFactory : IUpdateSourceFactory
 
         if (_sources.ContainsKey(source.SourceName))
         {
-            Logger.Warning("Update source '{SourceName}' is already registered, replacing with new instance", 
+            Logger.Warning("Update source '{SourceName}' is already registered, replacing with new instance",
                 source.SourceName);
         }
 
         _sources[source.SourceName] = source;
-        Logger.Debug("Registered update source: {SourceName} (SupportsPreReleases: {SupportsPreReleases})", 
+        Logger.Debug("Registered update source: {SourceName} (SupportsPreReleases: {SupportsPreReleases})",
             source.SourceName, source.SupportsPreReleases);
     }
 }

@@ -75,7 +75,7 @@ public class UpdateService : IUpdateService
 
                 // Skip sources that don't support pre-releases if pre-releases are requested
                 var effectiveIncludePreReleases = includePreReleases && source.SupportsPreReleases;
-                
+
                 var result = await source.GetLatestVersionAsync(effectiveIncludePreReleases, cancellationToken);
                 sourceResults.Add(result);
             }
@@ -97,7 +97,7 @@ public class UpdateService : IUpdateService
             Logger.Information("Update check completed - Current: {Current}, Latest: {Latest}, Available: {Available}",
                 currentVersion, latestResult.Version, isUpdateAvailable);
 
-            return UpdateCheckResult.Success(currentVersion, latestResult.Version, latestResult.Release, 
+            return UpdateCheckResult.Success(currentVersion, latestResult.Version, latestResult.Release,
                 updateSource, isUpdateAvailable);
         }
         catch (UpdateCheckException)
@@ -115,7 +115,7 @@ public class UpdateService : IUpdateService
     public VersionInfo? GetCurrentVersion()
     {
         // Try to get version from VersionService (assembly version)
-        if (_versionService is VersionService versionService) 
+        if (_versionService is VersionService versionService)
             return versionService.GetCurrentApplicationVersion();
 
         Logger.Warning("Could not get current version from VersionService");

@@ -23,7 +23,7 @@ public interface IUpdateSource
     /// <param name="includePreReleases">Whether to include pre-releases (ignored if not supported)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Version information and optional release details</returns>
-    Task<UpdateSourceResult> GetLatestVersionAsync(bool includePreReleases = false, 
+    Task<UpdateSourceResult> GetLatestVersionAsync(bool includePreReleases = false,
         CancellationToken cancellationToken = default);
 }
 

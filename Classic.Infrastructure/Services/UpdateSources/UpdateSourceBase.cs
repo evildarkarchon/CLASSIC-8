@@ -23,12 +23,12 @@ public abstract class UpdateSourceBase : IUpdateSource
     public abstract string SourceName { get; }
     public abstract bool SupportsPreReleases { get; }
 
-    public async Task<UpdateSourceResult> GetLatestVersionAsync(bool includePreReleases = false, 
+    public async Task<UpdateSourceResult> GetLatestVersionAsync(bool includePreReleases = false,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            Logger.Debug("Checking for updates from {SourceName}, PreReleases: {IncludePreReleases}", 
+            Logger.Debug("Checking for updates from {SourceName}, PreReleases: {IncludePreReleases}",
                 SourceName, includePreReleases);
 
             if (includePreReleases && !SupportsPreReleases)
@@ -41,12 +41,12 @@ public abstract class UpdateSourceBase : IUpdateSource
 
             if (result.IsSuccess)
             {
-                Logger.Information("Successfully retrieved version {Version} from {SourceName}", 
+                Logger.Information("Successfully retrieved version {Version} from {SourceName}",
                     result.Version, SourceName);
             }
             else
             {
-                Logger.Warning("Failed to retrieve version from {SourceName}: {Error}", 
+                Logger.Warning("Failed to retrieve version from {SourceName}: {Error}",
                     SourceName, result.ErrorMessage);
             }
 
@@ -77,7 +77,7 @@ public abstract class UpdateSourceBase : IUpdateSource
     /// <param name="includePreReleases">Whether to include pre-releases</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Update source result</returns>
-    protected abstract Task<UpdateSourceResult> GetLatestVersionInternalAsync(bool includePreReleases, 
+    protected abstract Task<UpdateSourceResult> GetLatestVersionInternalAsync(bool includePreReleases,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -90,9 +90,10 @@ public abstract class UpdateSourceBase : IUpdateSource
         var version = VersionService.ParseVersion(versionString);
         if (version == null)
         {
-            Logger.Debug("Failed to parse version string from {SourceName}: '{VersionString}'", 
+            Logger.Debug("Failed to parse version string from {SourceName}: '{VersionString}'",
                 SourceName, versionString);
         }
+
         return version;
     }
 
