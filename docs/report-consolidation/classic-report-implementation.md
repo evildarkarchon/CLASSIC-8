@@ -276,7 +276,7 @@ public class FCXModeHandler
 5. Port common validation logic from Python
 
 ### Phase 2: Standard Report (Week 3)
-Note: This phase might have infrastructure already in place from the initial C# port, modify it to comply if needed.
+Note: This phase might have infrastructure already in place from the initial C# port, modify it to comply as needed.
 1. Implement basic section generators
 2. Create Standard template with simple Markdown
 3. Port crash suspect detection logic

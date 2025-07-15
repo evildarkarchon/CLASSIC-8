@@ -183,6 +183,7 @@ public class ScanRequest
     }
 }
 
+[Obsolete("Use Classic.Report.Models.ReportTemplateType instead. This enum will be removed in a future version.")]
 public enum ReportFormat
 {
     Markdown,
