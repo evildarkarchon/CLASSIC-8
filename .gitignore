@@ -455,3 +455,4 @@ $RECYCLE.BIN/
 Reports/
 !Examples/*.log
 *.code-workspace
+!sample_logs/*.log
